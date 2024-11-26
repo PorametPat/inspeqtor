@@ -1,0 +1,45 @@
+## List of tutorials for building this project
+
+- [`uv`](https://docs.astral.sh/uv/concepts/projects/init/#applications) for package manager.
+- [Github action](https://www.youtube.com/watch?v=Y6D2XaFV3Cc) for CI/CD.
+
+
+## Useful command lines
+
+-  To create a new project using `uv` package manager, run the following command:
+
+```bash
+    uv init inspeqtor --lib
+```
+
+Using the `--lib` flag will create a library project. Remove the flag if you want to create an application project.
+
+- To create virtual enviroment, run the following command:
+
+```bash
+    uv venv [name] --python 3.12
+```
+- The `[name]` is optional. If you don't provide a name, the virtual environment will be created with the name `venv`.
+- If you use `[name]` you might have to use
+
+```bash
+    export UV_PROJECT_ENVIRONMENT=[name]
+```
+and also 
+```bash
+    export VIRTUAL_ENV=[name]
+```
+so that, `uv` will know which virtual environment to use.
+
+- To install the `inspeqtor` package, run the following command:
+
+```bash
+    uv add . --editable --dev
+```
+
+To make the virtual environment discoverable in jupyter notebook, install the `ipykernel` package:
+
+```bash
+    uv add ipykernel --dev
+```
+

@@ -1,0 +1,26 @@
+[project]
+name = "inspeqtor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "PorametPat", email = "43396870+PorametPat@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "jax>=0.4.35",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "inspeqtor",
+    "ipykernel>=6.29.5",
+    "pytest>=8.3.3",
+]
+
+[tool.uv.sources]
+inspeqtor = { workspace = true }
