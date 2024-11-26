@@ -14,18 +14,18 @@ import pandas as pd  # type: ignore
 from typing import Any, Callable
 from alive_progress import alive_it  # type: ignore
 from qiskit.primitives import PrimitiveJob, SamplerResult  # type: ignore
-from qiskit_ibm_runtime import (
+from qiskit_ibm_runtime import (  # type: ignore
     RuntimeJobV2,
     RuntimeJob,
     SamplerV2,
     QiskitRuntimeService,
     Session,
-)  # type: ignore
-from qiskit_ibm_runtime.options import (
+)
+from qiskit_ibm_runtime.options import (  # type: ignore
     DynamicalDecouplingOptions,
     TwirlingOptions,
     SamplerOptions,
-)  # type: ignore
+)
 from typing import Sequence
 
 from .data import (

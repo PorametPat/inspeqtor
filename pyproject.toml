@@ -36,6 +36,8 @@ dev = [
     "pre-commit>=4.0.1",
     "pyright>=1.1.389",
     "pytest>=8.3.3",
+    "seaborn>=0.13.2",
+    "treescope>=0.1.6",
 ]
 
 [tool.uv.sources]
