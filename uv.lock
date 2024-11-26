@@ -1122,6 +1122,8 @@ dev = [
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
+    { name = "seaborn" },
+    { name = "treescope" },
 ]
 
 [package.metadata]
@@ -1150,6 +1152,8 @@ dev = [
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pyright", specifier = ">=1.1.389" },
     { name = "pytest", specifier = ">=8.3.3" },
+    { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "treescope", specifier = ">=0.1.6" },
 ]
 
 [[package]]
@@ -3300,6 +3304,20 @@ wheels = [
 ]
 
 [[package]]
+name = "seaborn"
+version = "0.13.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/59/a451d7420a77ab0b98f7affa3a1d78a313d2f7281a57afb1a34bae8ab412/seaborn-0.13.2.tar.gz", hash = "sha256:93e60a40988f4d65e9f4885df477e2fdaff6b73a9ded434c1ab356dd57eefff7", size = 1457696 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/11/00d3c3dfc25ad54e731d91449895a79e4bf2384dc3ac01809010ba88f6d5/seaborn-0.13.2-py3-none-any.whl", hash = "sha256:636f8336facf092165e27924f223d3c62ca560b1f2bb5dff7ab7fad265361987", size = 294914 },
+]
+
+[[package]]
 name = "setuptools"
 version = "75.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3638,6 +3656,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/eb/79/72064e6a701c2183016abbbfedaba506d81e30e232a68c9f0d6f6fcd1574/traitlets-5.14.3.tar.gz", hash = "sha256:9ed0579d3502c94b4b3732ac120375cda96f923114522847de4b3bb98b96b6b7", size = 161621 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/c0/8f5d070730d7836adc9c9b6408dec68c6ced86b304a9b26a14df072a6e8c/traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f", size = 85359 },
+]
+
+[[package]]
+name = "treescope"
+version = "0.1.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e5/78/7214ec914075d0f28b70719d3b684bfeb74e05a10394963feec9b4e86b78/treescope-0.1.6.tar.gz", hash = "sha256:67763ee24c841ada531521538a7dec407cb8902310634bead2e6bb315a5f2a2c", size = 530135 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/4e/3528887a1f79ccb8116f519a2f8cc289dcf75a215eb23da72930b280f4fe/treescope-0.1.6-py3-none-any.whl", hash = "sha256:a54cbe3cc5b5d9fcc0ac2c79dd3f2efe5f9c965d17e261e6d260a0fe13527a8f", size = 174788 },
 ]
 
 [[package]]
