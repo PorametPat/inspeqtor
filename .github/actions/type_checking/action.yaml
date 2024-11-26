@@ -1,0 +1,9 @@
+name: "Type checking"
+description: "Type checking using the community action"
+runs:
+  using: composite
+  steps:
+    - name: Type checking
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/setup
+    - run: uv run pyright .

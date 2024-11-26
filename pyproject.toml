@@ -8,7 +8,21 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "flax>=0.10.2",
     "jax>=0.4.35",
+    "pandas-stubs>=2.2.3.241009",
+    "pandas>=2.2.3",
+    "torch>=2.5.1",
+    "ray[data,serve,train,tune]>=2.39.0",
+    "optax>=0.2.4",
+    "pennylane>=0.39.0",
+    "qiskit>=1.2.4",
+    "qiskit-ibm-runtime>=0.33.2",
+    "matplotlib>=3.9.2",
+    "diffrax>=0.6.0",
+    "qiskit-experiments>=0.8.0",
+    "alive-progress>=3.2.0",
+    "forest-benchmarking>=0.9.0",
 ]
 
 [build-system]
@@ -19,6 +33,7 @@ build-backend = "hatchling.build"
 dev = [
     "inspeqtor",
     "ipykernel>=6.29.5",
+    "pre-commit>=4.0.1",
     "pyright>=1.1.389",
     "pytest>=8.3.3",
 ]
