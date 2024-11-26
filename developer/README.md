@@ -43,3 +43,26 @@ To make the virtual environment discoverable in jupyter notebook, install the `i
     uv add ipykernel --dev
 ```
 
+- We use `pytest` for testing. To run the tests, run the following command:
+
+```bash
+    uv run pytest tests/ -v 
+```
+Flag `-v` is for verbose mode.
+
+- We use `ruff` for linting and formatting. To run the linter, run the following command:
+
+```bash
+    uvx ruff check .
+```
+For formatting, run the following command:
+
+```bash
+    uvx ruff format --check .
+```
+
+- We use `pyright` for type checking. To run the type checker, run the following command:
+
+```bash
+    uv run pyright .
+```
