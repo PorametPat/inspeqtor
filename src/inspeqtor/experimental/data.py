@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
 import jax
@@ -7,13 +6,10 @@ import typing
 import json
 import numpy as np
 from pathlib import Path
-import torch
-from torch import Generator
-import torch.utils
-from torch.utils.data import DataLoader, Dataset, random_split
-from .typing import ParametersDictType
-import pandas as pd  # type: ignore
+import pandas as pd
 import logging
+
+from .sq_typing import ParametersDictType
 
 
 def add_hilbert_level(op: jnp.ndarray, x: jnp.ndarray) -> jnp.ndarray:
@@ -282,10 +278,11 @@ class ExperimentConfiguration:
         return cls(**dict_experiment_config)
 
     def to_file(self, path: typing.Union[Path, str]):
-        os.makedirs(path, exist_ok=True)
-
         if isinstance(path, str):
             path = Path(path)
+
+        # os.makedirs(path, exist_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
         with open(path / "config.json", "w") as f:
             json.dump(self.to_dict(), f, indent=4)
 
@@ -629,11 +626,10 @@ class ExperimentData:
         if isinstance(path, str):
             path = Path(path)
 
-        os.makedirs(path, exist_ok=True)
+        # os.makedirs(path, exist_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
         self.experiment_config.to_file(path)
-        # self.preprocess_data.to_csv(f"{path}/preprocess_data.csv", index=False)
         self.preprocess_data.to_csv(path / "preprocess_data.csv", index=False)
-        # self.postprocessed_data.to_csv(f"{path}/postprocessed_data.csv", index=False)
         self.postprocessed_data.to_csv(path / "postprocessed_data.csv", index=False)
 
     @classmethod
@@ -643,16 +639,15 @@ class ExperimentData:
 
         experiment_config = ExperimentConfiguration.from_file(path)
         preprocess_data = pd.read_csv(
-            # f"{path}/preprocess_data.csv",
             path / "preprocess_data.csv",
         )
 
         # Check if postprocessed_data exists
-        if not os.path.exists(f"{str(path)}/postprocessed_data.csv"):
+        if not (path / "postprocessed_data.csv").exists():
+            # if not os.path.exists(path / "postprocessed_data.csv"):
             postprocessed_data = None
         else:
             postprocessed_data = pd.read_csv(
-                # f"{path}/postprocessed_data.csv",
                 path / "postprocessed_data.csv",
             )
 
@@ -682,172 +677,3 @@ class ExperimentData:
                 data[_name] = res.to_numpy()
 
         return pd.DataFrame(data)
-
-
-def generate_path_with_datetime(sub_dir: typing.Union[str, None] = None):
-    return os.path.join(
-        sub_dir if sub_dir is not None else "",
-        datetime.now().strftime("Y%YM%mD%d-H%HM%MS%S"),
-    )
-
-
-@dataclass
-class DataConfig:
-    EXPERIMENT_IDENTIFIER: str
-    hamiltonian: str
-    pulse_sequence: dict
-
-    def to_file(self, path: typing.Union[str, Path]):
-        if isinstance(path, str):
-            path = Path(path)
-
-        os.makedirs(path, exist_ok=True)
-        with open(f"{path}/data_config.json", "w") as f:
-            json.dump(self.to_dict(), f, indent=4)
-
-    def to_dict(self):
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(**data)
-
-    @classmethod
-    def from_file(cls, path: str):
-        with open(f"{path}/data_config.json", "r") as f:
-            config_dict = json.load(f)
-        return cls.from_dict(config_dict)
-
-
-class SpecQDataset(Dataset):
-    def __init__(
-        self,
-        pulse_parameters: np.ndarray,
-        unitaries: np.ndarray,
-        expectation_values: np.ndarray,
-    ):
-        self.pulse_parameters = torch.from_numpy(pulse_parameters)
-        self.unitaries = torch.from_numpy(unitaries)
-        self.expectation_values = torch.from_numpy(expectation_values)
-
-    def __len__(self):
-        return self.pulse_parameters.shape[0]
-
-    def __getitem__(self, idx):
-        return {
-            # Pulse parameters
-            "x0": self.pulse_parameters[idx],
-            # Unitaries
-            "x1": self.unitaries[idx],
-            # Expectation values
-            "y": self.expectation_values[idx],
-        }
-
-
-def prepare_dataset(
-    pulse_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    expectation_values: jnp.ndarray,
-    batch_size_ratio: float = 0.1,
-    ratio: list[float] = [0.8, 0.1, 0.1],
-) -> tuple[DataLoader, DataLoader, typing.Union[DataLoader, None]]:
-    # Sanity check on the inputs
-    # pulse_parameters.shape should be len(shape) == 2
-    assert (
-        len(pulse_parameters.shape) == 2
-    ), "The shape of pulse parameters should be (batch, pulse_params)"
-    pulse_parameters_size = pulse_parameters.shape[0]
-
-    # unitaries.shape should be (batch, 2, 2)
-    if len(unitaries.shape) == 4:
-        _unitaries = unitaries[:, -1, :, :]
-        logging.info(
-            "Assumed that unitaries provided has time step dims at axis = 1, select only the last time step"
-        )
-    elif len(unitaries.shape) == 3:
-        _unitaries = jnp.array(unitaries)
-    else:
-        raise ValueError(
-            f"The provided unitaries is invalid with shape {str(unitaries.shape)}"
-        )
-    unitaries_size = unitaries.shape[0]
-
-    assert (
-        len(expectation_values.shape) == 2
-    ), "The shape of pulse parameters should be (batch, expectation_value_order)"
-    expectation_values_size = expectation_values.shape[0]
-    # Check if we needed to transpose the unitaries or not.
-    if not expectation_values_size == pulse_parameters_size:
-        # Try to transpose
-        _expectation_value = np.array(expectation_values.T)
-        expectation_values_size = _expectation_value.shape[0]
-    else:
-        _expectation_value = np.array(expectation_values)
-
-    # Check if all of the sizes are the same
-    assert (
-        expectation_values_size == unitaries_size
-    ), "Batch size of the pulse_parameters, expectation_values, unitaries are not the same"
-
-    dataset = SpecQDataset(
-        pulse_parameters=np.array(pulse_parameters),
-        unitaries=np.array(_unitaries),  # only the final unitary
-        expectation_values=np.array(_expectation_value),
-    )
-
-    batch_size = int(pulse_parameters.shape[0] * batch_size_ratio)
-
-    # Split the dataset into train, val, test
-    split_generator = Generator().manual_seed(0)
-
-    subsets = random_split(dataset, ratio, generator=split_generator)
-
-    train_generator = Generator().manual_seed(1)
-    train_dataloader = DataLoader(
-        subsets[0], batch_size=batch_size, shuffle=True, generator=train_generator
-    )
-
-    val_generator = Generator().manual_seed(2)
-    val_dataloader = DataLoader(
-        subsets[1], batch_size=batch_size, shuffle=True, generator=val_generator
-    )
-
-    if len(ratio) == 3:
-        test_generator = Generator().manual_seed(3)
-        test_dataloader = DataLoader(
-            subsets[2], batch_size=batch_size, shuffle=True, generator=test_generator
-        )
-    else:
-        test_dataloader = None
-
-    return train_dataloader, val_dataloader, test_dataloader
-
-
-def extract_data(
-    dataloader: DataLoader,
-) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    # Assert that the dataloader has dataset attribute and the dataset has dataset attribute
-    assert hasattr(
-        dataloader, "dataset"
-    ), "The dataloader does not have dataset attribute"
-    assert hasattr(
-        dataloader.dataset, "dataset"
-    ), "The dataloader.dataset does not have dataset attribute"
-
-    assert hasattr(
-        dataloader.dataset.dataset, "pulse_parameters"
-    ), "dataloader.dataset.dataset does not have pulse_parameters"
-
-    assert hasattr(
-        dataloader.dataset.dataset, "unitaries"
-    ), "dataloader.dataset.dataset does not have unitaries"
-
-    assert hasattr(
-        dataloader.dataset.dataset, "expectation_values"
-    ), "dataloader.dataset.dataset does not have expectation_values"
-
-    return (
-        dataloader.dataset.dataset.pulse_parameters,
-        dataloader.dataset.dataset.unitaries,
-        dataloader.dataset.dataset.expectation_values,
-    )

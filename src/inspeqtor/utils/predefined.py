@@ -540,9 +540,9 @@ def signal_with_colored_noise(
 class MultiDragPulseV3(JaxBasedPulse):
     total_length: int
     order: int = 1
-    amp_bound: tuple[tuple[float, float]] = ((0.0, 1.0),)
-    sigma_bound: tuple[tuple[float, float]] = ((0.1, 5.0),)
-    global_beta_bound: tuple[float, float] = (-2.0, 2.0)
+    amp_bound: list[list[float, float]] = ((0.0, 1.0),)
+    sigma_bound: list[list[float, float]] = ((0.1, 5.0),)
+    global_beta_bound: list[float, float] = (-2.0, 2.0)
 
     def __post_init__(self):
         self.t_eval = jnp.arange(self.total_length, dtype=jnp.float64)
@@ -622,11 +622,11 @@ def get_envelope(params: ParametersDictType, order: int, total_length: int):
 
 def get_multi_drag_pulse_sequence_v3():
     order = 4
-    amp_bounds = tuple([(0, 1)] * order)
+    amp_bounds = list([[0, 1]] * order)
     order_amp_bound = tuple(
         [amp_bound for idx, amp_bound in enumerate(amp_bounds) for _ in range(idx + 1)]
     )
-    sigma_bounds = [(7, 9), (5, 7), (3, 5), (1, 3)]
+    sigma_bounds = [[7, 9], [5, 7], [3, 5], [1, 3]]
     order_sigma_bound = tuple(
         [
             sigma_bound

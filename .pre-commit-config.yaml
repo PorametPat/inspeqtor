@@ -10,3 +10,23 @@ repos:
     # Run the formatter.
     - id: ruff-format
       types_or: [ python, pyi ]
+
+- repo: https://github.com/astral-sh/uv-pre-commit
+  # uv version.
+  rev: 0.5.5
+  hooks:
+    # Update the uv lockfile
+    - id: uv-lock
+# - repo: https://github.com/RobertCraigie/pyright-python
+#   rev: v1.1.389
+#   hooks:
+#   - id: pyright
+
+- repo: local
+  hooks:
+    - id: pytest
+      name: pytest
+      entry: ./.venv/bin/pytest tests/experimental/.
+      language: python
+      pass_filenames: false
+      always_run: true

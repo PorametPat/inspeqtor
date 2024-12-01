@@ -22,13 +22,20 @@ jobs:
             - uses: ./.github/actions/setup
             - run: uvx ruff format .
             - run: uvx ruff format --check .
+    type_checking:
+        runs-on: ubuntu-latest
+        needs: [lock_file]
+        steps:
+            - uses: actions/checkout@v4
+            - uses: ./.github/actions/setup
+            - run: uv run pyright src/inspeqtor/experimental/.
     tests:
         runs-on: ubuntu-latest
         needs: [lock_file]
         steps:
             - uses: actions/checkout@v4
             - uses: ./.github/actions/setup
-            - run: uv run pytest -v --durations=0
+            - run: uv run pytest tests/experimental/. -vv --durations=0
     build:
         runs-on: ubuntu-latest
         needs: [lock_file, linting, formatting, tests]
