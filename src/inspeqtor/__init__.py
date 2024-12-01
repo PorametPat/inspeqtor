@@ -1,4 +1,5 @@
 from . import (
+    _pennylane as _pennylane,
     data as data,
     constant as constant,
     pulse as pulse,
@@ -6,7 +7,6 @@ from . import (
     utils as utils,
     qiskit as qiskit,
     physics as physics,
-    pennylane as pennylane,
     model as model,
     optimizer as optimizer,
     visualization as visualization,

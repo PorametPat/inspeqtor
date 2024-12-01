@@ -110,7 +110,7 @@ def test_run():
     waveforms = jnp.array(waveforms)
 
     # Get the simualtor
-    simulator = isq.pennylane.get_simulator(qubit_info=qubit_info, t_eval=t_eval)
+    simulator = isq._pennylane.get_simulator(qubit_info=qubit_info, t_eval=t_eval)
 
     # Solve for the unitaries
     # jit the simulator
@@ -186,10 +186,10 @@ def test_crosscheck_pennylane_difflax():
     auto_rotated_unitaries = jitted_simulator(hamil_params)
 
     # NOTE: Crosscheck with pennylane
-    qml_simulator = isq.pennylane.get_simulator(
+    qml_simulator = isq._pennylane.get_simulator(
         qubit_info=qubit_info,
         t_eval=t_eval,
-        hamiltonian=isq.pennylane.rotating_transmon_hamiltonian,
+        hamiltonian=isq._pennylane.rotating_transmon_hamiltonian,
     )
     qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
 

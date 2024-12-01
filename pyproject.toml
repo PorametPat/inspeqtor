@@ -23,6 +23,8 @@ dependencies = [
     "qiskit-experiments>=0.8.0",
     "alive-progress>=3.2.0",
     "forest-benchmarking>=0.9.0",
+    "optuna>=4.1.0",
+    "numpyro>=0.16.0",
 ]
 
 [build-system]
@@ -31,14 +33,22 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "chex>=0.1.87",
     "inspeqtor",
     "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.5",
     "pre-commit>=4.0.1",
     "pyright>=1.1.389",
     "pytest>=8.3.3",
     "seaborn>=0.13.2",
     "treescope>=0.1.6",
 ]
+
+[tool.pyright]
+exclude = [".venv"]
+pythonVersion = "3.11"
+venvPath = "."
+venv = ".venv"
 
 [tool.uv.sources]
 inspeqtor = { workspace = true }
