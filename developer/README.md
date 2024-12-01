@@ -66,3 +66,8 @@ For formatting, run the following command:
 ```bash
     uv run pyright .
 ```
+For pre-commit run the following command:
+
+```bash
+    uv run pre-commit run --all-files
+```
