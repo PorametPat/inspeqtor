@@ -7,4 +7,6 @@ from . import (
     constant as constant,
     physics as physics,
     predefined as predefined,
+    model as model,
+    optimize as optimize,
 )

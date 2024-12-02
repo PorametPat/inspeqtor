@@ -6,9 +6,11 @@ import jaxtyping
 from dataclasses import dataclass
 from .pulse import PulseSequence
 from .data import ExperimentData
-from .constant import Z
-from .decorator import not_yet_tested
+from .model import mse
+from .constant import Z, default_expectation_values_order
+from .decorator import warn_not_tested_function
 from .sq_typing import HamiltonianArgs
+from .physics import calculate_exp
 import logging
 
 
@@ -55,23 +57,18 @@ def drag_envelope_v2(
     return envelop
 
 
-def calculate_exp(
-    unitary: jnp.ndarray, operator: jnp.ndarray, density_matrix: jnp.ndarray
-) -> jnp.ndarray:
-    rho = jnp.matmul(
-        unitary, jnp.matmul(density_matrix, unitary.conj().swapaxes(-2, -1))
-    )
-    temp = jnp.matmul(rho, operator)
-    return jnp.real(jnp.sum(jnp.diagonal(temp, axis1=-2, axis2=-1), axis=-1))
-
-
-@not_yet_tested
+@warn_not_tested_function
 def detune_hamiltonian(
     hamiltonian: typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray],
     detune: float,
 ) -> typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray]:
-    def detuned_hamiltonian(params: HamiltonianArgs, t: jnp.ndarray) -> jnp.ndarray:
-        return hamiltonian(params, t) + detune * Z
+    def detuned_hamiltonian(
+        params: HamiltonianArgs,
+        t: jnp.ndarray,
+        *args,
+        **kwargs,
+    ) -> jnp.ndarray:
+        return hamiltonian(params, t, *args, **kwargs) + detune * Z
 
     return detuned_hamiltonian
 
@@ -91,7 +88,7 @@ def prepare_data(
             pulse_parameters.shape[1] * pulse_parameters.shape[2],
         )
 
-    expectations = jnp.array(exp_data.get_expectation_values())
+    expectation_values = jnp.array(exp_data.get_expectation_values())
     unitaries = jax.vmap(whitebox)(pulse_parameters)
 
     logging.info(
@@ -102,7 +99,7 @@ def prepare_data(
         experiment_data=exp_data,
         pulse_parameters=pulse_parameters,
         unitaries=unitaries[:, -1, :, :],
-        expectation_values=expectations,
+        expectation_values=expectation_values,
         pulse_sequence=pulse_sequence,
         whitebox=whitebox,
     )
@@ -194,41 +191,12 @@ def dataloader(
         epoch_idx += 1
 
 
-def test_dataloader(DATA_SIZE: int = 100, BATCH_SIZE: int = 15, NUM_EPOCHS: int = 10):
-    train_key = jax.random.key(0)
-
-    x_mock = jnp.linspace(0, 10, DATA_SIZE).reshape(-1, 1)
-    y_mock = jnp.sin(x_mock)
-
-    # Expected number of batches per epoch
-    num_batches = x_mock.shape[0] // BATCH_SIZE
-    if x_mock.shape[0] % BATCH_SIZE != 0:
-        num_batches += 1
-
-    expected_final_batch_idx = num_batches - 1
-    expected_step = num_batches * NUM_EPOCHS - 1
-
-    step = 0
-    batch_idx = 0
-    is_last_batch = True
-    epoch_idx = 0
-
-    for (step, batch_idx, is_last_batch, epoch_idx), (x_batch, y_batch) in dataloader(
-        (x_mock, y_mock), batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, key=train_key
-    ):
-        print(
-            f"step: {step}, batch_idx: {batch_idx}, is_last_batch: {is_last_batch}, epoch_idx: {epoch_idx}, x_batch: {x_batch.shape}, y_batch: {y_batch.shape}"
-        )
-
-    assert step == expected_step
-    assert batch_idx == expected_final_batch_idx
-    assert is_last_batch
-    assert epoch_idx == NUM_EPOCHS - 1
-
-
 def create_step(
     optimizer: optax.GradientTransformation,
-    loss_fn: typing.Callable[..., jnp.ndarray],
+    loss_fn: (
+        typing.Callable[..., jnp.ndarray]
+        | typing.Callable[..., typing.Tuple[jnp.ndarray, typing.Any]]
+    ),
     has_aux: bool = False,
 ):
     """The create_step function creates a training step function and a test step function.
@@ -271,3 +239,70 @@ def create_step(
         return loss_fn(params, *args)
 
     return train_step, test_step
+
+
+def variance_of_observable(expval: jnp.ndarray, shots: int = 1):
+    return (1 - expval**2) / shots
+
+
+# dataset metrics
+@dataclass
+class DatasetMetrics:
+    # The data variance
+    var: float
+    # The MSE between ideal and experimental expectation values
+    mse_ideal2exp: float
+    # The training iteration
+    total_iterations: int
+    step_for_optimizer: int
+    warmup_steps: int
+    cool_down_steps: int
+
+
+def calculate_expectation_values(
+    unitaries: jnp.ndarray,
+) -> jnp.ndarray:
+    # Calculate the ideal expectation values of the original pulse
+    ideal_expectation_values = jnp.zeros(shape=(unitaries.shape[0], 18))
+    for idx, exp in enumerate(default_expectation_values_order):
+        expvals = calculate_exp(
+            unitaries,
+            exp.observable_matrix,
+            exp.initial_density_matrix,
+        )
+        ideal_expectation_values = ideal_expectation_values.at[:, idx].set(expvals)
+
+    return ideal_expectation_values
+
+
+def get_dataset_metrics(
+    loaded_data: LoadedData,
+    NUM_EPOCH: int = 1000,
+) -> DatasetMetrics:
+    # * Data variance
+    var = variance_of_observable(
+        loaded_data.expectation_values,
+        shots=loaded_data.experiment_data.experiment_config.shots,
+    ).mean()
+
+    # * The MSE between ideal and experimental expectation values
+    # Calculate the ideal expectation values of the original pulse
+    ideal_expectation_values = calculate_expectation_values(loaded_data.unitaries)
+    mse_ideal2exp = jax.vmap(mse, in_axes=(0, 0))(
+        loaded_data.expectation_values, ideal_expectation_values
+    ).mean()
+
+    # * The training iteration.
+    total_iterations = 9 * NUM_EPOCH
+    step_for_optimizer = 8 * NUM_EPOCH
+    warmup_steps = int(0.1 * step_for_optimizer)
+    cool_down_steps = total_iterations - step_for_optimizer
+
+    return DatasetMetrics(
+        var=var.item(),
+        mse_ideal2exp=mse_ideal2exp.item(),
+        total_iterations=total_iterations,
+        step_for_optimizer=step_for_optimizer,
+        warmup_steps=warmup_steps,
+        cool_down_steps=cool_down_steps,
+    )
