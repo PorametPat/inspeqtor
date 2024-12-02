@@ -5,6 +5,7 @@ import typing
 from enum import Enum
 from functools import partial
 import pandas as pd
+import pathlib
 from .data import (
     QubitInformation,
     ExperimentConfiguration,
@@ -17,13 +18,21 @@ from .pulse import (
     PulseSequence,
     array_to_list_of_params,
     list_of_params_to_array,
+    construct_pulse_sequence_reader,
 )
-from .sq_typing import ParametersDictType
+from .sq_typing import ParametersDictType, HamiltonianArgs
 from .physics import SignalParameters, solver, signal_func_v5
 from .constant import X, Y, Z, default_expectation_values_order
-from .decorator import not_yet_tested
-from .utils import center_location, drag_envelope_v2, detune_hamiltonian, calculate_exp
-from .sq_typing import HamiltonianArgs
+from .decorator import warn_not_tested_function
+from .utils import (
+    center_location,
+    drag_envelope_v2,
+    detune_hamiltonian,
+    calculate_exp,
+    LoadedData,
+    prepare_data,
+)
+from .model import DataConfig
 
 
 def rotating_transmon_hamiltonian(
@@ -314,7 +323,7 @@ def calculate_shots_expectation_value(
     ).mean()
 
 
-@not_yet_tested
+@warn_not_tested_function
 def generate_mock_experiment_data(
     key: jnp.ndarray,
     sample_size: int = 10,
@@ -339,9 +348,6 @@ def generate_mock_experiment_data(
     key, exp_key = jax.random.split(key)
 
     dt = config.device_cycle_time_ns
-    t_eval = jnp.linspace(
-        0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
-    )
 
     ideal_hamiltonian = partial(
         rotating_transmon_hamiltonian,
@@ -360,24 +366,20 @@ def generate_mock_experiment_data(
         hamiltonian = ideal_hamiltonian
 
     noisy_simulator = jax.jit(
-        partial(
-            solver,
-            t_eval=t_eval,
+        get_single_qubit_whitebox(
             hamiltonian=hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex64),
-            t0=0,
-            t1=pulse_sequence.pulse_length_dt * dt,
+            pulse_sequence=pulse_sequence,
+            qubit_info=qubit_info,
+            dt=dt,
         )
     )
 
     whitebox = jax.jit(
-        partial(
-            solver,
-            t_eval=t_eval,
+        get_single_qubit_whitebox(
             hamiltonian=ideal_hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex64),
-            t0=0,
-            t1=pulse_sequence.pulse_length_dt * dt,
+            pulse_sequence=pulse_sequence,
+            qubit_info=qubit_info,
+            dt=dt,
         )
     )
 
@@ -495,7 +497,8 @@ def get_envelope_transformer(pulse_sequence: PulseSequence):
     return get_envelope
 
 
-def get_single_qubit_rotating_frame_whitebox(
+def get_single_qubit_whitebox(
+    hamiltonian: typing.Callable[..., jnp.ndarray],
     pulse_sequence: PulseSequence,
     qubit_info: QubitInformation,
     dt: float,
@@ -505,7 +508,7 @@ def get_single_qubit_rotating_frame_whitebox(
     )
 
     hamiltonian = partial(
-        rotating_transmon_hamiltonian,
+        hamiltonian,
         qubit_info=qubit_info,
         signal=signal_func_v5(
             get_envelope_transformer(pulse_sequence),
@@ -524,3 +527,53 @@ def get_single_qubit_rotating_frame_whitebox(
     )
 
     return whitebox
+
+
+def get_single_qubit_rotating_frame_whitebox(
+    pulse_sequence: PulseSequence,
+    qubit_info: QubitInformation,
+    dt: float,
+):
+    whitebox = get_single_qubit_whitebox(
+        rotating_transmon_hamiltonian,
+        pulse_sequence,
+        qubit_info,
+        dt,
+    )
+
+    return whitebox
+
+
+pulse_reader = construct_pulse_sequence_reader(pulses=[DragPulse, MultiDragPulseV3])
+
+hamiltonian_mapper = {
+    "transmon_hamiltonian": transmon_hamiltonian,
+    "rotating_transmon_hamiltonian": rotating_transmon_hamiltonian,
+}
+
+
+@warn_not_tested_function
+def load_data_from_path(
+    path: str | pathlib.Path,
+    model_path: str | pathlib.Path,
+) -> LoadedData:
+    if isinstance(path, str):
+        path = pathlib.Path(path)
+
+    if isinstance(model_path, str):
+        model_path = pathlib.Path(model_path)
+
+    exp_data = ExperimentData.from_folder(path)
+    pulse_sequence = pulse_reader(path)
+
+    # Read hamiltonian from data config
+    data_config = DataConfig.from_file(model_path)
+
+    whitebox = get_single_qubit_whitebox(
+        hamiltonian_mapper[data_config.hamiltonian],
+        pulse_sequence,
+        exp_data.experiment_config.qubits[0],
+        exp_data.experiment_config.device_cycle_time_ns,
+    )
+
+    return prepare_data(exp_data, pulse_sequence, whitebox)

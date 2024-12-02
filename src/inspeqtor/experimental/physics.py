@@ -576,3 +576,13 @@ def direct_AFG_estimation_coefficients(target_unitary: jnp.ndarray) -> jnp.ndarr
                 coefficients.append(coeff)
 
     return jnp.real(jnp.array(coefficients))
+
+
+def calculate_exp(
+    unitary: jnp.ndarray, operator: jnp.ndarray, density_matrix: jnp.ndarray
+) -> jnp.ndarray:
+    rho = jnp.matmul(
+        unitary, jnp.matmul(density_matrix, unitary.conj().swapaxes(-2, -1))
+    )
+    temp = jnp.matmul(rho, operator)
+    return jnp.real(jnp.sum(jnp.diagonal(temp, axis1=-2, axis2=-1), axis=-1))

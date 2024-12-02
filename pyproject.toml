@@ -25,6 +25,7 @@ dependencies = [
     "forest-benchmarking>=0.9.0",
     "optuna>=4.1.0",
     "numpyro>=0.16.0",
+    "hyperopt>=0.2.7",
 ]
 
 [build-system]

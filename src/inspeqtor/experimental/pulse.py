@@ -282,7 +282,7 @@ def get_param_array_converter(pulse_sequence: PulseSequence):
 
 def construct_pulse_sequence_reader(
     pulses: list[type[BasePulse]] = [],
-) -> typing.Callable[[str], PulseSequence]:
+) -> typing.Callable[[typing.Union[str, pathlib.Path]], PulseSequence]:
     default_pulses: list[type[BasePulse]] = []
 
     # Merge the default pulses with the provided pulses
