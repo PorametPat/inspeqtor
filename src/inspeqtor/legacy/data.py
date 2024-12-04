@@ -7,10 +7,7 @@ import typing
 import json
 import numpy as np
 from pathlib import Path
-import torch
-from torch import Generator
-import torch.utils
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from .typing import ParametersDictType
 import pandas as pd  # type: ignore
 import logging
@@ -726,6 +723,8 @@ class SpecQDataset(Dataset):
         unitaries: np.ndarray,
         expectation_values: np.ndarray,
     ):
+        import torch
+
         self.pulse_parameters = torch.from_numpy(pulse_parameters)
         self.unitaries = torch.from_numpy(unitaries)
         self.expectation_values = torch.from_numpy(expectation_values)
@@ -751,6 +750,9 @@ def prepare_dataset(
     batch_size_ratio: float = 0.1,
     ratio: list[float] = [0.8, 0.1, 0.1],
 ) -> tuple[DataLoader, DataLoader, typing.Union[DataLoader, None]]:
+    from torch import Generator
+    from torch.utils.data import DataLoader, random_split
+
     # Sanity check on the inputs
     # pulse_parameters.shape should be len(shape) == 2
     assert (

@@ -7,11 +7,13 @@ from dataclasses import dataclass
 import flax.traverse_util as traverse_util
 from functools import partial
 import optax
-from ray import tune, train
+
+# from ray import tune, train
 import tempfile
-from ray.tune.search.hyperopt import HyperOptSearch
-from ray.tune.search.optuna import OptunaSearch
-from ray.tune.search import Searcher
+
+# from ray.tune.search.hyperopt import HyperOptSearch
+# from ray.tune.search.optuna import OptunaSearch
+# from ray.tune.search import Searcher
 from enum import StrEnum
 
 from .pulse import PulseSequence
@@ -182,6 +184,8 @@ def default_trainable_v3(
     NUM_EPOCH: int = 1000,
     CHECKPOINT_EVERY: int = 100,
 ):
+    from ray import train
+
     def trainable(
         config: dict[str, int],
         pulse_parameters: jnp.ndarray,
@@ -306,6 +310,11 @@ def hypertuner(
     num_samples: int = 100,
     search_algo: SearchAlgo = SearchAlgo.HYPEROPT,
 ):
+    from ray import tune, train
+    from ray.tune.search.hyperopt import HyperOptSearch
+    from ray.tune.search.optuna import OptunaSearch
+    from ray.tune.search import Searcher
+
     search_space = {
         "hidden_layer_1_1": tune.randint(5, 50),
         "hidden_layer_1_2": tune.randint(5, 50),

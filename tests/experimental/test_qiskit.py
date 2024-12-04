@@ -3,6 +3,7 @@ import jax
 from functools import partial
 from qiskit_ibm_runtime import SamplerV2  # type: ignore
 import inspeqtor.experimental as sq
+from inspeqtor.external import qiskit as qk
 
 
 def test_execute_experiment_using_fake_backend_v2():
@@ -18,7 +19,7 @@ def test_execute_experiment_using_fake_backend_v2():
     backend = FakeJakartaV2()
     service = None
 
-    backend_properties = sq.qiskit.IBMQDeviceProperties.from_backend(
+    backend_properties = qk.IBMQDeviceProperties.from_backend(
         backend=backend, qubit_indices=[QUBIT_IDX]
     )
 
@@ -41,7 +42,7 @@ def test_execute_experiment_using_fake_backend_v2():
 
     key = jax.random.PRNGKey(0)
 
-    df, circuits = sq.qiskit.prepare_experiment(
+    df, circuits = qk.prepare_experiment(
         config, pulse_sequence, key, backend_properties
     )
 
@@ -51,21 +52,21 @@ def test_execute_experiment_using_fake_backend_v2():
 
     assert len(df) == len(circuits)
 
-    transpiled_circuits = sq.qiskit.transpile_circuits(
+    transpiled_circuits = qk.transpile_circuits(
         circuits, backend_properties.backend_instance, inital_layout=[QUBIT_IDX]
     )
 
     # options = options_v2 # if backend_properties.is_simulator else options_v1
-    options = sq.qiskit.make_sampler_options(shots=SHOTS)
+    options = qk.make_sampler_options(shots=SHOTS)
 
-    execute_dataframe, jobs = sq.qiskit.execute_experiment(
+    execute_dataframe, jobs = qk.execute_experiment(
         df, backend_properties, options, transpiled_circuits, service, SamplerV2
     )
 
-    _ = sq.qiskit.check_jobs_status(execute_dataframe, service=service, jobs=jobs)
+    _ = qk.check_jobs_status(execute_dataframe, service=service, jobs=jobs)
 
-    result_df = sq.qiskit.get_result_from_remote(
-        execute_dataframe, jobs, sq.qiskit.extract_results_v2
+    result_df = qk.get_result_from_remote(
+        execute_dataframe, jobs, qk.extract_results_v2
     )
 
     _ = sq.data.ExperimentData(
@@ -75,8 +76,8 @@ def test_execute_experiment_using_fake_backend_v2():
 
 
 test_cases = [
-    sq.qiskit.CompackConfig(identifier="0001", shots=4096, sample_size=1, qubit_idx=0),
-    sq.qiskit.CompackConfig(identifier="0002", shots=4096, sample_size=1, qubit_idx=1),
+    qk.CompackConfig(identifier="0001", shots=4096, sample_size=1, qubit_idx=0),
+    qk.CompackConfig(identifier="0002", shots=4096, sample_size=1, qubit_idx=1),
 ]
 
 
@@ -87,7 +88,7 @@ def test_execute_experiment_using_fake_backend_v3():
 
     qubit_indices = [test_case.qubit_idx for test_case in test_cases]
 
-    backend_properties = sq.qiskit.IBMQDeviceProperties.from_backend(
+    backend_properties = qk.IBMQDeviceProperties.from_backend(
         backend=backend, qubit_indices=qubit_indices
     )
 
@@ -116,7 +117,7 @@ def test_execute_experiment_using_fake_backend_v3():
     keys = [key for key in keys]  # NOTE: Not necessary but will satisfy Mypy
 
     # Prepare the dataframes and generate quantum circuits
-    prepared_dfs, qcs = sq.qiskit.prepare_parallel_experiment_v2(
+    prepared_dfs, qcs = qk.prepare_parallel_experiment_v2(
         configs,
         [pulse_sequence] * len(test_cases),
         keys,
@@ -131,7 +132,7 @@ def test_execute_experiment_using_fake_backend_v3():
         assert len(df) == len(qcs)
 
     # Transpile the circuits
-    tqcs = sq.qiskit.transpile_circuits_v2(
+    tqcs = qk.transpile_circuits_v2(
         qcs,
         backend_properties,
         [qubit.qubit_idx for qubit in backend_properties.qubit_informations],
@@ -140,20 +141,20 @@ def test_execute_experiment_using_fake_backend_v3():
     assert len(tqcs) == len(qcs)
 
     # Execute the experiments
-    options_v3 = sq.qiskit.make_sampler_options(shots=configs[0].shots)
-    executed_dfs, jobs = sq.qiskit.execute_parallel_experiment(
+    options_v3 = qk.make_sampler_options(shots=configs[0].shots)
+    executed_dfs, jobs = qk.execute_parallel_experiment(
         prepared_dfs, backend_properties, options_v3, tqcs, service
     )
 
     # Check the jobs status
-    _ = sq.qiskit.check_jobs_status(executed_dfs[0], service=service, jobs=jobs)
+    _ = qk.check_jobs_status(executed_dfs[0], service=service, jobs=jobs)
 
     # Retrieve the experiments
     result_dfs = [
-        sq.qiskit.get_result_from_remote(
+        qk.get_result_from_remote(
             executed_dfs[qubit.qubit_idx],
             jobs,
-            partial(sq.qiskit.extract_results_v3, qubit_idx=qubit.qubit_idx),
+            partial(qk.extract_results_v3, qubit_idx=qubit.qubit_idx),
         )
         for qubit in backend_properties.qubit_informations
     ]

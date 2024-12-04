@@ -1,7 +1,6 @@
 from . import (
     data as data,
     pulse as pulse,
-    qiskit as qiskit,
     typing as typing,
     utils as utils,
     constant as constant,

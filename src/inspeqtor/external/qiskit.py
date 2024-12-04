@@ -29,13 +29,14 @@ from qiskit_ibm_runtime.options import (  # type: ignore
 from typing import Sequence
 import typing
 
-from .data import (
+from ..experimental.data import (
     QubitInformation,
     ExperimentConfiguration,
     make_row,
 )
-from .typing import ParametersDictType
-from .pulse import PulseSequence
+from ..experimental.typing import ParametersDictType
+from ..experimental.pulse import PulseSequence
+from ..experimental.physics import CouplingInformation
 
 
 @dataclass
@@ -165,6 +166,35 @@ class IBMQDeviceProperties:
             is_simulator=is_simulator,
             hamiltonian_data=hamiltonian_data,
         )
+
+
+def get_coupling_strengths(
+    backend_properties: IBMQDeviceProperties,
+) -> list[CouplingInformation]:
+    # https://qiskit-extensions.github.io/qiskit-dynamics/stubs/qiskit_dynamics.backend.parse_backend_hamiltonian_dict.html
+    # Get the qubits coupling map
+    qubit_idxs = [qubit.qubit_idx for qubit in backend_properties.qubit_informations]
+    # Get the edges of the coupling map
+    edge_reindex = list(
+        backend_properties.backend_instance.coupling_map.reduce(qubit_idxs).get_edges()
+    )
+    # Map the edges to the qubit indices
+    edges = [(qubit_idxs[edge[0]], qubit_idxs[edge[1]]) for edge in edge_reindex]
+    # Get the coupling constants
+    coupling_constants: list[CouplingInformation] = []
+    for i, j in edges:
+        # Get the coupling constant
+        coupling_const = backend_properties.hamiltonian_data["vars"].get(
+            f"jq{i}q{j}", 0
+        )
+        # Add the coupling constant to the list
+        coupling_constants.append(
+            CouplingInformation(
+                qubit_indices=(i, j),
+                coupling_strength=coupling_const / (2 * jnp.pi),
+            )
+        )
+    return coupling_constants
 
 
 def get_circuit(

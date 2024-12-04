@@ -71,3 +71,17 @@ For pre-commit run the following command:
 ```bash
     uv run pre-commit run --all-files
 ```
+
+To perform profiling, we use `tuna`
+
+1. Run the following command to the script you want to profile:
+
+```bash
+    uv run python -X importtime profile.py 2> import.log
+```
+
+2. Run the following command for visualization:
+
+```bash
+    uvx tuna import.log
+```

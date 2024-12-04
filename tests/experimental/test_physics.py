@@ -6,6 +6,7 @@ from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
 import qiskit.quantum_info as qi  # type: ignore
 from forest.benchmarking import operator_tools as ot  # type: ignore
 import inspeqtor.experimental as sq
+from inspeqtor.external import qiskit as qk, benchmarking as bm
 import pennylane as qml  # type: ignore
 from typing import Callable
 import numpy as np
@@ -324,12 +325,12 @@ def test_crosscheck_pennylane_difflax():
 
     # NOTE: Crosscheck with the hamiltonian_fn flow
     backend = FakeJakartaV2()
-    backend_properties = sq.qiskit.IBMQDeviceProperties.from_backend(
+    backend_properties = qk.IBMQDeviceProperties.from_backend(
         backend=backend, qubit_indices=[0]
     )
     backend_properties.qubit_informations = [qubit_info]
 
-    coupling_infos = sq.physics.get_coupling_strengths(backend_properties)
+    coupling_infos = qk.get_coupling_strengths(backend_properties)
 
     total_hamiltonian = sq.physics.gen_hamiltonian_from(
         qubit_informations=backend_properties.qubit_informations,
@@ -455,7 +456,7 @@ def test_process_tomography(gate: jnp.ndarray):
     # Normally, those rho would be retrived from state tomography.
     assert jnp.allclose(
         sq.physics.avg_gate_fidelity_from_superop(
-            sq.physics.process_tomography(rho_0, rho_1, rho_p, rho_m),
+            bm.process_tomography(rho_0, rho_1, rho_p, rho_m),
             sq.physics.to_superop(gate),
         ),
         jnp.array(1.0),
@@ -510,7 +511,7 @@ def test_forest_process_tomography(gate_with_fidelity: list[jnp.ndarray]):
         )
         expvals.append(exp)
 
-    est_superoperator = ot.choi2superop(sq.physics.forest_process_tomography(expvals))
+    est_superoperator = ot.choi2superop(bm.forest_process_tomography(expvals))
 
     assert jnp.allclose(
         sq.physics.avg_gate_fidelity_from_superop(
