@@ -25,7 +25,7 @@ from .physics import (
     Z,
 )
 from .pulse import PulseSequence
-from .sq_typing import WoParams, ensure_wo_params_type
+from .typing import WoParams, ensure_wo_params_type
 
 
 def Wo_2_level_v3(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
@@ -60,6 +60,53 @@ def Wo_2_level_v3(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
 
     # Return Wos operator
     return jnp.matmul(Q, jnp.matmul(Diag, Q_dagger))
+
+
+class BasicBlackBox(nn.Module):
+    feature_size: int
+    hidden_sizes_1: typing.Sequence[int] = (20, 10)
+    hidden_sizes_2: typing.Sequence[int] = (20, 10)
+    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
+
+    NUM_UNITARY_PARAMS: int = 3
+    NUM_DIAGONAL_PARAMS: int = 2
+
+    @nn.compact
+    def __call__(self, x: jnp.ndarray):
+        x = nn.Dense(features=self.feature_size)(x)
+        # Apply a activation function
+        x = nn.relu(x)
+        # Apply a dense layer for each hidden size
+        for hidden_size in self.hidden_sizes_1:
+            x = nn.Dense(features=hidden_size)(x)
+            x = nn.relu(x)
+
+        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
+        for op in self.pauli_operators:
+            # ! Hotfix for the typing complaint
+            # ! That _x might be unbound. But it is actually bound.
+            _x = jnp.zeros_like(x)
+            # Sub hidden layer
+            for hidden_size in self.hidden_sizes_2:
+                _x = nn.Dense(features=hidden_size)(x)
+                _x = nn.relu(_x)
+
+            Wos_params[op] = dict()
+            # For the unitary part, we use a dense layer with 3 features
+            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS)(_x)
+            # Apply sigmoid to this layer
+            unitary_params = 2 * jnp.pi * nn.sigmoid(unitary_params)
+            # For the diagonal part, we use a dense layer with 1 feature
+            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS)(_x)
+            # Apply the activation function
+            diag_params = nn.tanh(diag_params)
+
+            Wos_params[op] = {
+                "U": unitary_params,
+                "D": diag_params,
+            }
+
+        return Wos_params
 
 
 class BasicBlackBoxV2(nn.Module):
@@ -108,7 +155,7 @@ def mse(x1: jnp.ndarray, x2: jnp.ndarray):
     return jnp.mean((x1 - x2) ** 2)
 
 
-def MAEF_loss(
+def AEF_loss(
     y_true: jnp.ndarray, y_pred: jnp.ndarray, target_unitary: jnp.ndarray
 ) -> jnp.ndarray:
     coefficients = direct_AFG_estimation_coefficients(target_unitary)
@@ -120,8 +167,20 @@ def MAEF_loss(
     )
 
 
-def calculate_Pauli_AGF(Wo_params: WoParams):
-    AGF_paulis = {}
+def WAEE_loss(
+    expectation_values_true: jnp.ndarray,
+    expectation_values_pred: jnp.ndarray,
+    target_unitary: jnp.ndarray,
+):
+    coefficients = direct_AFG_estimation_coefficients(target_unitary)
+    # The absolute difference between the expectation values
+    diff = jnp.abs(expectation_values_true - expectation_values_pred)
+    # Weighted by the coefficients
+    return jnp.sum(jnp.abs(coefficients) * diff)
+
+
+def calculate_Pauli_AGF(Wo_params: WoParams) -> dict[str, jnp.ndarray]:
+    AGF_paulis: dict[str, jnp.ndarray] = {}
     assert isinstance(Wo_params, dict)
     # Calculate the AGF between Wo_model and the Pauli
     for pauli_str, pauli_op in zip(["X", "Y", "Z"], [X, Y, Z]):
@@ -164,8 +223,9 @@ def get_predict_expectation_value(
 
 
 class LossMetric(StrEnum):
-    MSEE = "MSEE"
-    MAEF = "MAEF"
+    MSEE = "MSE[E]"
+    AEF = "AE[F]"
+    WAEE = "WAE[E]"
 
 
 def calculate_metrics(
@@ -208,7 +268,12 @@ def calculate_metrics(
     MSEE = jax.vmap(mse, in_axes=(0, 0))(expectation_values, predicted_expvals)
 
     # Calculate the AGF loss
-    MAEF = jax.vmap(MAEF_loss, in_axes=(0, 0, 0))(
+    AEF = jax.vmap(AEF_loss, in_axes=(0, 0, 0))(
+        expectation_values, predicted_expvals, unitaries
+    )
+
+    # Calculate WAEE loss
+    WAEE = jax.vmap(WAEE_loss, in_axes=(0, 0, 0))(
         expectation_values, predicted_expvals, unitaries
     )
 
@@ -218,9 +283,18 @@ def calculate_metrics(
 
     return {
         LossMetric.MSEE: MSEE,
-        LossMetric.MAEF: MAEF,
+        LossMetric.AEF: AEF,
+        LossMetric.WAEE: WAEE,
         "AGF_Paulis": AGF_paulis,
     }
+
+
+def calculate_metric(
+    unitaries: jnp.ndarray,
+    expectation_values: jnp.ndarray,
+    predicted_expectation_values: jnp.ndarray,
+):
+    return
 
 
 def loss_fn(

@@ -6,10 +6,11 @@ import typing
 from dataclasses import dataclass
 from enum import Enum
 import diffrax  # type: ignore
-from .sq_typing import ParametersDictType
+from .typing import ParametersDictType
 from .qiskit import IBMQDeviceProperties
 from .data import QubitInformation, ExpectationValue
 from .constant import X, Y, Z
+from .pulse import PulseSequence
 
 # Forest-Benchmarking
 from forest.benchmarking.observable_estimation import (  # type: ignore
@@ -586,3 +587,38 @@ def calculate_exp(
     )
     temp = jnp.matmul(rho, operator)
     return jnp.real(jnp.sum(jnp.diagonal(temp, axis1=-2, axis2=-1), axis=-1))
+
+
+def unitaries_prod(
+    prev_unitary: jnp.ndarray, curr_unitary: jnp.ndarray
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    prod_unitary = prev_unitary @ curr_unitary
+    return prod_unitary, prod_unitary
+
+
+def make_trotterization_whitebox(
+    hamiltonian: typing.Callable[..., jnp.ndarray],
+    pulse_sequence: PulseSequence,
+    dt: float = 2 / 9,
+    trotter_steps: int = 1000,
+):
+
+    hamiltonian = jax.jit(hamiltonian)
+    time_step = jnp.linspace(0, pulse_sequence.pulse_length_dt * dt, trotter_steps)
+
+    def whitebox(pulse_parameter: jnp.ndarray):
+
+        hamiltonians = jax.vmap(hamiltonian, in_axes=(None, 0))(
+            pulse_parameter, time_step
+        )
+        unitaries = jax.scipy.linalg.expm(
+            -1j * (time_step[1] - time_step[0]) * hamiltonians
+        )
+        # * Nice explanation of scan
+        # * https://www.nelsontang.com/blog/a-friendly-introduction-to-scan-with-jax
+        _, unitaries = jax.lax.scan(
+            unitaries_prod, jnp.eye(2, dtype=jnp.complex128), unitaries
+        )
+        return unitaries
+
+    return whitebox

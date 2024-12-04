@@ -9,7 +9,7 @@ from .data import ExperimentData
 from .model import mse
 from .constant import Z, default_expectation_values_order
 from .decorator import warn_not_tested_function
-from .sq_typing import HamiltonianArgs
+from .typing import HamiltonianArgs
 from .physics import calculate_exp
 import logging
 
@@ -263,14 +263,14 @@ def calculate_expectation_values(
     unitaries: jnp.ndarray,
 ) -> jnp.ndarray:
     # Calculate the ideal expectation values of the original pulse
-    ideal_expectation_values = jnp.zeros(shape=(unitaries.shape[0], 18))
+    ideal_expectation_values = jnp.zeros(tuple(unitaries.shape[:-2]) + (18,))
     for idx, exp in enumerate(default_expectation_values_order):
         expvals = calculate_exp(
             unitaries,
             exp.observable_matrix,
             exp.initial_density_matrix,
         )
-        ideal_expectation_values = ideal_expectation_values.at[:, idx].set(expvals)
+        ideal_expectation_values = ideal_expectation_values.at[..., idx].set(expvals)
 
     return ideal_expectation_values
 
@@ -306,3 +306,38 @@ def get_dataset_metrics(
         warmup_steps=warmup_steps,
         cool_down_steps=cool_down_steps,
     )
+
+
+def recursive_vmap(
+        func,
+        in_axes: typing.Tuple[int, ...]
+    ):
+    """
+    Recursively apply jax.vmap over multiple dimensions.
+    ```python
+    def func(x):
+        assert x.ndim == 1
+        return x ** 2
+
+    x = jnp.arange(10)
+    x_test = jnp.broadcast_to(x, (2, 3, 4,) + x.shape)
+    x_test.shape, recursive_vmap(func, (0,) * (x_test.ndim - 1))(x_test).shape
+    >>> ((2, 3, 4, 10), (2, 3, 4, 10))
+    ```
+
+    Parameters:
+    - func: The function to be vectorized.
+    - in_axes: A tuple of integers specifying which axes to map over.
+
+    Returns:
+    - A new function that applies `func` vectorized over the specified axes.
+    """
+    if not in_axes:
+        # Base case: no more axes to vectorize over
+        return func
+
+    # Apply vmap over the first axis specified in in_axes
+    vmap_func = jax.vmap(func, in_axes=in_axes[0])
+
+    # Recursively apply vmap over the remaining axes
+    return recursive_vmap(vmap_func, in_axes[1:])

@@ -2,7 +2,7 @@ from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
 import jax
 from functools import partial
 from qiskit_ibm_runtime import SamplerV2  # type: ignore
-import inspeqtor as isq
+import inspeqtor.legacy as isq
 
 
 def test_execute_experiment_using_fake_backend_v2():

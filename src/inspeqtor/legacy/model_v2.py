@@ -304,7 +304,7 @@ def gate_loss(
 
     # NOTE: For logging purposes
     fidelities_dict = calculate_Pauli_AGF(
-        jax.tree.map(lambda x: jnp.squeeze(x, 0), Wo_params)
+        jax.tree.map(lambda _x: jnp.squeeze(_x, 0), Wo_params)
     )
 
     gate_fi = avg_gate_fidelity_from_superop(

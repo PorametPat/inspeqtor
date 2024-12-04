@@ -2,13 +2,13 @@ import warnings
 import typing
 import functools
 
-
+FnInput = typing.ParamSpec("FnInput")
 FnOutput = typing.TypeVar("FnOutput")
 
 
 def warn_not_tested_function(
-    fun: typing.Callable[..., FnOutput],
-) -> typing.Callable[..., FnOutput]:
+    fun: typing.Callable[FnInput, FnOutput],
+) -> typing.Callable[FnInput, FnOutput]:
     """A decorator to mark a function not yet tested.
 
     Example usage:

@@ -92,12 +92,12 @@ def train_model(
 
     key, split_key, loader_key, init_key = jax.random.split(key, 4)
 
-    # Split the data into train and test
-    # use 10% of the data for testing
-    test_size = int(0.1 * pulse_parameters.shape[0])
-    train_p, train_u, train_ex, test_p, test_u, test_ex = random_split(
+    # Split the data into train and val
+    # use 10% of the data for valing
+    val_size = int(0.1 * pulse_parameters.shape[0])
+    train_p, train_u, train_ex, val_p, val_u, val_ex = random_split(
         split_key,
-        test_size,
+        val_size,
         pulse_parameters,
         unitaries,
         expectation_values,
@@ -110,7 +110,7 @@ def train_model(
     # histories: list[dict[str, typing.Any]] = []
     histories: list[HistoryEntryV3] = []
 
-    train_step, test_step = create_step(
+    train_step, val_step = create_step(
         optimizer=optimizer, loss_fn=loss_fn, has_aux=True
     )
 
@@ -120,7 +120,7 @@ def train_model(
         batch_ex,
     ) in dataloader(
         (train_p, train_u, train_ex),
-        batch_size=test_size,
+        batch_size=val_size,
         num_epochs=NUM_EPOCH,
         key=loader_key,
     ):
@@ -131,10 +131,10 @@ def train_model(
         histories.append(HistoryEntryV3(step=step, loss=loss, loop="train", aux=aux))
 
         if is_last_batch:
-            (test_loss, aux) = test_step(model_params, test_p, test_u, test_ex)
+            (val_loss, aux) = val_step(model_params, val_p, val_u, val_ex)
 
             histories.append(
-                HistoryEntryV3(step=step, loss=test_loss, loop="test", aux=aux)
+                HistoryEntryV3(step=step, loss=val_loss, loop="val", aux=aux)
             )
 
             for callback in callbacks:
@@ -216,7 +216,7 @@ def default_trainable_v3(
         ) -> None:
             last_entry = history[-1]
 
-            assert last_entry.loop == "test"
+            assert last_entry.loop == "val"
 
             # Check if last_entry.step is divisible by 100
             if (last_entry.step + 1) % CHECKPOINT_EVERY == 0:
@@ -243,8 +243,11 @@ def default_trainable_v3(
                             f"{last_entry.loop}/{LossMetric.MSEE}": last_entry.aux[
                                 LossMetric.MSEE
                             ].item(),
-                            f"{last_entry.loop}/{LossMetric.MAEF}": last_entry.aux[
-                                LossMetric.MAEF
+                            f"{last_entry.loop}/{LossMetric.AEF}": last_entry.aux[
+                                LossMetric.AEF
+                            ].item(),
+                            f"{last_entry.loop}/{LossMetric.WAEE}": last_entry.aux[
+                                LossMetric.WAEE
                             ].item(),
                         },
                         checkpoint=train.Checkpoint.from_directory(tmpdir),
@@ -256,8 +259,11 @@ def default_trainable_v3(
                         f"{last_entry.loop}/{LossMetric.MSEE}": last_entry.aux[
                             LossMetric.MSEE
                         ].item(),
-                        f"{last_entry.loop}/{LossMetric.MAEF}": last_entry.aux[
-                            LossMetric.MAEF
+                        f"{last_entry.loop}/{LossMetric.AEF}": last_entry.aux[
+                            LossMetric.AEF
+                        ].item(),
+                        f"{last_entry.loop}/{LossMetric.WAEE}": last_entry.aux[
+                            LossMetric.WAEE
                         ].item(),
                     },
                 )
@@ -277,8 +283,9 @@ def default_trainable_v3(
         )
 
         return {
-            f"test/{LossMetric.MSEE}": history[-1].aux[LossMetric.MSEE].item(),
-            f"test/{LossMetric.MAEF}": history[-1].aux[LossMetric.MAEF].item(),
+            f"val/{LossMetric.MSEE}": history[-1].aux[LossMetric.MSEE].item(),
+            f"val/{LossMetric.AEF}": history[-1].aux[LossMetric.AEF].item(),
+            f"val/{LossMetric.WAEE}": history[-1].aux[LossMetric.WAEE].item(),
         }
 
     return trainable
@@ -316,7 +323,7 @@ def hypertuner(
     ]
 
     # Prepend 'test/' to the metric
-    prepended_metric = f"test/{metric}"
+    prepended_metric = f"val/{metric}"
 
     if search_algo == SearchAlgo.HYPEROPT:
         search_algo_instance: Searcher = HyperOptSearch(
@@ -356,7 +363,7 @@ def hypertuner(
 
 
 def get_best_hypertuner_results(results, metric: LossMetric):
-    prepended_metric = f"test/{metric}"
+    prepended_metric = f"val/{metric}"
 
     with results.get_best_result(
         metric=prepended_metric, mode="min"

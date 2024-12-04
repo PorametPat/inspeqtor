@@ -1,5 +1,5 @@
 import jax
-import inspeqtor as sq
+import inspeqtor.legacy as sq
 import optax  # type: ignore
 
 
