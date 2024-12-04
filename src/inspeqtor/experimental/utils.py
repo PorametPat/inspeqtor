@@ -308,10 +308,7 @@ def get_dataset_metrics(
     )
 
 
-def recursive_vmap(
-        func,
-        in_axes: typing.Tuple[int, ...]
-    ):
+def recursive_vmap(func, in_axes: typing.Tuple[int, ...]):
     """
     Recursively apply jax.vmap over multiple dimensions.
     ```python

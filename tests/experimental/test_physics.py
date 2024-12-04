@@ -9,7 +9,6 @@ import inspeqtor.experimental as sq
 import pennylane as qml  # type: ignore
 from typing import Callable
 import numpy as np
-import chex
 
 jax.config.update("jax_enable_x64", True)
 
@@ -105,9 +104,7 @@ def whitebox(
     num_parameterized: int,
 ):
     # Evolve under the Hamiltonian
-    unitary = qml.evolve(H)(
-        [params] * num_parameterized, t, return_intermediate=True
-    )  # pyright: ignore
+    unitary = qml.evolve(H)([params] * num_parameterized, t, return_intermediate=True)  # pyright: ignore
     # Return the unitary
     return qml.matrix(unitary)
 
@@ -517,7 +514,7 @@ def test_forest_process_tomography(gate_with_fidelity: list[jnp.ndarray]):
 
     assert jnp.allclose(
         sq.physics.avg_gate_fidelity_from_superop(
-            est_superoperator, # pyright: ignore
+            est_superoperator,  # pyright: ignore
             ot.kraus2superop(np.array(gate)),  # pyright: ignore
         ),
         expected_fidelity,
