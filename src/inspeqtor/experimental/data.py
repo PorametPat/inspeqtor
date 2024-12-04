@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import logging
 
-from .sq_typing import ParametersDictType
+from .typing import ParametersDictType
 
 
 def add_hilbert_level(op: jnp.ndarray, x: jnp.ndarray) -> jnp.ndarray:

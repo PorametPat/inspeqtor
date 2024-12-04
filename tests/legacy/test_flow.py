@@ -7,7 +7,7 @@ from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
 import logging
 import optax  # type: ignore
 from dataclasses import asdict
-import inspeqtor as isq
+import inspeqtor.legacy as isq
 
 jax.config.update("jax_enable_x64", True)
 

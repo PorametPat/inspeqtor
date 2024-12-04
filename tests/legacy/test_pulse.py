@@ -1,6 +1,6 @@
 import jax
 from jax import numpy as jnp
-import inspeqtor as isq
+import inspeqtor.legacy as isq
 
 
 def test_jax_DRAG_pulse():

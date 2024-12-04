@@ -7,7 +7,7 @@ import json
 from abc import ABC, abstractmethod
 import pathlib
 
-from .sq_typing import ParametersDictType
+from .typing import ParametersDictType
 
 
 def sample_params(
@@ -265,6 +265,16 @@ def list_of_params_to_array(
 
 
 def get_param_array_converter(pulse_sequence: PulseSequence):
+    """This function returns two functions that can convert between a list of parameter dictionaries and a flat array.
+    ```python
+    array_to_list_of_params_fn, list_of_params_to_array_fn = get_param_array_converter(pulse_sequence)
+    ```
+    Args:
+        pulse_sequence (PulseSequence): The pulse sequence object.
+
+    Returns:
+        _type_: A tuple containing two functions. The first function converts an array to a list of parameter dictionaries, and the second function converts a list of parameter dictionaries to an array.
+    """
     structure = pulse_sequence.get_parameter_names()
 
     def array_to_list_of_params_fn(

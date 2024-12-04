@@ -5,7 +5,7 @@ from functools import partial
 from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
 import qiskit.quantum_info as qi  # type: ignore
 from forest.benchmarking import operator_tools as ot  # type: ignore
-import inspeqtor as isq
+import inspeqtor.legacy as isq
 
 jax.config.update("jax_enable_x64", True)
 

@@ -9,6 +9,7 @@ import inspeqtor.experimental as sq
 import pennylane as qml  # type: ignore
 from typing import Callable
 import numpy as np
+import chex
 
 jax.config.update("jax_enable_x64", True)
 
@@ -104,7 +105,9 @@ def whitebox(
     num_parameterized: int,
 ):
     # Evolve under the Hamiltonian
-    unitary = qml.evolve(H)([params] * num_parameterized, t, return_intermediate=True)  # pyright: ignore
+    unitary = qml.evolve(H)(
+        [params] * num_parameterized, t, return_intermediate=True
+    )  # pyright: ignore
     # Return the unitary
     return qml.matrix(unitary)
 
@@ -259,7 +262,9 @@ def test_crosscheck_pennylane_difflax():
     params = pulse_sequence.sample_params(key)
 
     time_step = 2 / 9
-    t_eval = jnp.arange(0, pulse_sequence.pulse_length_dt * time_step, step=time_step)
+    t_eval = jnp.linspace(
+        0, pulse_sequence.pulse_length_dt * (2 / 9), pulse_sequence.pulse_length_dt
+    )
 
     # NOTE: This hamiltonian is the analytical rotated Hamiltonian of single qubit
     hamiltonian = partial(
@@ -377,17 +382,29 @@ def test_crosscheck_pennylane_difflax():
         t1=pulse_sequence.pulse_length_dt * time_step,
     )
 
+    whitebox_v5 = sq.predefined.get_single_qubit_rotating_frame_whitebox(
+        pulse_sequence=pulse_sequence,
+        qubit_info=qubit_info,
+        dt=2 / 9,
+    )
+
+    unitaries_v5 = whitebox_v5(
+        sq.pulse.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
+    )
+
     unitaries_tuple = [
         (unitaries_manual_rotated, auto_rotated_unitaries),
         (unitaries_manual_rotated, qml_unitary),
         (qml_unitary, auto_rotated_unitaries),
         (unitaries_manual_rotated, unitaries_hamiltonian_fn),
+        (unitaries_manual_rotated, unitaries_v5),
     ]
 
     for uni_1, uni_2 in unitaries_tuple:
         fidelities = jax.vmap(sq.physics.gate_fidelity, in_axes=(0, 0))(uni_1, uni_2)
 
         assert jnp.allclose(fidelities, jnp.ones_like(fidelities), rtol=1e-3)
+        # assert chex.assert_trees_all_close(fidelities, jnp.ones_like(fidelities))
 
 
 @pytest.mark.parametrize(
@@ -500,7 +517,7 @@ def test_forest_process_tomography(gate_with_fidelity: list[jnp.ndarray]):
 
     assert jnp.allclose(
         sq.physics.avg_gate_fidelity_from_superop(
-            est_superoperator,
+            est_superoperator, # pyright: ignore
             ot.kraus2superop(np.array(gate)),  # pyright: ignore
         ),
         expected_fidelity,

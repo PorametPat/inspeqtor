@@ -34,7 +34,7 @@ from .data import (
     ExperimentConfiguration,
     make_row,
 )
-from .sq_typing import ParametersDictType
+from .typing import ParametersDictType
 from .pulse import PulseSequence
 
 

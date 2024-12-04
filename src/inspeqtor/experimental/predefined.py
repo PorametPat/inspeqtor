@@ -20,7 +20,7 @@ from .pulse import (
     list_of_params_to_array,
     construct_pulse_sequence_reader,
 )
-from .sq_typing import ParametersDictType, HamiltonianArgs
+from .typing import ParametersDictType, HamiltonianArgs
 from .physics import SignalParameters, solver, signal_func_v5
 from .constant import X, Y, Z, default_expectation_values_order
 from .decorator import warn_not_tested_function
