@@ -602,12 +602,10 @@ def make_trotterization_whitebox(
     dt: float = 2 / 9,
     trotter_steps: int = 1000,
 ):
-
     hamiltonian = jax.jit(hamiltonian)
     time_step = jnp.linspace(0, pulse_sequence.pulse_length_dt * dt, trotter_steps)
 
     def whitebox(pulse_parameter: jnp.ndarray):
-
         hamiltonians = jax.vmap(hamiltonian, in_axes=(None, 0))(
             pulse_parameter, time_step
         )
