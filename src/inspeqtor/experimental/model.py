@@ -411,7 +411,7 @@ def save_model(
     hamiltonian: typing.Union[str, typing.Callable],
     model_config: dict,
     model_params: VariableDict,
-    history: list[dict[str, typing.Any]] | None = None,
+    history: typing.Sequence[dict[typing.Hashable, typing.Any]] | None = None,
     with_auto_datetime: bool = True,
 ):
     if not isinstance(path, pathlib.Path):
