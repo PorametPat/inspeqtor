@@ -8,12 +8,7 @@ import flax.traverse_util as traverse_util
 from functools import partial
 import optax
 
-# from ray import tune, train
 import tempfile
-
-# from ray.tune.search.hyperopt import HyperOptSearch
-# from ray.tune.search.optuna import OptunaSearch
-# from ray.tune.search import Searcher
 from enum import StrEnum
 
 from .pulse import PulseSequence
@@ -44,10 +39,10 @@ class HistoryEntryV3:
 def train_model(
     # Random key
     key: jnp.ndarray,
-    # Data to be used for training and testing
-    pulse_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    expectation_values: jnp.ndarray,
+    # Data
+    train_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    val_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    test_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
     # Model to be used for training
     model: nn.Module,
     optimizer: optax.GradientTransformation,
@@ -79,9 +74,6 @@ def train_model(
 
     Args:
         key (jnp.ndarray): Random key
-        pulse_parameters (jnp.ndarray): Pulse parameters in the shape of (n_samples, n_features)
-        unitaries (jnp.ndarray): Ideal unitaries in the shape of (n_samples, 2, 2)
-        expectation_values (jnp.ndarray): Experimental expectation values in the shape of (n_samples, 18)
         model (nn.Module): The model to be used for training
         optimizer (optax.GradientTransformation): The optimizer to be used for training
         loss_fn (typing.Callable): The loss function to be used for training
@@ -92,27 +84,22 @@ def train_model(
         tuple: The model parameters, optimizer state, and the histories
     """
 
-    key, split_key, loader_key, init_key = jax.random.split(key, 4)
+    key, loader_key, init_key = jax.random.split(key, 3)
 
-    # Split the data into train and val
-    # use 10% of the data for valing
-    val_size = int(0.1 * pulse_parameters.shape[0])
-    train_p, train_u, train_ex, val_p, val_u, val_ex = random_split(
-        split_key,
-        val_size,
-        pulse_parameters,
-        unitaries,
-        expectation_values,
-    )
+    train_p, train_u, train_ex = train_data
+    val_p, val_u, val_ex = val_data
+    test_p, test_u, test_ex = test_data
+
+    BATCH_SIZE = val_p.shape[0]
 
     # Initialize the model parameters
-    model_params = model.init(init_key, pulse_parameters[0])
+    model_params = model.init(init_key, train_p[0])
     opt_state = optimizer.init(model_params)
 
     # histories: list[dict[str, typing.Any]] = []
     histories: list[HistoryEntryV3] = []
 
-    train_step, val_step = create_step(
+    train_step, eval_step = create_step(
         optimizer=optimizer, loss_fn=loss_fn, has_aux=True
     )
 
@@ -122,7 +109,7 @@ def train_model(
         batch_ex,
     ) in dataloader(
         (train_p, train_u, train_ex),
-        batch_size=val_size,
+        batch_size=BATCH_SIZE,
         num_epochs=NUM_EPOCH,
         key=loader_key,
     ):
@@ -133,10 +120,18 @@ def train_model(
         histories.append(HistoryEntryV3(step=step, loss=loss, loop="train", aux=aux))
 
         if is_last_batch:
-            (val_loss, aux) = val_step(model_params, val_p, val_u, val_ex)
+            # Validation
+            (val_loss, aux) = eval_step(model_params, val_p, val_u, val_ex)
 
             histories.append(
                 HistoryEntryV3(step=step, loss=val_loss, loop="val", aux=aux)
+            )
+
+            # Testing
+            (test_loss, aux) = eval_step(model_params, test_p, test_u, test_ex)
+
+            histories.append(
+                HistoryEntryV3(step=step, loss=test_loss, loop="test", aux=aux)
             )
 
             for callback in callbacks:
@@ -188,12 +183,11 @@ def default_trainable_v3(
 
     def trainable(
         config: dict[str, int],
-        pulse_parameters: jnp.ndarray,
-        unitaries: jnp.ndarray,
-        expectation_values: jnp.ndarray,
+        train_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+        val_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+        test_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         train_key: jnp.ndarray,
     ):
-        # FEATURE_SIZE = config["feature_size"]
         HIDDEN_LAYER_1_1 = config["hidden_layer_1_1"]
         HIDDEN_LAYER_1_2 = config["hidden_layer_1_2"]
         HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
@@ -213,17 +207,34 @@ def default_trainable_v3(
 
         partial_loss_fn = partial(loss_fn, model=model, loss_metric=metric)
 
+        def prepare_report(history: list[HistoryEntryV3]):
+            metric_types = [LossMetric.MSEE, LossMetric.AEF, LossMetric.WAEE]
+            metrics = {}
+            for entry in history:
+                for metric_type in metric_types:
+                    metrics[f"{entry.loop}/{metric_type}"] = entry.aux[
+                        metric_type
+                    ].item()
+
+            return metrics
+
         def callback(
             model_params: VariableDict,
             opt_state: optax.OptState,
             history: list[HistoryEntryV3],
         ) -> None:
-            last_entry = history[-1]
+            # Get the lasted 3 entries
+            last_entries = history[-3:]
 
-            assert last_entry.loop == "val"
+            loops = ["train", "val", "test"]
+            # assert that the last 3 entries are from train, val, and test
+            assert all(entry.loop in loops for entry in last_entries)
+
+            # Prepare the report
+            metrics = prepare_report(history)
 
             # Check if last_entry.step is divisible by 100
-            if (last_entry.step + 1) % CHECKPOINT_EVERY == 0:
+            if (last_entries[-1].step + 1) % CHECKPOINT_EVERY == 0:
                 # Checkpoint the model
 
                 # Clean the history entries
@@ -243,42 +254,22 @@ def default_trainable_v3(
 
                     # Report the loss and val_loss to tune
                     train.report(
-                        metrics={
-                            f"{last_entry.loop}/{LossMetric.MSEE}": last_entry.aux[
-                                LossMetric.MSEE
-                            ].item(),
-                            f"{last_entry.loop}/{LossMetric.AEF}": last_entry.aux[
-                                LossMetric.AEF
-                            ].item(),
-                            f"{last_entry.loop}/{LossMetric.WAEE}": last_entry.aux[
-                                LossMetric.WAEE
-                            ].item(),
-                        },
+                        metrics=metrics,
                         checkpoint=train.Checkpoint.from_directory(tmpdir),
                     )
             else:
                 # Report the loss and val_loss to tune
                 train.report(
-                    metrics={
-                        f"{last_entry.loop}/{LossMetric.MSEE}": last_entry.aux[
-                            LossMetric.MSEE
-                        ].item(),
-                        f"{last_entry.loop}/{LossMetric.AEF}": last_entry.aux[
-                            LossMetric.AEF
-                        ].item(),
-                        f"{last_entry.loop}/{LossMetric.WAEE}": last_entry.aux[
-                            LossMetric.WAEE
-                        ].item(),
-                    },
+                    metrics=metrics,
                 )
 
             return None
 
         _, _, history = train_model(
             key=train_key,
-            pulse_parameters=pulse_parameters,
-            unitaries=unitaries,
-            expectation_values=expectation_values,
+            train_data=train_data,
+            val_data=val_data,
+            test_data=test_data,
             model=model,
             optimizer=optimizer,
             loss_fn=partial_loss_fn,
@@ -286,11 +277,10 @@ def default_trainable_v3(
             callbacks=[callback],
         )
 
-        return {
-            f"val/{LossMetric.MSEE}": history[-1].aux[LossMetric.MSEE].item(),
-            f"val/{LossMetric.AEF}": history[-1].aux[LossMetric.AEF].item(),
-            f"val/{LossMetric.WAEE}": history[-1].aux[LossMetric.WAEE].item(),
-        }
+        # Prepare the report
+        metrics = prepare_report(history[-3:])
+
+        return metrics
 
     return trainable
 
@@ -348,12 +338,36 @@ def hypertuner(
         ),
     )
 
+    split_1_key, split_2_key, train_key = jax.random.split(train_key, 3)
+
+    # Data split into train, val, and test
+    # Split the data into train, val, and test
+    # use 10% of the data for validation and testing
+    val_size = int(0.1 * pulse_parameters.shape[0])
+    test_size = int(0.1 * pulse_parameters.shape[0])
+
+    train_p, train_u, train_ex, eval_p, eval_u, eval_ex = random_split(
+        split_1_key,
+        val_size + test_size,
+        pulse_parameters,
+        unitaries,
+        expectation_values,
+    )
+
+    val_p, val_u, val_ex, test_p, test_u, test_ex = random_split(
+        split_2_key,
+        test_size,
+        eval_p,
+        eval_u,
+        eval_ex,
+    )
+
     tuner = tune.Tuner(
         tune.with_parameters(
             trainable,
-            pulse_parameters=pulse_parameters,
-            unitaries=unitaries,
-            expectation_values=expectation_values,
+            train_data=(train_p, train_u, train_ex),
+            val_data=(val_p, val_u, val_ex),
+            test_data=(test_p, test_u, test_ex),
             train_key=train_key,
         ),
         tune_config=tune.TuneConfig(
@@ -371,8 +385,8 @@ def hypertuner(
     return results
 
 
-def get_best_hypertuner_results(results, metric: LossMetric):
-    prepended_metric = f"val/{metric}"
+def get_best_hypertuner_results(results, metric: LossMetric, loop: str = "val"):
+    prepended_metric = f"{loop}/{metric}"
 
     with results.get_best_result(
         metric=prepended_metric, mode="min"

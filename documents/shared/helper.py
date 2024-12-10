@@ -28,7 +28,6 @@ def random_split_index(rng_key, num_samples, test_size):
 
 
 def _safe_mean_terms(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
-
     nonnan = jnp.isfinite(terms)
     terms = jnp.nan_to_num(terms, nan=0.0, posinf=0.0, neginf=0.0)
     loss = terms.sum(axis=0) / nonnan.sum(axis=0)
@@ -38,7 +37,6 @@ def _safe_mean_terms(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
 
 
 def _safe_mean_terms_v2(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
-
     nonnan = jnp.isfinite(terms)
     terms = jnp.nan_to_num(terms)
     loss = terms.sum(axis=0) / nonnan.sum(axis=0)
@@ -175,7 +173,6 @@ def opt_eig_ape_loss(
     optim: optax.GradientTransformation,
     key: jnp.ndarray,
 ):
-
     # Initialize the optimizer
     opt_state = optim.init(params)
     # jit the loss function
@@ -208,7 +205,6 @@ def marginal_eig(
     num_particles: int,
     final_num_particles: int | None = None,
 ):
-
     # NOTE: In final evalution, if final_num_particles != num_particles,
     # the code will error because we train params with num_particles
     # the shape will mismatch
