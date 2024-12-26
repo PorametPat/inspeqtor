@@ -3,7 +3,50 @@ import jax.numpy as jnp
 from numpyro import handlers
 import optax
 from alive_progress import alive_it
+import typing
+import jax
+import jax.numpy as jnp
+import inspeqtor.experimental as sq
 
+def gate_optimizer(
+    params,
+    lower,
+    upper,
+    func: typing.Callable,
+    optimizer: optax.GradientTransformation,
+    maxiter: int = 1000,
+):
+
+    opt_state = optimizer.init(params)
+    history = []
+
+    for _ in alive_it(range(maxiter), force_tty=True):
+        grads, aux = jax.grad(func, has_aux=True)(params)
+        updates, opt_state = optimizer.update(grads, opt_state, params)
+        params = optax.apply_updates(params, updates)
+
+        # Apply projection
+        params = optax.projections.projection_box(params, lower, upper)
+
+        # Log the history
+        aux['params'] = params
+        history.append(aux)
+
+    return params, history
+
+def detune_x_hamiltonian(
+    hamiltonian: typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray],
+    detune: float,
+) -> typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray]:
+    def detuned_hamiltonian(
+        params: sq.typing.HamiltonianArgs,
+        t: jnp.ndarray,
+        *args,
+        **kwargs,
+    ) -> jnp.ndarray:
+        return hamiltonian(params, t, *args, **kwargs) + detune * sq.constant.X
+
+    return detuned_hamiltonian
 
 def safe_shape(a):
     try:
@@ -104,13 +147,6 @@ def marginal_loss(
             target_labels=target_labels,
         )
         # Compute the log prob of observing the data
-        # terms = -sum(
-        #     cond_trace[observation_label]["fn"].log_prob(
-        #         cond_trace[observation_label]["value"]
-        #     )
-        #     for observation_label in observation_labels
-        # )
-
         terms = jnp.array(
             [
                 cond_trace[observation_label]["fn"].log_prob(
@@ -121,12 +157,6 @@ def marginal_loss(
         ).sum(axis=0)
 
         if evaluation:
-            # terms += sum(
-            #     trace[observation_label]["fn"].log_prob(
-            #         trace[observation_label]["value"]
-            #     )
-            #     for observation_label in observation_labels
-            # )
 
             terms += jnp.array(
                 [

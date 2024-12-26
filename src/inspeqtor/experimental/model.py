@@ -264,17 +264,11 @@ def calculate_metrics(
         default_expectation_values_order,
     )
 
-    # Calculate the MSE loss
-    MSEE = jax.vmap(mse, in_axes=(0, 0))(expectation_values, predicted_expvals)
-
-    # Calculate the AGF loss
-    AEF = jax.vmap(AEF_loss, in_axes=(0, 0, 0))(
-        expectation_values, predicted_expvals, unitaries
-    )
-
-    # Calculate WAEE loss
-    WAEE = jax.vmap(WAEE_loss, in_axes=(0, 0, 0))(
-        expectation_values, predicted_expvals, unitaries
+    # Calculate the metrics
+    metrics = calculate_metric(
+        unitaries=unitaries,
+        expectation_values=expectation_values,
+        predicted_expectation_values=predicted_expvals,
     )
 
     AGF_paulis = jax.vmap(calculate_Pauli_AGF, in_axes=(0))(
@@ -282,9 +276,7 @@ def calculate_metrics(
     )
 
     return {
-        LossMetric.MSEE: MSEE,
-        LossMetric.AEF: AEF,
-        LossMetric.WAEE: WAEE,
+        **metrics,
         "AGF_Paulis": AGF_paulis,
     }
 
@@ -294,7 +286,27 @@ def calculate_metric(
     expectation_values: jnp.ndarray,
     predicted_expectation_values: jnp.ndarray,
 ):
-    return
+
+    # Calculate the MSE loss
+    MSEE = jax.vmap(mse, in_axes=(0, 0))(
+        expectation_values, predicted_expectation_values
+    )
+
+    # Calculate the AGF loss
+    AEF = jax.vmap(AEF_loss, in_axes=(0, 0, 0))(
+        expectation_values, predicted_expectation_values, unitaries
+    )
+
+    # Calculate WAEE loss
+    WAEE = jax.vmap(WAEE_loss, in_axes=(0, 0, 0))(
+        expectation_values, predicted_expectation_values, unitaries
+    )
+
+    return {
+        LossMetric.MSEE: MSEE,
+        LossMetric.AEF: AEF,
+        LossMetric.WAEE: WAEE,
+    }
 
 
 def loss_fn(

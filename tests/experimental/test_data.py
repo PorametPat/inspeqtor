@@ -190,6 +190,7 @@ def test_ExperimentData_1(tmp_path):
     for sample_idx in range(config.sample_size):
         key, subkey = jax.random.split(key)
         pulse_params = pulse_sequence.sample_params(subkey)
+        pulse_params = jax.tree.map(float, pulse_params)
         pulse_params_list.append(pulse_params)
         manual_pulse_params_array.append(
             sq.pulse.list_of_params_to_array(pulse_params, parameter_structure)

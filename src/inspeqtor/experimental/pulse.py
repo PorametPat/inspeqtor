@@ -19,10 +19,11 @@ def sample_params(
     for name in param_names:
         sample_key, key = jax.random.split(key)
         param[name] = jax.random.uniform(
-            sample_key, shape=(), minval=lower[name], maxval=upper[name]
+            sample_key, shape=(), dtype=float, minval=lower[name], maxval=upper[name]
         )
 
-    return jax.tree.map(float, param)
+    # return jax.tree.map(float, param)
+    return param
 
 
 @dataclass
@@ -113,8 +114,8 @@ class PulseSequence:
                 [isinstance(k, str) for k in params.keys()]
             ), "All key of params dict must be string"
             assert all(
-                [isinstance(v, (float, int)) for v in params.values()]
-            ), "All value of params dict must be jax.Array"
+                [isinstance(v, (float, int, jnp.ndarray)) for v in params.values()]
+            ), "All value of params dict must be float or jax.Array"
 
         params = self.sample_params(key)
 
