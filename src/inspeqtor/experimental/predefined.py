@@ -27,7 +27,6 @@ from .decorator import warn_not_tested_function
 from .utils import (
     center_location,
     drag_envelope_v2,
-    detune_hamiltonian,
     calculate_exp,
     LoadedData,
     prepare_data,
