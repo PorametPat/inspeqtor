@@ -4,9 +4,8 @@ from numpyro import handlers
 import optax
 from alive_progress import alive_it
 import typing
-import jax
-import jax.numpy as jnp
 import inspeqtor.experimental as sq
+
 
 def gate_optimizer(
     params,
@@ -16,7 +15,6 @@ def gate_optimizer(
     optimizer: optax.GradientTransformation,
     maxiter: int = 1000,
 ):
-
     opt_state = optimizer.init(params)
     history = []
 
@@ -29,10 +27,11 @@ def gate_optimizer(
         params = optax.projections.projection_box(params, lower, upper)
 
         # Log the history
-        aux['params'] = params
+        aux["params"] = params
         history.append(aux)
 
     return params, history
+
 
 def detune_x_hamiltonian(
     hamiltonian: typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray],
@@ -47,6 +46,7 @@ def detune_x_hamiltonian(
         return hamiltonian(params, t, *args, **kwargs) + detune * sq.constant.X
 
     return detuned_hamiltonian
+
 
 def safe_shape(a):
     try:
@@ -157,7 +157,6 @@ def marginal_loss(
         ).sum(axis=0)
 
         if evaluation:
-
             terms += jnp.array(
                 [
                     trace[observation_label]["fn"].log_prob(

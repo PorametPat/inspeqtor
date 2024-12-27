@@ -286,7 +286,6 @@ def calculate_metric(
     expectation_values: jnp.ndarray,
     predicted_expectation_values: jnp.ndarray,
 ):
-
     # Calculate the MSE loss
     MSEE = jax.vmap(mse, in_axes=(0, 0))(
         expectation_values, predicted_expectation_values
