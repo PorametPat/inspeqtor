@@ -329,7 +329,12 @@ def generate_mock_experiment_data(
     sample_size: int = 10,
     shots: int = 1000,
     strategy: SimulationStrategy = SimulationStrategy.RANDOM,
-    detune: float = 0,
+    # detune: float = 0,
+    hamiltonian_transformers: list[
+        typing.Callable[
+            [typing.Callable[..., jnp.ndarray]], typing.Callable[..., jnp.ndarray]
+        ]
+    ] = [],
     get_qubit_information_fn: typing.Callable[
         [], QubitInformation
     ] = get_mock_qubit_information,
@@ -359,24 +364,28 @@ def generate_mock_experiment_data(
         ),
     )
 
-    if detune != 0:
-        # Detune the hamiltonian
-        hamiltonian = detune_hamiltonian(ideal_hamiltonian, detune)
-    else:
-        hamiltonian = ideal_hamiltonian
-
-    noisy_simulator = jax.jit(
+    whitebox = jax.jit(
         get_single_qubit_whitebox(
-            hamiltonian=hamiltonian,
+            hamiltonian=ideal_hamiltonian,
             pulse_sequence=pulse_sequence,
             qubit_info=qubit_info,
             dt=dt,
         )
     )
 
-    whitebox = jax.jit(
+    # if detune != 0:
+    #     # Detune the hamiltonian
+    #     hamiltonian = detune_hamiltonian(ideal_hamiltonian, detune)
+    # else:
+    #     hamiltonian = ideal_hamiltonian
+
+    hamiltonian = ideal_hamiltonian
+    for transformer in hamiltonian_transformers:
+        hamiltonian = transformer(hamiltonian)
+
+    noisy_simulator = jax.jit(
         get_single_qubit_whitebox(
-            hamiltonian=ideal_hamiltonian,
+            hamiltonian=hamiltonian,
             pulse_sequence=pulse_sequence,
             qubit_info=qubit_info,
             dt=dt,
