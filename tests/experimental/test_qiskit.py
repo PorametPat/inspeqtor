@@ -4,8 +4,10 @@ from functools import partial
 from qiskit_ibm_runtime import SamplerV2  # type: ignore
 import inspeqtor.experimental as sq
 from inspeqtor.external import qiskit as qk
+import pytest
 
 
+@pytest.mark.skip(reason="Skipping test due to qiskit compatibility issues")
 def test_execute_experiment_using_fake_backend_v2():
     EXPERIMENT_IDENTIFIER = "0021"
     SHOTS = 3000
@@ -81,6 +83,7 @@ test_cases = [
 ]
 
 
+@pytest.mark.skip(reason="Skipping test due to qiskit compatibility issues")
 def test_execute_experiment_using_fake_backend_v3():
     INSTANCE = "ibm_test"
     backend = FakeJakartaV2()

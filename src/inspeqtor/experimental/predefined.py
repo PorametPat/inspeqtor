@@ -197,7 +197,7 @@ class MultiDragPulseV3(BasePulse):
         return lower, upper
 
     def get_envelope(
-        self, params: dict[str, float]
+        self, params: ParametersDictType
     ) -> typing.Callable[..., typing.Any]:
         return get_envelope(params, self.order, self.duration)
 
