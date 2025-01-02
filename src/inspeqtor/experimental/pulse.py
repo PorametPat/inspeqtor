@@ -54,7 +54,7 @@ class BasePulse(ABC):
         ), "All key of params dict must be string"
         assert all(
             [isinstance(v, float) for v in params.values()]
-        ), "All value of params dict must be jax.Array"
+        ), "All value of params dict must be float"
         assert isinstance(waveform, jax.Array), "Waveform must be jax.Array"
 
         # Validate that params is serializable and deserializable
