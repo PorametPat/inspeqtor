@@ -11,7 +11,7 @@ from .typing import ParametersDictType
 
 
 def sample_params(
-    key: jnp.ndarray, lower: dict[str, float], upper: dict[str, float]
+    key: jnp.ndarray, lower: ParametersDictType, upper: ParametersDictType
 ) -> ParametersDictType:
     # This function is general because it is depend only on lower and upper structure
     param = {}
