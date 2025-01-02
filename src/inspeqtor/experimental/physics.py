@@ -356,7 +356,16 @@ def signal_func_v3(get_envelope: typing.Callable, drive_frequency: float, dt: fl
     return signal
 
 
-def signal_func_v5(get_envelope: typing.Callable, drive_frequency: float, dt: float):
+ControlParam = typing.TypeVar("ControlParam")
+
+
+def signal_func_v5(
+    get_envelope: typing.Callable[
+        [ControlParam], typing.Callable[[jnp.ndarray], jnp.ndarray]
+    ],
+    drive_frequency: float,
+    dt: float,
+):
     """Make the envelope function into signal with drive frequency
 
     Args:
@@ -366,7 +375,7 @@ def signal_func_v5(get_envelope: typing.Callable, drive_frequency: float, dt: fl
                     set to 1 if the envelope function is already in unit of ns
     """
 
-    def signal(pulse_parameters: list[dict[str, float]], t: jnp.ndarray):
+    def signal(pulse_parameters: ControlParam, t: jnp.ndarray):
         return jnp.real(
             get_envelope(pulse_parameters)(t / dt)
             * jnp.exp(1j * (2 * jnp.pi * drive_frequency * t))

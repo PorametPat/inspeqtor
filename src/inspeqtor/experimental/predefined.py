@@ -21,7 +21,12 @@ from .pulse import (
     construct_pulse_sequence_reader,
 )
 from .typing import ParametersDictType, HamiltonianArgs
-from .physics import SignalParameters, solver, signal_func_v5
+from .physics import (
+    SignalParameters,
+    solver,
+    signal_func_v5,
+    make_trotterization_whitebox,
+)
 from .constant import X, Y, Z, default_expectation_values_order
 from .decorator import warn_not_tested_function
 from .utils import (
@@ -328,7 +333,6 @@ def generate_mock_experiment_data(
     sample_size: int = 10,
     shots: int = 1000,
     strategy: SimulationStrategy = SimulationStrategy.RANDOM,
-    # detune: float = 0,
     hamiltonian_transformers: list[
         typing.Callable[
             [typing.Callable[..., jnp.ndarray]], typing.Callable[..., jnp.ndarray]
@@ -340,6 +344,8 @@ def generate_mock_experiment_data(
     get_pulse_sequence_fn: typing.Callable[
         [], PulseSequence
     ] = get_multi_drag_pulse_sequence_v3,
+    max_steps: int = int(2**16),
+    method: str = "ODE",
 ):
     qubit_info, pulse_sequence, config = get_mock_prefined_exp_v1(
         sample_size=sample_size,
@@ -363,33 +369,41 @@ def generate_mock_experiment_data(
         ),
     )
 
-    whitebox = jax.jit(
-        get_single_qubit_whitebox(
-            hamiltonian=ideal_hamiltonian,
-            pulse_sequence=pulse_sequence,
-            qubit_info=qubit_info,
-            dt=dt,
-        )
-    )
-
-    # if detune != 0:
-    #     # Detune the hamiltonian
-    #     hamiltonian = detune_hamiltonian(ideal_hamiltonian, detune)
-    # else:
-    #     hamiltonian = ideal_hamiltonian
-
     hamiltonian = ideal_hamiltonian
     for transformer in hamiltonian_transformers:
         hamiltonian = transformer(hamiltonian)
 
-    noisy_simulator = jax.jit(
-        get_single_qubit_whitebox(
-            hamiltonian=hamiltonian,
-            pulse_sequence=pulse_sequence,
-            qubit_info=qubit_info,
-            dt=dt,
+    if method == "TROTTER":
+        whitebox = jax.jit(
+            make_trotterization_whitebox(
+                hamiltonian=ideal_hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
+            )
         )
-    )
+
+        noisy_simulator = jax.jit(
+            make_trotterization_whitebox(
+                hamiltonian=hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
+            )
+        )
+    else:
+        whitebox = jax.jit(
+            get_single_qubit_whitebox(
+                hamiltonian=ideal_hamiltonian,
+                pulse_sequence=pulse_sequence,
+                qubit_info=qubit_info,
+                dt=dt,
+                max_steps=max_steps,
+            )
+        )
+
+        noisy_simulator = jax.jit(
+            get_single_qubit_whitebox(
+                hamiltonian=hamiltonian,
+                pulse_sequence=pulse_sequence,
+                qubit_info=qubit_info,
+                dt=dt,
+            )
+        )
 
     SHOTS = config.shots
 
@@ -490,6 +504,7 @@ def generate_mock_experiment_data(
         signal_params_list,
         noisy_simulator,
         whitebox,
+        (ideal_hamiltonian, hamiltonian),
     )
 
 
@@ -510,6 +525,7 @@ def get_single_qubit_whitebox(
     pulse_sequence: PulseSequence,
     qubit_info: QubitInformation,
     dt: float,
+    max_steps: int = int(2**16),
 ):
     t_eval = jnp.linspace(
         0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
@@ -532,6 +548,7 @@ def get_single_qubit_whitebox(
         y0=jnp.eye(2, dtype=jnp.complex64),
         t0=0,
         t1=pulse_sequence.pulse_length_dt * dt,
+        max_steps=max_steps,
     )
 
     return whitebox

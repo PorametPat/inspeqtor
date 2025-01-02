@@ -8,4 +8,5 @@ from . import (
     predefined as predefined,
     model as model,
     optimize as optimize,
+    decorator as decorator,
 )
