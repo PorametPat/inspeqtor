@@ -89,9 +89,9 @@ def forest_process_tomography(
     exp_results = []
 
     for expval in expvals:
-        assert isinstance(
-            expval.expectation_value, float
-        ), "Expectation value is not float"
+        assert isinstance(expval.expectation_value, float), (
+            "Expectation value is not float"
+        )
 
         exp_results.append(
             ExperimentResult(

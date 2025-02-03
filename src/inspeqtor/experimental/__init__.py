@@ -9,4 +9,5 @@ from . import (
     model as model,
     optimize as optimize,
     decorator as decorator,
+    boed as boed,
 )
