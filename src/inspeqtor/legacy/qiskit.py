@@ -755,9 +755,9 @@ def prepare_parallel_experiment_v2(
             backend_properties=backend_properties,
         )
 
-        assert len(dataframe) == len(qcs), (
-            "The len of dataframe and Quantum circuit is not the same"
-        )
+        assert len(dataframe) == len(
+            qcs
+        ), "The len of dataframe and Quantum circuit is not the same"
 
         dataframes.append(dataframe)
         quantum_circuits.append(qcs)
