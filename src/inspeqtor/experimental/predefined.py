@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 from dataclasses import dataclass, field
 import typing
-from enum import Enum
+from enum import Enum, StrEnum, auto
 from functools import partial
 import pandas as pd
 import pathlib
@@ -327,6 +327,11 @@ def calculate_shots_expectation_value(
     ).mean()
 
 
+class WhiteboxStrategy(StrEnum):
+    ODE = auto()
+    TROTTER = auto()
+
+
 @warn_not_tested_function
 def generate_mock_experiment_data(
     key: jnp.ndarray,
@@ -345,7 +350,7 @@ def generate_mock_experiment_data(
         [], PulseSequence
     ] = get_multi_drag_pulse_sequence_v3,
     max_steps: int = int(2**16),
-    method: str = "ODE",
+    method: WhiteboxStrategy = WhiteboxStrategy.ODE,
 ):
     qubit_info, pulse_sequence, config = get_mock_prefined_exp_v1(
         sample_size=sample_size,
@@ -373,7 +378,7 @@ def generate_mock_experiment_data(
     for transformer in hamiltonian_transformers:
         hamiltonian = transformer(hamiltonian)
 
-    if method == "TROTTER":
+    if method == WhiteboxStrategy.TROTTER:
         whitebox = jax.jit(
             make_trotterization_whitebox(
                 hamiltonian=ideal_hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
@@ -602,3 +607,102 @@ def load_data_from_path(
     )
 
     return prepare_data(exp_data, pulse_sequence, whitebox)
+
+
+def gaussian_envelope(amp, center, sigma):
+    def g_fn(t):
+        return (amp / (jnp.sqrt(2 * jnp.pi) * sigma)) * jnp.exp(
+            -((t - center) ** 2) / (2 * sigma**2)
+        )
+
+    return g_fn
+
+
+@dataclass
+class GaussianPulse(BasePulse):
+    duration: int
+    # beta: float
+    qubit_drive_strength: float
+    dt: float
+    max_amp: float = 0.25
+
+    min_theta: float = 0.0
+    max_theta: float = 2 * jnp.pi
+
+    def __post_init__(self):
+        self.t_eval = jnp.arange(self.duration)
+
+        # This is the correction factor that will cancel the factor in the front of hamiltonian
+        self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
+
+        # The standard derivation of Gaussian pulse is keep fixed for the given max_amp
+        self.sigma = jnp.sqrt(2 * jnp.pi) / (self.max_amp * self.correction)
+
+        # The center position is set at the center of the duration
+        self.center_position = self.duration // 2
+
+    def get_bounds(
+        self,
+    ) -> tuple[ParametersDictType, ParametersDictType]:
+        lower = {}
+        upper = {}
+
+        lower["theta"] = self.min_theta
+        upper["theta"] = self.max_theta
+
+        return lower, upper
+
+    def get_envelope(
+        self, params: ParametersDictType
+    ) -> typing.Callable[..., typing.Any]:
+        # The area of Gaussian to be rotate to,
+        area = (
+            params["theta"] / self.correction
+        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
+
+        return gaussian_envelope(
+            amp=area, center=self.center_position, sigma=self.sigma
+        )
+
+
+def get_gaussian_pulse_sequence(
+    qubit_info: QubitInformation,
+    max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
+):
+    total_length = 320
+    dt = 2 / 9
+
+    pulse_sequence = PulseSequence(
+        pulses=[
+            GaussianPulse(
+                duration=total_length,
+                qubit_drive_strength=qubit_info.drive_strength,
+                dt=dt,
+                max_amp=max_amp,
+                min_theta=0.0,
+                max_theta=2 * jnp.pi,
+            ),
+        ],
+        pulse_length_dt=total_length,
+    )
+
+    return pulse_sequence
+
+
+def polynomial_feature_map(x: jnp.ndarray, degree: int):
+    return jnp.concatenate([x**i for i in range(1, degree + 1)], axis=-1)
+
+
+def detune_x_hamiltonian(
+    hamiltonian: typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray],
+    detune: float,
+) -> typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray]:
+    def detuned_hamiltonian(
+        params: HamiltonianArgs,
+        t: jnp.ndarray,
+        *args,
+        **kwargs,
+    ) -> jnp.ndarray:
+        return hamiltonian(params, t, *args, **kwargs) + detune * X
+
+    return detuned_hamiltonian

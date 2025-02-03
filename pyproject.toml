@@ -36,6 +36,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "arviz>=0.20.0",
     "blackjax>=1.2.4",
     "chex>=0.1.87",
     "inspeqtor",
@@ -45,6 +46,7 @@ dev = [
     "pre-commit>=4.0.1",
     "pyright>=1.1.389",
     "pytest>=8.3.3",
+    "qutip>=5.1.1",
     "scienceplots>=2.1.1",
     "seaborn>=0.13.2",
     "treescope>=0.1.6",
