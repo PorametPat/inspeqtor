@@ -10,4 +10,5 @@ from . import (
     optimize as optimize,
     decorator as decorator,
     boed as boed,
+    visualization as visualization,
 )

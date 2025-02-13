@@ -137,13 +137,63 @@ class BasicBlackBoxV2(nn.Module):
 
             Wos_params[op] = dict()
             # For the unitary part, we use a dense layer with 3 features
-            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS)(_x)
+            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
+                _x
+            )
             # Apply sigmoid to this layer
             unitary_params = 2 * jnp.pi * nn.sigmoid(unitary_params)
             # For the diagonal part, we use a dense layer with 1 feature
-            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS)(_x)
+            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
+                _x
+            )
             # Apply the activation function
             diag_params = nn.tanh(diag_params)
+
+            Wos_params[op] = {
+                "U": unitary_params,
+                "D": diag_params,
+            }
+
+        return Wos_params
+
+
+class BasicBlackBoxV3(nn.Module):
+    hidden_sizes_1: typing.Sequence[int] = (20, 10)
+    hidden_sizes_2: typing.Sequence[int] = (20, 10)
+    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
+
+    NUM_UNITARY_PARAMS: int = 3
+    NUM_DIAGONAL_PARAMS: int = 2
+
+    @nn.compact
+    def __call__(self, x: jnp.ndarray):
+        # Apply a dense layer for each hidden size
+        for hidden_size in self.hidden_sizes_1:
+            x = nn.Dense(features=hidden_size)(x)
+            x = nn.relu(x)
+
+        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
+        for op in self.pauli_operators:
+            # Sub hidden layer
+            # Copy the input
+            _x = jnp.copy(x)
+            for hidden_size in self.hidden_sizes_2:
+                _x = nn.Dense(features=hidden_size)(_x)
+                _x = nn.relu(_x)
+
+            Wos_params[op] = dict()
+            # For the unitary part, we use a dense layer with 3 features
+            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
+                _x
+            )
+            # Apply sigmoid to this layer
+            unitary_params = 2 * jnp.pi * nn.hard_sigmoid(unitary_params)
+            # For the diagonal part, we use a dense layer with 1 feature
+            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
+                _x
+            )
+            # Apply the activation function
+            diag_params = (2 * nn.hard_sigmoid(diag_params)) - 1
 
             Wos_params[op] = {
                 "U": unitary_params,

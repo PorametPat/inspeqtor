@@ -182,7 +182,7 @@ class PulseSequence:
 
     def get_parameter_names(self) -> list[list[str]]:
         # Sample the pulse sequence to get the parameter names
-        key = jax.random.PRNGKey(0)
+        key = jax.random.key(0)
         params_list = self.sample_params(key)
 
         # Get the parameter names for each pulse
