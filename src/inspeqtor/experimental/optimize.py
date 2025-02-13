@@ -7,12 +7,13 @@ from dataclasses import dataclass
 import flax.traverse_util as traverse_util
 from functools import partial
 import optax
+from alive_progress import alive_it
 
 import tempfile
 from enum import StrEnum
 
 from .pulse import PulseSequence
-from .utils import random_split, dataloader, create_step
+from .utils import dataloader, create_step
 from .model import BasicBlackBoxV2, loss_fn, LossMetric, save_model, load_model
 
 
@@ -26,6 +27,32 @@ def get_default_optimizer(n_iterations):
             end_value=1e-6,
         )
     )
+
+
+def gate_optimizer(
+    params,
+    lower,
+    upper,
+    func: typing.Callable,
+    optimizer: optax.GradientTransformation,
+    maxiter: int = 1000,
+):
+    opt_state = optimizer.init(params)
+    history = []
+
+    for _ in alive_it(range(maxiter), force_tty=True):
+        grads, aux = jax.grad(func, has_aux=True)(params)
+        updates, opt_state = optimizer.update(grads, opt_state, params)
+        params = optax.apply_updates(params, updates)
+
+        # Apply projection
+        params = optax.projections.projection_box(params, lower, upper)
+
+        # Log the history
+        aux["params"] = params
+        history.append(aux)
+
+    return params, history
 
 
 @dataclass
@@ -176,6 +203,7 @@ def default_trainable_v3(
     metric: LossMetric,
     experiment_identifier: str,
     hamiltonian: typing.Callable | str,
+    model_choice: type[nn.Module] = BasicBlackBoxV2,
     NUM_EPOCH: int = 1000,
     CHECKPOINT_EVERY: int = 100,
 ):
@@ -193,16 +221,19 @@ def default_trainable_v3(
         HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
         HIDDEN_LAYER_2_2 = config["hidden_layer_2_2"]
 
-        model_config: dict[str, int | list[int]] = {
-            "hidden_sizes_1": [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2],
-            "hidden_sizes_2": [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2],
+        HIDDEN_LAYER_1 = [i for i in [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2] if i != 0]
+        HIDDEN_LAYER_2 = [i for i in [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2] if i != 0]
+
+        model_config: dict[str, list[int]] = {
+            "hidden_sizes_1": HIDDEN_LAYER_1,
+            "hidden_sizes_2": HIDDEN_LAYER_2,
         }
 
         optimizer = get_default_optimizer(8 * NUM_EPOCH)
 
-        model = BasicBlackBoxV2(
-            hidden_sizes_1=[HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2],
-            hidden_sizes_2=[HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2],
+        model = model_choice(
+            hidden_sizes_1=model_config["hidden_sizes_1"],
+            hidden_sizes_2=model_config["hidden_sizes_2"],
         )
 
         partial_loss_fn = partial(loss_fn, model=model, loss_metric=metric)
@@ -292,34 +323,43 @@ class SearchAlgo(StrEnum):
 
 def hypertuner(
     trainable: typing.Callable,
-    pulse_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    expectation_values: jnp.ndarray,
+    train_pulse_parameters: jnp.ndarray,
+    train_unitaries: jnp.ndarray,
+    train_expectation_values: jnp.ndarray,
+    test_pulse_parameters: jnp.ndarray,
+    test_unitaries: jnp.ndarray,
+    test_expectation_values: jnp.ndarray,
+    val_pulse_parameters: jnp.ndarray,
+    val_unitaries: jnp.ndarray,
+    val_expectation_values: jnp.ndarray,
     train_key: jnp.ndarray,
     metric: LossMetric,
     num_samples: int = 100,
     search_algo: SearchAlgo = SearchAlgo.HYPEROPT,
+    search_spaces: dict[str, tuple[int, int]] = {
+        "hidden_layer_1_1": (5, 50),
+        "hidden_layer_1_2": (5, 50),
+        "hidden_layer_2_1": (5, 50),
+        "hidden_layer_2_2": (5, 50),
+    },
+    initial_config: dict[str, int] = {
+        "hidden_layer_1_1": 10,
+        "hidden_layer_1_2": 20,
+        "hidden_layer_2_1": 10,
+        "hidden_layer_2_2": 20,
+    },
 ):
     from ray import tune, train
     from ray.tune.search.hyperopt import HyperOptSearch
     from ray.tune.search.optuna import OptunaSearch
     from ray.tune.search import Searcher
 
-    search_space = {
-        "hidden_layer_1_1": tune.randint(5, 50),
-        "hidden_layer_1_2": tune.randint(5, 50),
-        "hidden_layer_2_1": tune.randint(5, 50),
-        "hidden_layer_2_2": tune.randint(5, 50),
-    }
+    # Construct the search space
+    search_space = {}
+    for key, (lower, upper) in search_spaces.items():
+        search_space[key] = tune.randint(lower, upper)
 
-    current_best_params = [
-        {
-            "hidden_layer_1_1": 10,
-            "hidden_layer_1_2": 20,
-            "hidden_layer_2_1": 10,
-            "hidden_layer_2_2": 20,
-        }
-    ]
+    current_best_params = [initial_config]
 
     # Prepend 'test/' to the metric
     prepended_metric = f"val/{metric}"
@@ -338,28 +378,16 @@ def hypertuner(
         ),
     )
 
-    split_1_key, split_2_key, train_key = jax.random.split(train_key, 3)
-
-    # Data split into train, val, and test
-    # Split the data into train, val, and test
-    # use 10% of the data for validation and testing
-    val_size = int(0.1 * pulse_parameters.shape[0])
-    test_size = int(0.1 * pulse_parameters.shape[0])
-
-    train_p, train_u, train_ex, eval_p, eval_u, eval_ex = random_split(
-        split_1_key,
-        val_size + test_size,
-        pulse_parameters,
-        unitaries,
-        expectation_values,
+    train_p, train_u, train_ex = (
+        train_pulse_parameters,
+        train_unitaries,
+        train_expectation_values,
     )
-
-    val_p, val_u, val_ex, test_p, test_u, test_ex = random_split(
-        split_2_key,
-        test_size,
-        eval_p,
-        eval_u,
-        eval_ex,
+    val_p, val_u, val_ex = val_pulse_parameters, val_unitaries, val_expectation_values
+    test_p, test_u, test_ex = (
+        test_pulse_parameters,
+        test_unitaries,
+        test_expectation_values,
     )
 
     tuner = tune.Tuner(

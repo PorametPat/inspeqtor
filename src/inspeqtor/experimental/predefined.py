@@ -35,8 +35,10 @@ from .utils import (
     calculate_exp,
     LoadedData,
     prepare_data,
+    calculate_expectation_values,
 )
 from .model import DataConfig
+from functools import reduce
 
 
 def rotating_transmon_hamiltonian(
@@ -119,6 +121,86 @@ def get_envelope(params: ParametersDictType, order: int, total_length: int):
     drag_part_fn = jax.grad(real_part_fn)
 
     return lambda t: real_part_fn(t) + 1j * params["beta"] * drag_part_fn(t)
+
+
+def gaussian_envelope(amp, center, sigma):
+    def g_fn(t):
+        return (amp / (jnp.sqrt(2 * jnp.pi) * sigma)) * jnp.exp(
+            -((t - center) ** 2) / (2 * sigma**2)
+        )
+
+    return g_fn
+
+
+@dataclass
+class GaussianPulse(BasePulse):
+    duration: int
+    # beta: float
+    qubit_drive_strength: float
+    dt: float
+    max_amp: float = 0.25
+
+    min_theta: float = 0.0
+    max_theta: float = 2 * jnp.pi
+
+    def __post_init__(self):
+        self.t_eval = jnp.arange(self.duration)
+
+        # This is the correction factor that will cancel the factor in the front of hamiltonian
+        self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
+
+        # The standard derivation of Gaussian pulse is keep fixed for the given max_amp
+        self.sigma = jnp.sqrt(2 * jnp.pi) / (self.max_amp * self.correction)
+
+        # The center position is set at the center of the duration
+        self.center_position = self.duration // 2
+
+    def get_bounds(
+        self,
+    ) -> tuple[ParametersDictType, ParametersDictType]:
+        lower = {}
+        upper = {}
+
+        lower["theta"] = self.min_theta
+        upper["theta"] = self.max_theta
+
+        return lower, upper
+
+    def get_envelope(
+        self, params: ParametersDictType
+    ) -> typing.Callable[..., typing.Any]:
+        # The area of Gaussian to be rotate to,
+        area = (
+            params["theta"] / self.correction
+        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
+
+        return gaussian_envelope(
+            amp=area, center=self.center_position, sigma=self.sigma
+        )
+
+
+def get_gaussian_pulse_sequence(
+    qubit_info: QubitInformation,
+    max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
+):
+    total_length = 320
+    dt = 2 / 9
+
+    pulse_sequence = PulseSequence(
+        pulses=[
+            GaussianPulse(
+                duration=total_length,
+                qubit_drive_strength=qubit_info.drive_strength,
+                dt=dt,
+                max_amp=max_amp,
+                min_theta=0.0,
+                max_theta=2 * jnp.pi,
+            ),
+        ],
+        pulse_length_dt=total_length,
+    )
+
+    return pulse_sequence
 
 
 @dataclass
@@ -374,9 +456,11 @@ def generate_mock_experiment_data(
         ),
     )
 
-    hamiltonian = ideal_hamiltonian
-    for transformer in hamiltonian_transformers:
-        hamiltonian = transformer(hamiltonian)
+    # hamiltonian = ideal_hamiltonian
+    # for transformer in hamiltonian_transformers:
+    #     hamiltonian = transformer(hamiltonian)
+
+    hamiltonian = reduce(lambda x, y: y(x), hamiltonian_transformers, ideal_hamiltonian)
 
     if method == WhiteboxStrategy.TROTTER:
         whitebox = jax.jit(
@@ -391,22 +475,50 @@ def generate_mock_experiment_data(
             )
         )
     else:
+        # whitebox = jax.jit(
+        #     get_single_qubit_whitebox(
+        #         hamiltonian=ideal_hamiltonian,
+        #         pulse_sequence=pulse_sequence,
+        #         qubit_info=qubit_info,
+        #         dt=dt,
+        #         max_steps=max_steps,
+        #     )
+        # )
+
+        # noisy_simulator = jax.jit(
+        #     get_single_qubit_whitebox(
+        #         hamiltonian=hamiltonian,
+        #         pulse_sequence=pulse_sequence,
+        #         qubit_info=qubit_info,
+        #         dt=dt,
+        #     )
+        # )
+
+        t_eval = jnp.linspace(
+            0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+        )
+
         whitebox = jax.jit(
-            get_single_qubit_whitebox(
+            partial(
+                solver,
+                t_eval=t_eval,
                 hamiltonian=ideal_hamiltonian,
-                pulse_sequence=pulse_sequence,
-                qubit_info=qubit_info,
-                dt=dt,
+                y0=jnp.eye(2, dtype=jnp.complex64),
+                t0=0,
+                t1=pulse_sequence.pulse_length_dt * dt,
                 max_steps=max_steps,
             )
         )
 
         noisy_simulator = jax.jit(
-            get_single_qubit_whitebox(
+            partial(
+                solver,
+                t_eval=t_eval,
                 hamiltonian=hamiltonian,
-                pulse_sequence=pulse_sequence,
-                qubit_info=qubit_info,
-                dt=dt,
+                y0=jnp.eye(2, dtype=jnp.complex64),
+                t0=0,
+                t1=pulse_sequence.pulse_length_dt * dt,
+                max_steps=max_steps,
             )
         )
 
@@ -513,6 +625,141 @@ def generate_mock_experiment_data(
     )
 
 
+def generate_experimental_data(
+    key: jnp.ndarray,
+    hamiltonian: typing.Callable[..., jnp.ndarray],
+    sample_size: int = 10,
+    shots: int = 1000,
+    strategy: SimulationStrategy = SimulationStrategy.RANDOM,
+    get_qubit_information_fn: typing.Callable[
+        [], QubitInformation
+    ] = get_mock_qubit_information,
+    get_pulse_sequence_fn: typing.Callable[
+        [], PulseSequence
+    ] = get_multi_drag_pulse_sequence_v3,
+    max_steps: int = int(2**16),
+    method: WhiteboxStrategy = WhiteboxStrategy.ODE,
+):
+    qubit_info, pulse_sequence, config = get_mock_prefined_exp_v1(
+        sample_size=sample_size,
+        shots=shots,
+        get_pulse_sequence_fn=get_pulse_sequence_fn,
+        get_qubit_information_fn=get_qubit_information_fn,
+    )
+
+    # Generate mock expectation value
+    key, exp_key = jax.random.split(key)
+
+    dt = config.device_cycle_time_ns
+
+    if method == WhiteboxStrategy.TROTTER:
+        noisy_simulator = jax.jit(
+            make_trotterization_whitebox(
+                hamiltonian=hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
+            )
+        )
+    else:
+        t_eval = jnp.linspace(
+            0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+        )
+        noisy_simulator = jax.jit(
+            partial(
+                solver,
+                t_eval=t_eval,
+                hamiltonian=hamiltonian,
+                y0=jnp.eye(2, dtype=jnp.complex64),
+                t0=0,
+                t1=pulse_sequence.pulse_length_dt * dt,
+                max_steps=max_steps,
+            )
+        )
+
+    control_params_list = []
+    control_params = []
+    parameter_structure = pulse_sequence.get_parameter_names()
+    for _ in range(config.sample_size):
+        key, subkey = jax.random.split(key)
+        pulse_params = pulse_sequence.sample_params(subkey)
+        control_params_list.append(pulse_params)
+
+        control_params.append(
+            list_of_params_to_array(pulse_params, parameter_structure)
+        )
+
+    control_params = jnp.array(control_params)
+
+    unitaries = jax.vmap(noisy_simulator)(control_params)
+    SHOTS = config.shots
+
+    # Calculate the expectation values depending on the strategy
+    unitaries_f = jnp.asarray(unitaries)[:, -1, :, :]
+    # expectation_values = jnp.zeros((config.sample_size, 18))
+
+    assert unitaries_f.shape == (
+        sample_size,
+        2,
+        2,
+    ), f"Final unitaries shape is {unitaries_f.shape}"
+
+    if strategy == SimulationStrategy.RANDOM:
+        # Just random expectation values with key
+        expectation_values = 2 * (
+            jax.random.uniform(exp_key, shape=(config.sample_size, 18)) - (1 / 2)
+        )
+    elif strategy == SimulationStrategy.IDEAL:
+        expectation_values = calculate_expectation_values(unitaries_f)
+
+    elif strategy == SimulationStrategy.SHOT:
+        expectation_values = jnp.zeros((config.sample_size, 18))
+        for idx, exp in enumerate(default_expectation_values_order):
+            key, sample_key = jax.random.split(key)
+            sample_keys = jax.random.split(sample_key, num=unitaries_f.shape[0])
+
+            expval = jax.vmap(
+                calculate_shots_expectation_value, in_axes=(0, None, 0, None, None)
+            )(
+                sample_keys,
+                exp.initial_density_matrix,
+                unitaries_f,
+                plus_projectors[exp.observable],
+                SHOTS,
+            )
+
+            expectation_values = expectation_values.at[..., idx].set(expval)
+
+    else:
+        raise NotImplementedError
+
+    assert expectation_values.shape == (
+        sample_size,
+        18,
+    ), f"Expectation values shape is {expectation_values.shape}"
+
+    rows = []
+    for sample_idx in range(config.sample_size):
+        for exp_idx, exp in enumerate(default_expectation_values_order):
+            row = make_row(
+                expectation_value=float(expectation_values[sample_idx, exp_idx]),
+                initial_state=exp.initial_state,
+                observable=exp.observable,
+                parameters_list=control_params_list[sample_idx],
+                parameters_id=sample_idx,
+            )
+
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    exp_data = ExperimentData(experiment_config=config, preprocess_data=df)
+
+    return (
+        exp_data,
+        pulse_sequence,
+        jnp.array(unitaries),
+        noisy_simulator,
+    )
+
+
 def get_envelope_transformer(pulse_sequence: PulseSequence):
     structure = pulse_sequence.get_parameter_names()
 
@@ -574,7 +821,9 @@ def get_single_qubit_rotating_frame_whitebox(
     return whitebox
 
 
-pulse_reader = construct_pulse_sequence_reader(pulses=[DragPulse, MultiDragPulseV3])
+pulse_reader = construct_pulse_sequence_reader(
+    pulses=[DragPulse, MultiDragPulseV3, GaussianPulse]
+)
 
 hamiltonian_mapper = {
     "transmon_hamiltonian": transmon_hamiltonian,
@@ -607,86 +856,6 @@ def load_data_from_path(
     )
 
     return prepare_data(exp_data, pulse_sequence, whitebox)
-
-
-def gaussian_envelope(amp, center, sigma):
-    def g_fn(t):
-        return (amp / (jnp.sqrt(2 * jnp.pi) * sigma)) * jnp.exp(
-            -((t - center) ** 2) / (2 * sigma**2)
-        )
-
-    return g_fn
-
-
-@dataclass
-class GaussianPulse(BasePulse):
-    duration: int
-    # beta: float
-    qubit_drive_strength: float
-    dt: float
-    max_amp: float = 0.25
-
-    min_theta: float = 0.0
-    max_theta: float = 2 * jnp.pi
-
-    def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration)
-
-        # This is the correction factor that will cancel the factor in the front of hamiltonian
-        self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
-
-        # The standard derivation of Gaussian pulse is keep fixed for the given max_amp
-        self.sigma = jnp.sqrt(2 * jnp.pi) / (self.max_amp * self.correction)
-
-        # The center position is set at the center of the duration
-        self.center_position = self.duration // 2
-
-    def get_bounds(
-        self,
-    ) -> tuple[ParametersDictType, ParametersDictType]:
-        lower = {}
-        upper = {}
-
-        lower["theta"] = self.min_theta
-        upper["theta"] = self.max_theta
-
-        return lower, upper
-
-    def get_envelope(
-        self, params: ParametersDictType
-    ) -> typing.Callable[..., typing.Any]:
-        # The area of Gaussian to be rotate to,
-        area = (
-            params["theta"] / self.correction
-        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
-
-        return gaussian_envelope(
-            amp=area, center=self.center_position, sigma=self.sigma
-        )
-
-
-def get_gaussian_pulse_sequence(
-    qubit_info: QubitInformation,
-    max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
-):
-    total_length = 320
-    dt = 2 / 9
-
-    pulse_sequence = PulseSequence(
-        pulses=[
-            GaussianPulse(
-                duration=total_length,
-                qubit_drive_strength=qubit_info.drive_strength,
-                dt=dt,
-                max_amp=max_amp,
-                min_theta=0.0,
-                max_theta=2 * jnp.pi,
-            ),
-        ],
-        pulse_length_dt=total_length,
-    )
-
-    return pulse_sequence
 
 
 def polynomial_feature_map(x: jnp.ndarray, degree: int):
