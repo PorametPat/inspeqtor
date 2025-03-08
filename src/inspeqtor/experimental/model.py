@@ -25,7 +25,7 @@ from .physics import (
     Z,
 )
 from .pulse import PulseSequence
-from .typing import WoParams, ensure_wo_params_type
+from .typing import ensure_wo_type, Wos
 
 jax.config.update("jax_enable_x64", True)
 
@@ -157,6 +157,66 @@ class BasicBlackBoxV2(nn.Module):
         return Wos_params
 
 
+def make_basic_blackbox_model(
+    unitary_activation_fn: typing.Callable = lambda x: 2 * jnp.pi * nn.hard_sigmoid(x),
+    diagonal_activation_fn: typing.Callable = lambda x: (2 * nn.hard_sigmoid(x)) - 1,
+):
+
+    class BlackBox(nn.Module):
+        hidden_sizes_1: typing.Sequence[int] = (20, 10)
+        hidden_sizes_2: typing.Sequence[int] = (20, 10)
+        pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
+
+        NUM_UNITARY_PARAMS: int = 3
+        NUM_DIAGONAL_PARAMS: int = 2
+
+        _unitary_activation_fn: typing.Callable = unitary_activation_fn
+        _diagonal_activation_fn: typing.Callable = diagonal_activation_fn
+
+        @nn.compact
+        def __call__(self, x: jnp.ndarray) -> dict[str, jnp.ndarray]:
+            # Apply a dense layer for each hidden size
+            for hidden_size in self.hidden_sizes_1:
+                x = nn.Dense(features=hidden_size)(x)
+                x = nn.relu(x)
+
+            # Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
+            Wos: dict[str, jnp.ndarray] = dict()
+            for op in self.pauli_operators:
+                # Sub hidden layer
+                # Copy the input
+                _x = jnp.copy(x)
+                for hidden_size in self.hidden_sizes_2:
+                    _x = nn.Dense(features=hidden_size)(_x)
+                    _x = nn.relu(_x)
+
+                # Wos_params[op] = dict()
+                # For the unitary part, we use a dense layer with 3 features
+                unitary_params = nn.Dense(
+                    features=self.NUM_UNITARY_PARAMS, name=f"U_{op}"
+                )(_x)
+                # Apply sigmoid to this layer
+                unitary_params = self._unitary_activation_fn(unitary_params)
+                # For the diagonal part, we use a dense layer with 1 feature
+                diag_params = nn.Dense(
+                    features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}"
+                )(_x)
+                # Apply the activation function
+                diag_params = self._diagonal_activation_fn(diag_params)
+
+                Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+
+                # Wos_params[op] = {
+                #     "U": unitary_params,
+                #     "D": diag_params,
+                # }
+
+            # return Wos_params
+            return Wos
+
+    return BlackBox
+
+
 class BasicBlackBoxV3(nn.Module):
     hidden_sizes_1: typing.Sequence[int] = (20, 10)
     hidden_sizes_2: typing.Sequence[int] = (20, 10)
@@ -231,14 +291,19 @@ def WAEE_loss(
     return jnp.sum(jnp.abs(coefficients) * diff)
 
 
-def calculate_Pauli_AGF(Wo_params: WoParams) -> dict[str, jnp.ndarray]:
+def calculate_Pauli_AGF(
+    Wos: Wos,
+) -> dict[str, jnp.ndarray]:
     AGF_paulis: dict[str, jnp.ndarray] = {}
-    assert isinstance(Wo_params, dict)
+    # assert isinstance(Wo_params, dict)
     # Calculate the AGF between Wo_model and the Pauli
+    Wos = ensure_wo_type(Wos)
     for pauli_str, pauli_op in zip(["X", "Y", "Z"], [X, Y, Z]):
-        Wo = Wo_2_level_v3(U=Wo_params[pauli_str]["U"], D=Wo_params[pauli_str]["D"])
+        # Wo = Wo_2_level_v3(U=Wo_params[pauli_str]["U"], D=Wo_params[pauli_str]["D"])
         # evaluate the fidleity to the Pauli operator
-        fidelity = avg_gate_fidelity_from_superop(to_superop(Wo), to_superop(pauli_op))
+        fidelity = avg_gate_fidelity_from_superop(
+            to_superop(Wos[pauli_str]), to_superop(pauli_op)
+        )
 
         AGF_paulis[pauli_str] = fidelity
 
@@ -246,7 +311,7 @@ def calculate_Pauli_AGF(Wo_params: WoParams) -> dict[str, jnp.ndarray]:
 
 
 def get_predict_expectation_value(
-    Wos_params: WoParams,
+    Wos: Wos,
     unitaries: jnp.ndarray,
     evaluate_expectation_values: list[ExpectationValue],
 ) -> jnp.ndarray:
@@ -254,17 +319,14 @@ def get_predict_expectation_value(
         tuple(unitaries.shape[:-2]) + (len(evaluate_expectation_values),)
     )
 
-    Wos_params = ensure_wo_params_type(Wos_params)
+    Wos = ensure_wo_type(Wos)
 
     # Calculate expectation values for all cases
     for idx, exp_case in enumerate(evaluate_expectation_values):
-        Wo = Wo_2_level_v3(
-            Wos_params[exp_case.observable]["U"], Wos_params[exp_case.observable]["D"]
-        )
 
         batch_expectaion_values = calculate_exp(
             unitaries,
-            Wo,
+            Wos[exp_case.observable],
             exp_case.initial_density_matrix,
         )
         predict_expectation_values = predict_expectation_values.at[..., idx].set(
