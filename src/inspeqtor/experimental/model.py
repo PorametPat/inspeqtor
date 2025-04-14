@@ -523,6 +523,9 @@ class DataConfig:
         with open(path / "data_config.json", "r") as f:
             config_dict = json.load(f)
         return cls.from_dict(config_dict)
+    
+
+
 
 
 def generate_path_with_datetime(sub_dir: pathlib.Path):

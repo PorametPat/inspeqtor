@@ -144,7 +144,7 @@ class GaussianPulse(BasePulse):
     max_theta: float = 2 * jnp.pi
 
     def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration)
+        self.t_eval = jnp.arange(self.duration, dtype=jnp.float_)
 
         # This is the correction factor that will cancel the factor in the front of hamiltonian
         self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
@@ -178,6 +178,61 @@ class GaussianPulse(BasePulse):
             amp=area, center=self.center_position, sigma=self.sigma
         )
 
+@dataclass
+class DragPulseV2(BasePulse):
+    duration: int
+    qubit_drive_strength: float
+    dt: float
+    max_amp: float = 0.25
+
+    min_theta: float = 0.0
+    max_theta: float = 2 * jnp.pi
+
+    min_beta: float = 0.0
+    max_beta: float = 2.0
+
+    def __post_init__(self):
+        self.gaussian_pulse = GaussianPulse(
+            duration=self.duration,
+            qubit_drive_strength=self.qubit_drive_strength,
+            dt=self.dt,
+            max_amp=self.max_amp,
+            min_theta=self.min_theta,
+            max_theta=self.max_theta,
+        )
+        self.t_eval = self.gaussian_pulse.t_eval
+
+    def get_bounds(
+        self,
+    ) -> tuple[ParametersDictType, ParametersDictType]:
+        
+        lower, upper = self.gaussian_pulse.get_bounds()
+
+        lower["beta"] = self.min_beta
+        upper["beta"] = self.max_beta
+
+        return lower, upper
+
+    def get_envelope(
+        self, params: ParametersDictType
+    ) -> typing.Callable[..., typing.Any]:
+        # The area of Gaussian to be rotate to,
+        area = (
+            params["theta"] / self.gaussian_pulse.correction
+        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
+
+        def real_component(t):
+            return gaussian_envelope(
+                amp=area,
+                center=self.gaussian_pulse.center_position,
+                sigma=self.gaussian_pulse.sigma,
+            )(t)
+
+        def envelope_fn(t):
+            return real_component(t) + 1j * params["beta"] * jax.grad(real_component)(t)
+
+        return envelope_fn
+
 
 def get_gaussian_pulse_sequence(
     qubit_info: QubitInformation,
@@ -195,6 +250,32 @@ def get_gaussian_pulse_sequence(
                 max_amp=max_amp,
                 min_theta=0.0,
                 max_theta=2 * jnp.pi,
+            ),
+        ],
+        pulse_length_dt=total_length,
+    )
+
+    return pulse_sequence
+
+
+def get_drag_pulse_v2_sequence(
+    qubit_info: QubitInformation,
+    max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
+):
+    total_length = 320
+    dt = 2 / 9
+
+    pulse_sequence = PulseSequence(
+        pulses=[
+            DragPulseV2(
+                duration=total_length,
+                qubit_drive_strength=qubit_info.drive_strength,
+                dt=dt,
+                max_amp=max_amp,
+                min_theta=0.0,
+                max_theta=2 * jnp.pi,
+                min_beta=0.0,
+                max_beta=2.0
             ),
         ],
         pulse_length_dt=total_length,
