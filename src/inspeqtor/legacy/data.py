@@ -489,7 +489,9 @@ class ExperimentData:
                     ignore_index=True
                 )
             )
-        ), "The preprocess_data and postprocessed_data does not have the same parameters."
+        ), (
+            "The preprocess_data and postprocessed_data does not have the same parameters."
+        )
         logging.info("Preprocess data and postprocess data have the same parameters")
 
     def __eq__(self, __value: object) -> bool:
@@ -512,9 +514,9 @@ class ExperimentData:
         """
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert (
-                    col.name in self.preprocess_data.columns
-                ), f"Column {col.name} is required but not found in the preprocess_data."
+                assert col.name in self.preprocess_data.columns, (
+                    f"Column {col.name} is required but not found in the preprocess_data."
+                )
 
         # Validate that the preprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
@@ -522,34 +524,34 @@ class ExperimentData:
         )
 
         for _col in required_parameters_columns:
-            assert (
-                _col in self.preprocess_data.columns
-            ), f"Column {_col} is required but not found in the preprocess_data."
+            assert _col in self.preprocess_data.columns, (
+                f"Column {_col} is required but not found in the preprocess_data."
+            )
 
     def validate_postprocess_data(self, post_data: pd.DataFrame):
         logging.info("Validating postprocess data")
         # Validate that the postprocess_data have all the required columns
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert (
-                    col.name in post_data.columns
-                ), f"Column {col.name} is required but not found in the postprocess_data."
+                assert col.name in post_data.columns, (
+                    f"Column {col.name} is required but not found in the postprocess_data."
+                )
 
         # Validate the check functions
         for col in REQUIRED_COLUMNS:
             for check in col.checks:
-                assert all(
-                    [check(v) for v in post_data[col.name]]
-                ), f"Column {col.name} failed the check function {check}"
+                assert all([check(v) for v in post_data[col.name]]), (
+                    f"Column {col.name} failed the check function {check}"
+                )
 
         # Validate that the postprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
             self.experiment_config.parameter_names
         )
         for _col in required_parameters_columns:
-            assert (
-                _col in post_data.columns
-            ), f"Column {_col} is required but not found in the postprocess_data."
+            assert _col in post_data.columns, (
+                f"Column {_col} is required but not found in the postprocess_data."
+            )
 
     def transform_preprocess_data_to_postprocess_data(self) -> pd.DataFrame:
         # Postprocess the data squeezing the data into the expectation values
@@ -755,9 +757,9 @@ def prepare_dataset(
 
     # Sanity check on the inputs
     # pulse_parameters.shape should be len(shape) == 2
-    assert (
-        len(pulse_parameters.shape) == 2
-    ), "The shape of pulse parameters should be (batch, pulse_params)"
+    assert len(pulse_parameters.shape) == 2, (
+        "The shape of pulse parameters should be (batch, pulse_params)"
+    )
     pulse_parameters_size = pulse_parameters.shape[0]
 
     # unitaries.shape should be (batch, 2, 2)
@@ -774,9 +776,9 @@ def prepare_dataset(
         )
     unitaries_size = unitaries.shape[0]
 
-    assert (
-        len(expectation_values.shape) == 2
-    ), "The shape of pulse parameters should be (batch, expectation_value_order)"
+    assert len(expectation_values.shape) == 2, (
+        "The shape of pulse parameters should be (batch, expectation_value_order)"
+    )
     expectation_values_size = expectation_values.shape[0]
     # Check if we needed to transpose the unitaries or not.
     if not expectation_values_size == pulse_parameters_size:
@@ -787,9 +789,9 @@ def prepare_dataset(
         _expectation_value = np.array(expectation_values)
 
     # Check if all of the sizes are the same
-    assert (
-        expectation_values_size == unitaries_size
-    ), "Batch size of the pulse_parameters, expectation_values, unitaries are not the same"
+    assert expectation_values_size == unitaries_size, (
+        "Batch size of the pulse_parameters, expectation_values, unitaries are not the same"
+    )
 
     dataset = SpecQDataset(
         pulse_parameters=np.array(pulse_parameters),
@@ -829,24 +831,24 @@ def extract_data(
     dataloader: DataLoader,
 ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     # Assert that the dataloader has dataset attribute and the dataset has dataset attribute
-    assert hasattr(
-        dataloader, "dataset"
-    ), "The dataloader does not have dataset attribute"
-    assert hasattr(
-        dataloader.dataset, "dataset"
-    ), "The dataloader.dataset does not have dataset attribute"
+    assert hasattr(dataloader, "dataset"), (
+        "The dataloader does not have dataset attribute"
+    )
+    assert hasattr(dataloader.dataset, "dataset"), (
+        "The dataloader.dataset does not have dataset attribute"
+    )
 
-    assert hasattr(
-        dataloader.dataset.dataset, "pulse_parameters"
-    ), "dataloader.dataset.dataset does not have pulse_parameters"
+    assert hasattr(dataloader.dataset.dataset, "pulse_parameters"), (
+        "dataloader.dataset.dataset does not have pulse_parameters"
+    )
 
-    assert hasattr(
-        dataloader.dataset.dataset, "unitaries"
-    ), "dataloader.dataset.dataset does not have unitaries"
+    assert hasattr(dataloader.dataset.dataset, "unitaries"), (
+        "dataloader.dataset.dataset does not have unitaries"
+    )
 
-    assert hasattr(
-        dataloader.dataset.dataset, "expectation_values"
-    ), "dataloader.dataset.dataset does not have expectation_values"
+    assert hasattr(dataloader.dataset.dataset, "expectation_values"), (
+        "dataloader.dataset.dataset does not have expectation_values"
+    )
 
     return (
         dataloader.dataset.dataset.pulse_parameters,

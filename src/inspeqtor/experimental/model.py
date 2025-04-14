@@ -161,7 +161,6 @@ def make_basic_blackbox_model(
     unitary_activation_fn: typing.Callable = lambda x: 2 * jnp.pi * nn.hard_sigmoid(x),
     diagonal_activation_fn: typing.Callable = lambda x: (2 * nn.hard_sigmoid(x)) - 1,
 ):
-
     class BlackBox(nn.Module):
         hidden_sizes_1: typing.Sequence[int] = (20, 10)
         hidden_sizes_2: typing.Sequence[int] = (20, 10)
@@ -323,7 +322,6 @@ def get_predict_expectation_value(
 
     # Calculate expectation values for all cases
     for idx, exp_case in enumerate(evaluate_expectation_values):
-
         batch_expectaion_values = calculate_exp(
             unitaries,
             Wos[exp_case.observable],
@@ -523,9 +521,6 @@ class DataConfig:
         with open(path / "data_config.json", "r") as f:
             config_dict = json.load(f)
         return cls.from_dict(config_dict)
-    
-
-
 
 
 def generate_path_with_datetime(sub_dir: pathlib.Path):
