@@ -178,6 +178,7 @@ class GaussianPulse(BasePulse):
             amp=area, center=self.center_position, sigma=self.sigma
         )
 
+
 @dataclass
 class DragPulseV2(BasePulse):
     duration: int
@@ -205,7 +206,6 @@ class DragPulseV2(BasePulse):
     def get_bounds(
         self,
     ) -> tuple[ParametersDictType, ParametersDictType]:
-        
         lower, upper = self.gaussian_pulse.get_bounds()
 
         lower["beta"] = self.min_beta
@@ -275,7 +275,7 @@ def get_drag_pulse_v2_sequence(
                 min_theta=0.0,
                 max_theta=2 * jnp.pi,
                 min_beta=0.0,
-                max_beta=2.0
+                max_beta=2.0,
             ),
         ],
         pulse_length_dt=total_length,

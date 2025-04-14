@@ -174,12 +174,12 @@ class JaxBasedPulse(BasePulse):
         params = self.sample_params(key)
         waveform = self.get_waveform(params)
 
-        assert all(
-            [isinstance(k, str) for k in params.keys()]
-        ), "All key of params dict must be string"
-        assert all(
-            [isinstance(v, float) for v in params.values()]
-        ), "All value of params dict must be jax.Array"
+        assert all([isinstance(k, str) for k in params.keys()]), (
+            "All key of params dict must be string"
+        )
+        assert all([isinstance(v, float) for v in params.values()]), (
+            "All value of params dict must be jax.Array"
+        )
         assert isinstance(waveform, jax.Array), "Waveform must be jax.Array"
 
         # Validate that params is serializable and deserializable
@@ -208,12 +208,12 @@ class JaxBasedPulseSequence(BasePulseSequence):
             # Assert the waveform is of the correct length
             assert waveform.shape == (self.pulse_length_dt,)
             # Assert that all key of params dict is string and all value is jax.Array
-            assert all(
-                [isinstance(k, str) for k in params.keys()]
-            ), "All key of params dict must be string"
-            assert all(
-                [isinstance(v, (float, int)) for v in params.values()]
-            ), "All value of params dict must be jax.Array"
+            assert all([isinstance(k, str) for k in params.keys()]), (
+                "All key of params dict must be string"
+            )
+            assert all([isinstance(v, (float, int)) for v in params.values()]), (
+                "All value of params dict must be jax.Array"
+            )
 
         params = self.sample_params(key)
 
