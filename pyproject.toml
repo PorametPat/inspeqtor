@@ -49,8 +49,10 @@ dev = [
     "qutip>=5.1.1",
     "scienceplots>=2.1.1",
     "seaborn>=0.13.2",
+    "sphinx>=8.2.3",
     "treescope>=0.1.6",
     "tune>=0.1.6",
+    "typer>=0.15.2",
 ]
 
 [tool.pyright]

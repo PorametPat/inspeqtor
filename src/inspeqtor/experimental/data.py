@@ -677,3 +677,31 @@ class ExperimentData:
                 data[_name] = res.to_numpy()
 
         return pd.DataFrame(data)
+
+
+def save_to_json(data: dict, path: typing.Union[str, Path]):
+
+    if isinstance(path, str):
+        path = Path(path)
+
+    path.parent.mkdir(exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+DataclassVar = typing.TypeVar("DataclassVar")
+
+
+def read_from_json(
+    path: typing.Union[str, Path], dataclass: typing.Union[None, type[DataclassVar]] = None
+) -> typing.Union[dict, DataclassVar]:
+
+    if isinstance(path, str):
+        path = Path(path)
+    with open(path, "r") as f:
+        config_dict = json.load(f)
+
+    if dataclass is None:
+        return config_dict
+    else:
+        return dataclass(**config_dict)
