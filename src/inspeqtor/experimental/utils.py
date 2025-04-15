@@ -1,11 +1,11 @@
 import jax
 import jax.numpy as jnp
 import typing
-import optax
+import optax  # type: ignore
 import jaxtyping
 from dataclasses import dataclass
 from .pulse import PulseSequence
-from .data import ExperimentData
+from .data import ExperimentData, QubitInformation
 from .model import mse
 from .constant import Z, default_expectation_values_order
 from .decorator import warn_not_tested_function
@@ -26,13 +26,20 @@ class LoadedData:
     noisy_unitaries: jnp.ndarray | None = None
 
 
-def center_location(num_of_pulse_in_dd: int, total_time_dt: int | float):
+def center_location(num_of_pulse: int, total_time_dt: int | float) -> jnp.ndarray:
+    """Create an array of location equally that centered each pulse.
+
+    Args:
+        num_of_pulse (int): The number of the pulse in the sequence to be equally center.
+        total_time_dt (int | float): The total bins of the sequence.
+
+    Returns:
+        jnp.ndarray: The array of location equally that centered each pulse.
+    """
     center_locations = (
-        jnp.array(
-            [(k - 0.5) / num_of_pulse_in_dd for k in range(1, num_of_pulse_in_dd + 1)]
-        )
+        jnp.array([(k - 0.5) / num_of_pulse for k in range(1, num_of_pulse + 1)])
         * total_time_dt
-    )  # ideal CPMG pulse locations for x-axis
+    )
     return center_locations
 
 
@@ -43,7 +50,18 @@ def drag_envelope_v2(
     center: float | jnp.ndarray,
     final_amp: float | jnp.ndarray = 1.0,
 ):
-    # https://docs.quantum.ibm.com/api/qiskit/qiskit.pulse.library.Drag_class.rst#drag
+    """Drag pulse following: https://docs.quantum.ibm.com/api/qiskit/qiskit.pulse.library.Drag_class.rst#drag
+
+    Args:
+        amp (float | jnp.ndarray): The amplitude of the pulse
+        sigma (float | jnp.ndarray): The standard deviation of the pulse
+        beta (float | jnp.ndarray): DRAG coefficient.
+        center (float | jnp.ndarray): Center location of the pulse
+        final_amp (float | jnp.ndarray, optional): Final amplitude of the control. Defaults to 1.0.
+
+    Returns:
+        typing.Callable: DRAG envelope function
+    """
 
     def g(t):
         return jnp.exp(-((t - center) ** 2) / (2 * sigma**2))
@@ -62,6 +80,17 @@ def detune_hamiltonian(
     hamiltonian: typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray],
     detune: float,
 ) -> typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray]:
+    """Detune the Hamiltonian in Z-axis with detuning coefficient
+
+    Args:
+        hamiltonian (typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray]): Hamiltonian function to be detuned
+        detune (float): Detuning coefficient
+
+    Returns:
+        typing.Callable: Detuned Hamiltonian.
+
+    """
+
     def detuned_hamiltonian(
         params: HamiltonianArgs,
         t: jnp.ndarray,
@@ -78,6 +107,16 @@ def prepare_data(
     pulse_sequence: PulseSequence,
     whitebox: typing.Callable,
 ) -> LoadedData:
+    """Prepare the data for easy accessing from experiment data, control sequence, and Whitebox.
+
+    Args:
+        exp_data (ExperimentData): `ExperimentData` instance
+        pulse_sequence (PulseSequence): Control sequence of the experiment
+        whitebox (typing.Callable): Ideal unitary solver.
+
+    Returns:
+        LoadedData: `LoadedData` instance
+    """
     logging.info(f"Loaded data from {exp_data.experiment_config.EXPERIMENT_IDENTIFIER}")
 
     pulse_parameters = jnp.array(exp_data.parameters)
@@ -338,3 +377,13 @@ def recursive_vmap(func, in_axes):
 
     # Recursively apply vmap over the remaining axes
     return recursive_vmap(vmap_func, in_axes[1:])
+
+
+class SyntheticDataModel(typing.NamedTuple):
+    pulse_sequence: PulseSequence
+    qubit_information: QubitInformation
+    dt: float
+    ideal_hamiltonian: typing.Callable[..., jnp.ndarray]
+    total_hamiltonian: typing.Callable[..., jnp.ndarray]
+    solver: typing.Callable[..., jnp.ndarray]
+    quantum_device: typing.Callable[..., jnp.ndarray] | None

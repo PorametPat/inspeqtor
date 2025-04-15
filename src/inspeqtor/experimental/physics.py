@@ -199,15 +199,39 @@ def auto_rotating_frame_hamiltonian(
     )
 
 
-def a(dims: int):
+def a(dims: int) -> jnp.ndarray:
+    """Annihilation operator of given dims
+
+    Args:
+        dims (int): Number of states
+
+    Returns:
+        jnp.ndarray: Annihilation operator
+    """
     return jnp.diag(jnp.sqrt(jnp.arange(1, dims)), 1)
 
 
-def a_dag(dims: int):
+def a_dag(dims: int) -> jnp.ndarray:
+    """Creation operator of given dims
+
+    Args:
+        dims (int): Number of states
+
+    Returns:
+        jnp.ndarray: Creation operator
+    """
     return jnp.diag(jnp.sqrt(jnp.arange(1, dims)), -1)
 
 
-def N(dims: int):
+def N(dims: int) -> jnp.ndarray:
+    """Number operator of given dims
+
+    Args:
+        dims (int): Number of states
+
+    Returns:
+        jnp.ndarray: Number operator
+    """
     return jnp.diag(jnp.arange(dims))
 
 
@@ -222,7 +246,17 @@ def gen_hamiltonian_from(
     qubit_informations: list[QubitInformation],
     coupling_constants: list[CouplingInformation],
     dims: int = 2,
-):
+) -> dict[str, HamiltonianTerm]:
+    """Generate dict of Hamiltonian from given qubits and coupling information.
+
+    Args:
+        qubit_informations (list[QubitInformation]): Qubit information
+        coupling_constants (list[CouplingInformation]): Coupling information
+        dims (int, optional): The level of the quantum system. Defaults to 2, i.e. qubit system.
+
+    Returns:
+        dict[str, HamiltonianTerm]: _description_
+    """
     num_qubits = len(qubit_informations)
 
     operators: dict[str, HamiltonianTerm] = {}
@@ -308,6 +342,19 @@ def hamiltonian_fn(
     hamiltonian_terms: dict[str, HamiltonianTerm],
     static_terms: list[str],
 ) -> jnp.ndarray:
+    """Hamiltonian function to be used whitebox.
+    Expect to be used in partial form, i.e. making `signals`, `hamiltonian_terms`, and `static_terms` static arguments.
+
+    Args:
+        args (dict[str, SignalParameters]): Control parameter
+        t (jnp.ndarray): Time to evaluate
+        signals (dict[str, typing.Callable[[SignalParameters, jnp.ndarray], jnp.ndarray]]): Signal function of the control
+        hamiltonian_terms (dict[str, HamiltonianTerm]): Dict of Hamiltonian terms, where key is channel
+        static_terms (list[str]): list of channel id specifing the static term.
+
+    Returns:
+        jnp.ndarray: _description_
+    """
     # Match the args with signal
     drives = jnp.array(
         [
@@ -385,6 +432,15 @@ def signal_func_v5(
 
 
 def gate_fidelity(U: jnp.ndarray, V: jnp.ndarray) -> jnp.ndarray:
+    """Calculate the gate fidelity between U and V
+
+    Args:
+        U (jnp.ndarray): Unitary operator to be targetted
+        V (jnp.ndarray): Unitary operator to be compared
+
+    Returns:
+        jnp.ndarray: Gate fidelity
+    """
     up = jnp.trace(U.conj().T @ V)
     down = jnp.sqrt(jnp.trace(U.conj().T @ U) * jnp.trace(V.conj().T @ V))
 
@@ -415,23 +471,55 @@ def state_tomography(exp_X: jnp.ndarray, exp_Y: jnp.ndarray, exp_Z: jnp.ndarray)
 
 
 def check_valid_density_matrix(rho: jnp.ndarray):
+    """Check if the provided matrix is valid density matrix
+
+    Args:
+        rho (jnp.ndarray): _description_
+    """
     # Check if the density matrix is valid
     assert jnp.allclose(jnp.trace(rho), 1.0), "Density matrix is not trace 1"
     assert jnp.allclose(rho, rho.conj().T), "Density matrix is not Hermitian"
 
 
 def check_hermitian(op: jnp.ndarray):
+    """Check if the provided matrix is Hermitian
+
+    Args:
+        op (jnp.ndarray): Matrix to be assert
+    """
     assert jnp.allclose(op, op.conj().T), "Matrix is not Hermitian"
 
 
 def direct_AFG_estimation(
     coefficients: jnp.ndarray,
     expectation_values: jnp.ndarray,
-):
+) -> jnp.ndarray:
+    """Calculate single qubit average gate fidelity from expectation value
+    This function should be used with `direct_AFG_estimation_coefficients`
+
+    >>> coefficients = direct_AFG_estimation_coefficients(unitary)
+    ... agf = direct_AFG_estimation(coefficients, expectation_value)
+
+    Args:
+        coefficients (jnp.ndarray): The coefficients return from `direct_AFG_estimation_coefficients`
+        expectation_values (jnp.ndarray): The expectation values assume to be shape of (..., 18) with order of `sq.constant.default_expectation_values_order`
+
+    Returns:
+        jnp.ndarray: Average Gate Fidelity
+    """
     return (1 / 2) + ((1 / 12) * jnp.dot(coefficients, expectation_values))
 
 
 def direct_AFG_estimation_coefficients(target_unitary: jnp.ndarray) -> jnp.ndarray:
+    """Compute the expected coefficients to be used for AGF calculation using `direct_AFG_estimation`.
+    The order of coefficients is the same as `sq.constant.default_expectation_values_order`
+
+    Args:
+        target_unitary (jnp.ndarray): Target unitary to be computed for coefficient
+
+    Returns:
+        jnp.ndarray: Coefficients for AGF calculation.
+    """
     coefficients = []
     for pauli_i in [X, Y, Z]:
         for pauli_j in [X, Y, Z]:
@@ -448,6 +536,17 @@ def direct_AFG_estimation_coefficients(target_unitary: jnp.ndarray) -> jnp.ndarr
 def calculate_exp(
     unitary: jnp.ndarray, operator: jnp.ndarray, density_matrix: jnp.ndarray
 ) -> jnp.ndarray:
+    """Calculate the expectation value for given unitary, observable (operator), initial state (density_matrix).
+    Shape of all arguments must be boardcastable.
+
+    Args:
+        unitary (jnp.ndarray): Unitary operator
+        operator (jnp.ndarray): Quantum Observable
+        density_matrix (jnp.ndarray): Intial state in form of density matrix.
+
+    Returns:
+        jnp.ndarray: Expectation value of quantum observable.
+    """
     rho = jnp.matmul(
         unitary, jnp.matmul(density_matrix, unitary.conj().swapaxes(-2, -1))
     )
@@ -458,6 +557,15 @@ def calculate_exp(
 def unitaries_prod(
     prev_unitary: jnp.ndarray, curr_unitary: jnp.ndarray
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Function to be used for trotterization Whitebox
+
+    Args:
+        prev_unitary (jnp.ndarray): Product of cummulate Unitary operator.
+        curr_unitary (jnp.ndarray): The next Unitary operator to be multiply.
+
+    Returns:
+        tuple[jnp.ndarray, jnp.ndarray]: Product of previous unitart and current unitary.
+    """
     prod_unitary = prev_unitary @ curr_unitary
     return prod_unitary, prod_unitary
 
@@ -468,6 +576,17 @@ def make_trotterization_whitebox(
     dt: float = 2 / 9,
     trotter_steps: int = 1000,
 ):
+    """Retutn whitebox function compute using Trotterization strategy.
+
+    Args:
+        hamiltonian (typing.Callable[..., jnp.ndarray]): The Hamiltonian function of the system
+        pulse_sequence (PulseSequence): The pulse sequence instance
+        dt (float, optional): The duration of time step in nanosecond. Defaults to 2/9.
+        trotter_steps (int, optional): The number of trotterization step. Defaults to 1000.
+
+    Returns:
+        typing.Callable[..., jnp.ndarray]: Trotterization Whitebox function
+    """
     hamiltonian = jax.jit(hamiltonian)
     time_step = jnp.linspace(0, pulse_sequence.pulse_length_dt * dt, trotter_steps)
 

@@ -3,6 +3,7 @@
 - [`uv`](https://docs.astral.sh/uv/concepts/projects/init/#applications) for package manager.
 - [Github action](https://www.youtube.com/watch?v=Y6D2XaFV3Cc) for CI/CD.
 
+-[Sphinx tutorial](https://youtu.be/KKfQnxQBoWE?si=JbCm1rioptxYjqMW) for documentation.
 
 ## Useful command lines
 
@@ -85,3 +86,29 @@ To perform profiling, we use `tuna`
 ```bash
     uvx tuna import.log
 ```
+
+## For using sphinx auto genereate documentation:
+
+Setting things up
+```bash
+$ documents/
+uv run sphinx-quickstart
+```
+
+Read the src files
+```bash
+$ root
+uv run sphinx-apidoc -o documents/ src/inspeqtor/
+```
+
+Make the HTML files
+```bash
+$ documents/
+uv run make html
+```
+
+We use `furo` for the theme of sphinx
+```bash
+uv add furo --dev
+```
+

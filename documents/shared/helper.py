@@ -1,10 +1,10 @@
 import jax
 import jax.numpy as jnp
-import optax
-from alive_progress import alive_it
+import optax  # type: ignore
+from alive_progress import alive_it  # type: ignore
 import typing
 import inspeqtor.experimental as sq
-from dataclasses import dataclass
+from functools import partial
 
 
 def gate_optimizer(
@@ -60,62 +60,6 @@ def get_default_optimizer(n_iterations):
     )
 
 
-def gaussian_envelope(amp, center, sigma):
-    def g_fn(t):
-        return (amp / (jnp.sqrt(2 * jnp.pi) * sigma)) * jnp.exp(
-            -((t - center) ** 2) / (2 * sigma**2)
-        )
-
-    return g_fn
-
-
-@dataclass
-class GaussianPulse(sq.pulse.BasePulse):
-    duration: int
-    # beta: float
-    qubit_drive_strength: float
-    dt: float
-    max_amp: float = 0.25
-
-    min_theta: float = 0.0
-    max_theta: float = 2 * jnp.pi
-
-    def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration)
-
-        # This is the correction factor that will cancel the factor in the front of hamiltonian
-        self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
-
-        # The standard derivation of Gaussian pulse is keep fixed for the given max_amp
-        self.sigma = jnp.sqrt(2 * jnp.pi) / (self.max_amp * self.correction)
-
-        # The center position is set at the center of the duration
-        self.center_position = self.duration // 2
-
-    def get_bounds(
-        self,
-    ) -> tuple[sq.typing.ParametersDictType, sq.typing.ParametersDictType]:
-        lower = {}
-        upper = {}
-
-        lower["theta"] = self.min_theta
-        upper["theta"] = self.max_theta
-
-        return lower, upper
-
-    def get_envelope(
-        self, params: sq.typing.ParametersDictType
-    ) -> typing.Callable[..., typing.Any]:
-        # The area of Gaussian to be rotate to,
-        area = (
-            params["theta"] / self.correction
-        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
-
-        return gaussian_envelope(
-            amp=area, center=self.center_position, sigma=self.sigma
-        )
-
-
 def get_gaussian_pulse_sequence(
     qubit_info: sq.data.QubitInformation,
     max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
@@ -125,7 +69,7 @@ def get_gaussian_pulse_sequence(
 
     pulse_sequence = sq.pulse.PulseSequence(
         pulses=[
-            GaussianPulse(
+            sq.predefined.GaussianPulse(
                 duration=total_length,
                 qubit_drive_strength=qubit_info.drive_strength,
                 dt=dt,
@@ -138,3 +82,54 @@ def get_gaussian_pulse_sequence(
     )
 
     return pulse_sequence
+
+
+def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDataModel:
+    qubit_info = sq.predefined.get_mock_qubit_information()
+    pulse_sequence = sq.predefined.get_gaussian_pulse_sequence(qubit_info=qubit_info)
+    dt = 2 / 9
+
+    ideal_hamiltonian = partial(
+        sq.predefined.rotating_transmon_hamiltonian,
+        qubit_info=qubit_info,
+        signal=sq.physics.signal_func_v5(
+            get_envelope=sq.predefined.get_envelope_transformer(
+                pulse_sequence=pulse_sequence
+            ),
+            drive_frequency=qubit_info.frequency,
+            dt=dt,
+        ),
+    )
+
+    detune = 0.001
+    total_hamiltonian = sq.predefined.detune_x_hamiltonian(
+        ideal_hamiltonian, detune * qubit_info.frequency
+    )
+
+    solver = sq.predefined.get_single_qubit_whitebox(
+        hamiltonian=total_hamiltonian,
+        pulse_sequence=pulse_sequence,
+        qubit_info=qubit_info,
+        dt=dt,
+    )
+
+    trotter_solver = sq.physics.make_trotterization_whitebox(
+        hamiltonian=total_hamiltonian,
+        pulse_sequence=pulse_sequence,
+        trotter_steps=1000,
+        dt=dt,
+    )
+
+    return sq.utils.SyntheticDataModel(
+        pulse_sequence=pulse_sequence,
+        qubit_information=qubit_info,
+        dt=dt,
+        ideal_hamiltonian=ideal_hamiltonian,
+        total_hamiltonian=total_hamiltonian,
+        solver=solver if not trotterization_solver else trotter_solver,
+        quantum_device=None,
+    )
+
+
+def custom_feature_map(x: jnp.ndarray) -> jnp.ndarray:
+    return sq.predefined.polynomial_feature_map(x / (2 * jnp.pi), degree=4)
