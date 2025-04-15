@@ -408,7 +408,7 @@ def hypertuner(
     Returns:
         _type_: Optimization result.
     """
-    from ray import tune, train
+    from ray import tune
     from ray.tune.search.hyperopt import HyperOptSearch
     from ray.tune.search.optuna import OptunaSearch
     from ray.tune.search import Searcher
@@ -430,9 +430,16 @@ def hypertuner(
     elif search_algo == SearchAlgo.OPTUNA:
         search_algo_instance = OptunaSearch(metric=prepended_metric, mode="min")
 
-    run_config = train.RunConfig(
+    # run_config = train.RunConfig(
+    #     name="tune_experiment",
+    #     checkpoint_config=train.CheckpointConfig(
+    #         num_to_keep=10,
+    #     ),
+    # )
+
+    run_config = tune.RunConfig(
         name="tune_experiment",
-        checkpoint_config=train.CheckpointConfig(
+        checkpoint_config=tune.CheckpointConfig(
             num_to_keep=10,
         ),
     )
