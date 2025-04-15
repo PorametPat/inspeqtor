@@ -27,6 +27,13 @@ def add_hilbert_level(op: jnp.ndarray, x: jnp.ndarray) -> jnp.ndarray:
 
 @dataclass
 class Operator:
+    """Dataclass for accessing qubit operators. Support X, Y, Z, Hadamard, S, Sdg, and I gate.
+
+    Raises:
+        ValueError: Provided operator is not supperted
+
+    """
+
     _pauli_x = jnp.array([[0, 1], [1, 0]], dtype=jnp.complex64)
     _pauli_y = jnp.array([[0, -1j], [1j, 0]], dtype=jnp.complex64)
     _pauli_z = jnp.array([[1, 0], [0, -1]], dtype=jnp.complex64)
@@ -70,11 +77,27 @@ class Operator:
 
     @classmethod
     def to_qutrit(cls, op: jnp.ndarray, value: float = 1.0) -> jnp.ndarray:
+        """Add extra dimension to the operator
+
+        Args:
+            op (jnp.ndarray): Qubit operator
+            value (float, optional): Value to be add at the extra dimension diagonal entry. Defaults to 1.0.
+
+        Returns:
+            jnp.ndarray: New operator for qutrit space.
+        """
         return add_hilbert_level(op, x=jnp.array([value]))
 
 
 @dataclass
 class State:
+    """Dataclass for accessing eigenvector corresponded to eigenvalue of Pauli operator X, Y, and Z.
+
+    Raises:
+        ValueError: Provided state is not supported
+        ValueError: Provided state is not qubit
+    """
+
     _zero = jnp.array([1, 0], dtype=jnp.complex64)
     _one = jnp.array([0, 1], dtype=jnp.complex64)
     _plus = jnp.array([1, 1], dtype=jnp.complex64) / jnp.sqrt(2)
@@ -118,6 +141,17 @@ class State:
 
     @classmethod
     def to_qutrit(cls, state: jnp.ndarray) -> jnp.ndarray:
+        """Promote qubit state to qutrit with zero probability
+
+        Args:
+            state (jnp.ndarray): Density matrix of 2 x 2 qubit state.
+
+        Raises:
+            ValueError: Provided state is not qubit
+
+        Returns:
+            jnp.ndarray: Qutrit density matrix
+        """
         if state.shape != (2, 2):
             raise ValueError("Shape of the state is not as expected, expect (2, 2)")
 
@@ -127,6 +161,13 @@ class State:
 @dataclass
 class QubitInformation:
     """Dataclass to store qubit information
+
+    Args:
+        unit (str): The string representation of unit, currently support "GHz", "2piGHz", "2piHz", or "Hz".
+        qubit_idx (int): the index of the qubit.
+        anharmonicity (float): Anhamonicity of the qubit, kept for the sake of completeness.
+        frequency (float): Qubit frequency.
+        drive_strength (float): Drive strength of qubit, might be specific for IBMQ platform.
 
     Raises:
         ValueError: Fail to convert unit to GHz
@@ -143,6 +184,11 @@ class QubitInformation:
         self.convert_unit_to_ghz()
 
     def convert_unit_to_ghz(self):
+        """Convert the unit of data stored in self to unit of GHz
+
+        Raises:
+            ValueError: Data stored in the unsupported unit
+        """
         if self.unit == "GHz":
             pass
         elif self.unit == "Hz":
@@ -167,7 +213,7 @@ class QubitInformation:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, dict_qubit_info):
+    def from_dict(cls, dict_qubit_info: dict):
         return cls(**dict_qubit_info)
 
 
@@ -175,14 +221,16 @@ class QubitInformation:
 class ExpectationValue:
     """Dataclass to store expectation value information
 
+    Args:
+        initial_state (str): String representation of inital state. Currently support "+", "-", "r", "l", "0", "1".
+        observable (str): String representation of quantum observable.  Currently support "X", "Y", "Z".
+        expectation_value (None | float): the expectation value. Default to None
+
     Raises:
         ValueError: Not support initial state
         ValueError: Not support observable
         ValueError: Not support initial state
         ValueError: Not support observable
-
-    Returns:
-        _type_: _description_
     """
 
     initial_state: str
@@ -394,6 +442,14 @@ def flatten_parameter_name_with_prefix(
 
 
 def transform_parameter_name(name: str) -> str:
+    """Remove "parameter/{i}/" from provided name
+
+    Args:
+        name (str): Name of the control parameters
+
+    Returns:
+        str: Name that have "parameter/{i}/" strip.
+    """
     if name.startswith("parameter/"):
         return "/".join(name.split("/")[2:])
     else:
@@ -403,6 +459,15 @@ def transform_parameter_name(name: str) -> str:
 def get_parameters_dict_list(
     parameters_name: typing.Sequence[typing.Sequence[str]], parameters_row: pd.Series
 ) -> list[ParametersDictType]:
+    """Get the list of dict containing name and value of each control in the sequence.
+
+    Args:
+        parameters_name (typing.Sequence[typing.Sequence[str]]): _description_
+        parameters_row (pd.Series): _description_
+
+    Returns:
+        list[ParametersDictType]: _description_
+    """
     recovered_parameters: list[ParametersDictType] = [
         {
             # Split to remove the parameter/{i}/
@@ -421,6 +486,17 @@ def get_parameters_dict_list(
 
 @dataclass
 class ExperimentData:
+    """Dataclass for processing of the characterization dataset.
+    A difference between preprocess and postprocess dataset is that postprocess group
+    expectation values same control parameter id within single row instead of multiple rows.
+
+    Args:
+        experiment_config (ExperimentConfiguration): Experiment configuration
+        preprocess_data (pd.DataFrame): Pandas dataframe containing the preprocess dataset
+        _postprocessed_data: (pd.DataFrame): Provide this optional argument to skip dataset postprocessing.
+        keep_decimal (int): the precision of floating point to keep.
+    """
+
     experiment_config: ExperimentConfiguration
     preprocess_data: pd.DataFrame
     # optional
@@ -489,9 +565,7 @@ class ExperimentData:
                     ignore_index=True
                 )
             )
-        ), (
-            "The preprocess_data and postprocessed_data does not have the same parameters."
-        )
+        ), "The preprocess_data and postprocessed_data does not have the same parameters."
         logging.info("Preprocess data and postprocess data have the same parameters")
 
     def __eq__(self, __value: object) -> bool:
@@ -504,8 +578,8 @@ class ExperimentData:
         )
 
     def validate_preprocess_data(self):
-        """Validate that the preprocess_data have all the required columns."""
-        """
+        """Validate that the preprocess_data have all the required columns.
+
         Required columns:
             - EXPECTATION_VALUE
             - INITIAL_STATE
@@ -514,9 +588,9 @@ class ExperimentData:
         """
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert col.name in self.preprocess_data.columns, (
-                    f"Column {col.name} is required but not found in the preprocess_data."
-                )
+                assert (
+                    col.name in self.preprocess_data.columns
+                ), f"Column {col.name} is required but not found in the preprocess_data."
 
         # Validate that the preprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
@@ -524,36 +598,50 @@ class ExperimentData:
         )
 
         for _col in required_parameters_columns:
-            assert _col in self.preprocess_data.columns, (
-                f"Column {_col} is required but not found in the preprocess_data."
-            )
+            assert (
+                _col in self.preprocess_data.columns
+            ), f"Column {_col} is required but not found in the preprocess_data."
 
     def validate_postprocess_data(self, post_data: pd.DataFrame):
+        """Validate postprocess dataset, by check the requirements given by `PredefinedCol` instance of each column
+        that required in the postprocessed dataset.
+
+        Args:
+            post_data (pd.DataFrame): Postprocessed dataset to be validated.
+        """
         logging.info("Validating postprocess data")
         # Validate that the postprocess_data have all the required columns
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert col.name in post_data.columns, (
-                    f"Column {col.name} is required but not found in the postprocess_data."
-                )
+                assert (
+                    col.name in post_data.columns
+                ), f"Column {col.name} is required but not found in the postprocess_data."
 
         # Validate the check functions
         for col in REQUIRED_COLUMNS:
             for check in col.checks:
-                assert all([check(v) for v in post_data[col.name]]), (
-                    f"Column {col.name} failed the check function {check}"
-                )
+                assert all(
+                    [check(v) for v in post_data[col.name]]
+                ), f"Column {col.name} failed the check function {check}"
 
         # Validate that the postprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
             self.experiment_config.parameter_names
         )
         for _col in required_parameters_columns:
-            assert _col in post_data.columns, (
-                f"Column {_col} is required but not found in the postprocess_data."
-            )
+            assert (
+                _col in post_data.columns
+            ), f"Column {_col} is required but not found in the postprocess_data."
 
     def transform_preprocess_data_to_postprocess_data(self) -> pd.DataFrame:
+        """Internal method to post process the dataset.
+
+        Raises:
+            ValueError: There is duplicate entry of the expectation value.
+
+        Returns:
+            pd.DataFrame: Postprocessed experiment dataset.
+        """
         # Postprocess the data squeezing the data into the expectation values
         # Required columns: PARAMETERS_ID, OBSERVABLE, INITIAL_STATE, EXPECTATION_VALUE, + experiment_config.parameter_names
         post_data = []
@@ -602,9 +690,19 @@ class ExperimentData:
         return pd.DataFrame(post_data)
 
     def get_parameters_dataframe(self) -> pd.DataFrame:
+        """Get dataframe with only the columns of control parameters.
+
+        Returns:
+            pd.DataFrame: Dataframe with only the columns of control parameters.
+        """
         return self.postprocessed_data[self.parameter_columns]
 
     def get_expectation_values(self) -> np.ndarray:
+        """Get the expectation value of the shape (sample_size, num_expectation_value)
+
+        Returns:
+            np.ndarray: expectation value of the shape (sample_size, num_expectation_value)
+        """
         expectation_value = self.postprocessed_data[
             [
                 f"expectation_value/{col.initial_state}/{col.observable}"
@@ -615,6 +713,11 @@ class ExperimentData:
         return np.array(expectation_value)
 
     def get_parameters_dict_list(self) -> list[list[ParametersDictType]]:
+        """Get the list, where each element is list of dict of the control parameters of the dataset.
+
+        Returns:
+            list[list[ParametersDictType]]: The list of list of dict of parameter.
+        """
         _temp = self.postprocessed_data[self.parameter_columns]
 
         _params_list = [
@@ -625,6 +728,11 @@ class ExperimentData:
         return _params_list
 
     def save_to_folder(self, path: typing.Union[Path, str]):
+        """Save the experiment data to given folder
+
+        Args:
+            path (typing.Union[Path, str]): Path of the folder for experiment data to be saved.
+        """
         if isinstance(path, str):
             path = Path(path)
 
@@ -636,6 +744,14 @@ class ExperimentData:
 
     @classmethod
     def from_folder(cls, path: typing.Union[Path, str]) -> "ExperimentData":
+        """Read the experiment data from path
+
+        Args:
+            path (typing.Union[Path, str]): path to the folder contain experiment data. Expected to be used with `self.save_to_folder` method.
+
+        Returns:
+            ExperimentData: Intance of `ExperimentData` read from path.
+        """
         if isinstance(path, str):
             path = Path(path)
 
@@ -682,6 +798,12 @@ class ExperimentData:
 
 
 def save_to_json(data: dict, path: typing.Union[str, Path]):
+    """Save the dictionary as json to the path
+
+    Args:
+        data (dict): Dict to be save to file
+        path (typing.Union[str, Path]): Path to save file.
+    """
     if isinstance(path, str):
         path = Path(path)
 
@@ -697,6 +819,15 @@ def read_from_json(
     path: typing.Union[str, Path],
     dataclass: typing.Union[None, type[DataclassVar]] = None,
 ) -> typing.Union[dict, DataclassVar]:
+    """Construct provided `dataclass` instance with json file
+
+    Args:
+        path (typing.Union[str, Path]): Path to json file
+        dataclass (typing.Union[None, type[DataclassVar]], optional): The constructor of the dataclass. Defaults to None.
+
+    Returns:
+        typing.Union[dict, DataclassVar]: Dataclass instance, if dataclass is not provideded, return dict instead.
+    """
     if isinstance(path, str):
         path = Path(path)
     with open(path, "r") as f:

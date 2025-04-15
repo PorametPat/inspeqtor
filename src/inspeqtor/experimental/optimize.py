@@ -6,18 +6,27 @@ from flax.typing import VariableDict
 from dataclasses import dataclass
 import flax.traverse_util as traverse_util
 from functools import partial
-import optax
-from alive_progress import alive_it
+import optax  # type: ignore
+from alive_progress import alive_it  # type: ignore
 
 import tempfile
 from enum import StrEnum
+import chex
 
 from .pulse import PulseSequence
 from .utils import dataloader, create_step
 from .model import BasicBlackBoxV2, loss_fn, LossMetric, save_model, load_model
 
 
-def get_default_optimizer(n_iterations):
+def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
+    """Generate present optimizer from number of training iteration.
+
+    Args:
+        n_iterations (int): Training iteration
+
+    Returns:
+        optax.GradientTransformation: Optax optimizer.
+    """
     return optax.adamw(
         learning_rate=optax.warmup_cosine_decay_schedule(
             init_value=1e-6,
@@ -30,13 +39,26 @@ def get_default_optimizer(n_iterations):
 
 
 def gate_optimizer(
-    params,
-    lower,
-    upper,
-    func: typing.Callable,
+    params: chex.ArrayTree,
+    lower: chex.ArrayTree,
+    upper: chex.ArrayTree,
+    func: typing.Callable[[jnp.ndarray], tuple[jnp.ndarray, typing.Any]],
     optimizer: optax.GradientTransformation,
     maxiter: int = 1000,
-):
+) -> tuple[chex.ArrayTree, list[typing.Any]]:
+    """Optimize the loss function with bounded parameters.
+
+    Args:
+        params (chex.ArrayTree): Intiial parameters to be optimized
+        lower (chex.ArrayTree): Lower bound of the parameters
+        upper (chex.ArrayTree): Upper bound of the parameters
+        func (typing.Callable[[jnp.ndarray], tuple[jnp.ndarray, typing.Any]]): Loss function
+        optimizer (optax.GradientTransformation): Instance of optax optimizer
+        maxiter (int, optional): Number of optimization step. Defaults to 1000.
+
+    Returns:
+        tuple[chex.ArrayTree, list[typing.Any]]: Tuple of parameters and optimization history
+    """
     opt_state = optimizer.init(params)
     history = []
 
@@ -82,21 +104,21 @@ def train_model(
 ):
     """Train the BlackBox model
 
-    ```py
+
     # The number of epochs break down
-    NUM_EPOCH = 150
+    >>> NUM_EPOCH = 150
     # Total number of iterations as 90% of data is used for training
     # 10% of the data is used for testing
-    total_iterations = 9 * NUM_EPOCH
+    >>> total_iterations = 9 * NUM_EPOCH
     # The step for optimizer if set to 8 * NUM_EPOCH (should be less than total_iterations)
-    step_for_optimizer = 8 * NUM_EPOCH
-    optimizer = get_default_optimizer(step_for_optimizer)
+    >>> step_for_optimizer = 8 * NUM_EPOCH
+    >>> optimizer = get_default_optimizer(step_for_optimizer)
     # The warmup steps for the optimizer
-    warmup_steps = 0.1 * step_for_optimizer
+    >>> warmup_steps = 0.1 * step_for_optimizer
     # The cool down steps for the optimizer
-    cool_down_steps = total_iterations - step_for_optimizer
+    >>> cool_down_steps = total_iterations - step_for_optimizer
 
-    total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
+    >>> total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
     ```
 
     Args:
@@ -167,7 +189,7 @@ def train_model(
     return model_params, opt_state, histories
 
 
-def transform_key(data: dict[typing.Sequence[str], typing.Any]):
+def transform_key(data):
     return {
         # Concanate the key by '/'
         "/".join(key): value
@@ -177,7 +199,7 @@ def transform_key(data: dict[typing.Sequence[str], typing.Any]):
 
 def clean_history_entries(
     histories: list[HistoryEntryV3],
-) -> list[dict[str, str | float]]:
+):
     clean_histories = [
         {
             "step": history.step,
@@ -207,6 +229,20 @@ def default_trainable_v3(
     NUM_EPOCH: int = 1000,
     CHECKPOINT_EVERY: int = 100,
 ):
+    """Create trainable function for `ray.tune` for hyperparameter tuning
+
+    Args:
+        pulse_sequence (PulseSequence): Pulse sequence of dataset
+        metric (LossMetric): Metric to be minimized for.
+        experiment_identifier (str): The experiment identifier
+        hamiltonian (typing.Callable | str): Ideal Hamiltonian function or name.
+        model_choice (type[nn.Module], optional): Choice of the Blackbox model. Defaults to BasicBlackBoxV2.
+        NUM_EPOCH (int, optional): Number of training epoch. Defaults to 1000.
+        CHECKPOINT_EVERY (int, optional): Checkpointing every given number. Defaults to 100.
+
+    Returns:
+        typing.Callable: Trainable function that recieve hyperparameter configutation, dataset and random key.
+    """
     from ray import train
 
     def trainable(
@@ -349,6 +385,29 @@ def hypertuner(
         "hidden_layer_2_2": 20,
     },
 ):
+    """Perform hyperparameter tuning
+
+    Args:
+        trainable (typing.Callable): Trainable function
+        train_pulse_parameters (jnp.ndarray): Training pulse parameters
+        train_unitaries (jnp.ndarray): Training ideal unitary matrix
+        train_expectation_values (jnp.ndarray): Training experiment expectation value
+        test_pulse_parameters (jnp.ndarray): Testing pulse parameters
+        test_unitaries (jnp.ndarray): Testing ideal unitary matrix
+        test_expectation_values (jnp.ndarray): Testing experiment expectation value
+        val_pulse_parameters (jnp.ndarray): Validating pulse parameters
+        val_unitaries (jnp.ndarray): Validating ideal unitary matrix
+        val_expectation_values (jnp.ndarray): Validating experiment expectation value
+        train_key (jnp.ndarray): Random key
+        metric (LossMetric): Metric to optimized for.
+        num_samples (int, optional): The number of random configuration of hyperparameter. Defaults to 100.
+        search_algo (SearchAlgo, optional): The search algorithm to be used for optimization. Defaults to SearchAlgo.HYPEROPT.
+        search_spaces (_type_, optional): Search space of hyperparameters. Defaults to { "hidden_layer_1_1": (5, 50), "hidden_layer_1_2": (5, 50), "hidden_layer_2_1": (5, 50), "hidden_layer_2_2": (5, 50), }.
+        initial_config (_type_, optional): Initial hyperparameters. Defaults to { "hidden_layer_1_1": 10, "hidden_layer_1_2": 20, "hidden_layer_2_1": 10, "hidden_layer_2_2": 20, }.
+
+    Returns:
+        _type_: Optimization result.
+    """
     from ray import tune, train
     from ray.tune.search.hyperopt import HyperOptSearch
     from ray.tune.search.optuna import OptunaSearch

@@ -1,33 +1,80 @@
 import jax
 import jax.numpy as jnp
-from numpyro import handlers
-import optax
-from alive_progress import alive_it
+from numpyro import handlers  # type: ignore
+import optax  # type: ignore
+from alive_progress import alive_it  # type: ignore
+import typing
+import jaxtyping
+import chex
 
 
-def safe_shape(a):
+def safe_shape(a: typing.Any) -> tuple[int, ...] | str:
+    """Safely get the shape of the object
+
+    Args:
+        a (typing.Any): Expect the object to be jnp.ndarray
+
+    Returns:
+        tuple[int, ...] | str: Either return the shape of `a`
+        or string representation of the type
+    """
     try:
+        assert isinstance(a, jnp.ndarray)
         return a.shape
     except AttributeError:
-        return type(a)
+        return str(type(a))
 
 
-def report_shape(a):
+def report_shape(a: jaxtyping.PyTree) -> jaxtyping.PyTree:
+    """Report the shape of pytree
+
+    Args:
+        a (jaxtyping.PyTree): The pytree to be report.
+
+    Returns:
+        jaxtyping.PyTree: The shape of pytree.
+    """
     return jax.tree.map(safe_shape, a)
 
 
 def lexpand(a: jnp.ndarray, *dimensions: int) -> jnp.ndarray:
-    """Expand tensor, adding new dimensions on left."""
+    """Expand tensor, adding new dimensions on left.
+
+    Args:
+        a (jnp.ndarray): expand the dimension on the left with given dimension arguments.
+
+    Returns:
+        jnp.ndarray: New array with shape (*dimension + a.shape)
+    """
     return jnp.broadcast_to(a, dimensions + a.shape)
 
 
-# Custom random split function
-def random_split_index(rng_key, num_samples, test_size):
+def random_split_index(
+    rng_key: jnp.ndarray, num_samples: int, test_size: int
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Create the randomly spilt of indice to two set, with one of test_size and another as the rest.
+
+    Args:
+        rng_key (jnp.ndarray): The random key
+        num_samples (int): The size of total sample size
+        test_size (int): The size of test set
+
+    Returns:
+        tuple[jnp.ndarray, jnp.ndarray]: Array of train indice and array of test indice.
+    """
     idx = jax.random.permutation(rng_key, jnp.arange(num_samples))
     return idx[test_size:], idx[:test_size]
 
 
 def _safe_mean_terms(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Safely calculate the mean of the first axis.
+
+    Args:
+        terms (jnp.ndarray): Multi axis jnp.ndarray to calculate the mean value
+
+    Returns:
+        tuple[jnp.ndarray, jnp.ndarray]: sum of all value in the first axis-averaged array, first axis-averaged array
+    """
     nonnan = jnp.isfinite(terms)
     terms = jnp.nan_to_num(terms, nan=0.0, posinf=0.0, neginf=0.0)
     loss = terms.sum(axis=0) / nonnan.sum(axis=0)
@@ -37,6 +84,15 @@ def _safe_mean_terms(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
 
 
 def _safe_mean_terms_v2(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Safely calculate the mean of the first axis.
+       This is the simplify version
+
+    Args:
+        terms (jnp.ndarray): Multi axis jnp.ndarray to calculate the mean value
+
+    Returns:
+        tuple[jnp.ndarray, jnp.ndarray]: sum of all value in the first axis-averaged array, first axis-averaged array
+    """
     nonnan = jnp.isfinite(terms)
     terms = jnp.nan_to_num(terms)
     loss = terms.sum(axis=0) / nonnan.sum(axis=0)
@@ -45,38 +101,48 @@ def _safe_mean_terms_v2(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
     return loss.sum(), loss
 
 
-def test_safe_mean_terms():
-    # Test cases
-    test_cases = [
-        jnp.array([1.0, 2.0, 3.0], dtype=jnp.float32),
-        jnp.array([1.0, jnp.nan, 3.0], dtype=jnp.float32),
-        jnp.array([jnp.inf, 2.0, -jnp.inf], dtype=jnp.float32),
-        jnp.array([jnp.nan, jnp.nan, jnp.nan], dtype=jnp.float32),  # NOTE: Fail.
-        jnp.array([1.0, 2.0, 3.0, -jnp.inf, jnp.nan], dtype=jnp.float64),
-    ]
+class AuxEntry(typing.NamedTuple):
+    """The auxillary entry returned by loss function
 
-    for i, terms in enumerate(test_cases):
-        agg_loss, loss = _safe_mean_terms(terms)
-        mask = jnp.isnan(terms) | (terms == float("-inf")) | (terms == float("inf"))
-        print(f"Test case {i + 1}:")
-        print(f"mask: {mask}")
-        print(f"Input terms: {terms}")
-        print(f"Aggregate loss: {agg_loss}")
-        print(f"Loss: {loss}\n")
+    Args:
+        terms (jnp.ndarray): _description_
+        eig (jnp.ndarray): Expected information gain
+    """
+
+    terms: jnp.ndarray
+    eig: jnp.ndarray
 
 
 def marginal_loss(
-    model,
-    marginal_guide,
-    design,
+    model: typing.Callable,
+    marginal_guide: typing.Callable,
+    design: jnp.ndarray,
     *args,
-    observation_labels,
-    target_labels,
-    num_particles,
-    evaluation=False,
-):
+    observation_labels: list[str],
+    target_labels: list[str],
+    num_particles: int,
+    evaluation: bool = False,
+) -> typing.Callable[[chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]:
+    """The marginal loss implemented following
+    https://docs.pyro.ai/en/dev/contrib.oed.html#pyro.contrib.oed.eig.marginal_eig
+
+    Args:
+        model (typing.Callable): The probabilistic model
+        marginal_guide (typing.Callable): The custom guide
+        design (jnp.ndarray): Possible designs of the experiment
+        observation_labels (list[str]): The list of string of observations
+        target_labels (list[str]): The target latent parameters to be optimized for
+        num_particles (int): The number of independent trials
+        evaluation (bool, optional): True for actual evalution of the EIG. Defaults to False.
+
+    Returns:
+        typing.Callable[ [chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry] ]: Loss function that return tuple of (1) Total loss, (2.1) Each terms without the average, (2.2) The EIG
+    """
+
     # Marginal loss
-    def loss_fn(param, key):
+    def loss_fn(
+        param: chex.ArrayTree, key: jnp.ndarray
+    ) -> tuple[jnp.ndarray, AuxEntry]:
         expanded_design = lexpand(design, num_particles)
 
         # Sample from p(y | d)
@@ -124,18 +190,30 @@ def marginal_loss(
             ).sum(axis=0)
 
         agg_loss, loss = _safe_mean_terms_v2(terms)
-        return agg_loss, {"terms": terms, "eig": loss}
+        # return agg_loss, {"terms": terms, "eig": loss}
+        return agg_loss, AuxEntry(terms=terms, eig=loss)
 
     return loss_fn
 
 
 def init_params_from_guide(
-    marginal_guide,
+    marginal_guide: typing.Callable,
     *args,
     key: jnp.ndarray,
     design: jnp.ndarray,
     num_particles: int,
-):
+) -> chex.ArrayTree:
+    """Initlalize parameters of marginal guide.
+
+    Args:
+        marginal_guide (typing.Callable): Marginal guide to be used with marginal eig
+        key (jnp.ndarray): Random Key
+        design (jnp.ndarray): Example of the designs of the experiment
+        num_particles (int): Number of independent trials
+
+    Returns:
+        chex.ArrayTree: Random parameters for marginal guide to be optimized.
+    """
     key, subkey = jax.random.split(key)
     expanded_design = lexpand(design, num_particles)
     marginal_guide_trace = handlers.trace(
@@ -152,13 +230,33 @@ def init_params_from_guide(
     return params
 
 
+class HistoryEntry(typing.NamedTuple):
+    step: int
+    loss: jnp.ndarray
+    aux: AuxEntry
+
+
 def opt_eig_ape_loss(
-    loss_fn,
-    params,
+    loss_fn: typing.Callable[
+        [chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]
+    ],
+    params: chex.ArrayTree,
     num_steps: int,
     optim: optax.GradientTransformation,
     key: jnp.ndarray,
-):
+) -> tuple[chex.ArrayTree, list[typing.Any]]:
+    """Optimize the EIG loss function.
+
+    Args:
+        loss_fn (typing.Callable[[chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]): Loss function
+        params (chex.ArrayTree): Initial parameter
+        num_steps (int): Number of optimization step
+        optim (optax.GradientTransformation): Optax Optimizer
+        key (jnp.ndarray): Random key
+
+    Returns:
+        tuple[chex.ArrayTree, list[typing.Any]]: Optimized parameters, and optimization history.
+    """
     # Initialize the optimizer
     opt_state = optim.init(params)
     # jit the loss function
@@ -180,8 +278,8 @@ def opt_eig_ape_loss(
 
 def marginal_eig(
     key: jnp.ndarray,
-    model,
-    marginal_guide,
+    model: typing.Callable,
+    marginal_guide: typing.Callable,
     design: jnp.ndarray,
     *args,
     optimizer: optax.GradientTransformation,
@@ -190,7 +288,24 @@ def marginal_eig(
     target_labels: list[str],
     num_particles: int,
     final_num_particles: int | None = None,
-):
+) -> tuple[jnp.ndarray, dict[str, typing.Any]]:
+    """Optimize for marginal EIG
+
+    Args:
+        key (jnp.ndarray): Random key
+        model (typing.Callable): Probabilistic model of the experiment
+        marginal_guide (typing.Callable): The marginal guide of the experiment
+        design (jnp.ndarray): Possible designs of the experiment
+        optimizer (optax.GradientTransformation): Optax optimizer
+        num_optimization_steps (int): Number of the optimization step
+        observation_labels (list[str]): The list of string of observations
+        target_labels (list[str]): The target latent parameters to be optimized for
+        num_particles (int): The number of independent trials
+        final_num_particles (int | None, optional): Final independent trials to calculate marginal EIG. Defaults to None.
+
+    Returns:
+        tuple[jnp.ndarray, dict[str, typing.Any]]: EIG, and tuple of optimized parameters and optimization history.
+    """
     # NOTE: In final evalution, if final_num_particles != num_particles,
     # the code will error because we train params with num_particles
     # the shape will mismatch
@@ -234,7 +349,7 @@ def marginal_eig(
         evaluation=True,
     )(params, subkey)
 
-    return aux["eig"], {
+    return aux.eig, {
         "params": params,
         "history": history,
     }

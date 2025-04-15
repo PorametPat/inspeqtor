@@ -25,12 +25,21 @@ from .physics import (
     Z,
 )
 from .pulse import PulseSequence
-from .typing import ensure_wo_type, Wos
+from .typing import Wos
 
 jax.config.update("jax_enable_x64", True)
 
 
 def Wo_2_level_v3(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
+    """This is a function that parametrized Hermitian matrix
+
+    Args:
+        U (jnp.ndarray): Parameters for unitary operator with shape of (..., 3)
+        D (jnp.ndarray): Parameters for diagonal matrix with shape if (..., 2)
+
+    Returns:
+        jnp.ndarray: Hermitian matrix of shape (..., 2, 2)
+    """
     # parametrize eigenvector matrix being unitary as in https://en.wikipedia.org/wiki/Unitary_matrix
 
     theta = U[..., 0]
@@ -158,9 +167,24 @@ class BasicBlackBoxV2(nn.Module):
 
 
 def make_basic_blackbox_model(
-    unitary_activation_fn: typing.Callable = lambda x: 2 * jnp.pi * nn.hard_sigmoid(x),
-    diagonal_activation_fn: typing.Callable = lambda x: (2 * nn.hard_sigmoid(x)) - 1,
-):
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
+    * jnp.pi
+    * nn.hard_sigmoid(x),
+    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        2 * nn.hard_sigmoid(x)
+    )
+    - 1,
+) -> type[nn.Module]:
+    """Function to create Blackbox constructor with custom activation functions for unitary and diagonal output
+
+    Args:
+        unitary_activation_fn (_type_, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
+        diagonal_activation_fn (_type_, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
+
+    Returns:
+        type[nn.Module]: Constructor of the Blackbox model
+    """
+
     class BlackBox(nn.Module):
         hidden_sizes_1: typing.Sequence[int] = (20, 10)
         hidden_sizes_2: typing.Sequence[int] = (20, 10)
@@ -205,12 +229,6 @@ def make_basic_blackbox_model(
 
                 Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
 
-                # Wos_params[op] = {
-                #     "U": unitary_params,
-                #     "D": diag_params,
-                # }
-
-            # return Wos_params
             return Wos
 
     return BlackBox
@@ -269,6 +287,16 @@ def mse(x1: jnp.ndarray, x2: jnp.ndarray):
 def AEF_loss(
     y_true: jnp.ndarray, y_pred: jnp.ndarray, target_unitary: jnp.ndarray
 ) -> jnp.ndarray:
+    """Calculate the absolute error between AGF with respect to given unitary.
+
+    Args:
+        y_true (jnp.ndarray): Experimental expectation values
+        y_pred (jnp.ndarray): Predicted expectation values
+        target_unitary (jnp.ndarray): Target unitary matrix
+
+    Returns:
+        jnp.ndarray: loss value
+    """
     coefficients = direct_AFG_estimation_coefficients(target_unitary)
 
     # TODO: Should be squared or absolute value?
@@ -282,7 +310,17 @@ def WAEE_loss(
     expectation_values_true: jnp.ndarray,
     expectation_values_pred: jnp.ndarray,
     target_unitary: jnp.ndarray,
-):
+) -> jnp.ndarray:
+    """Weighted absolute error of expectation values
+
+    Args:
+        expectation_values_true (jnp.ndarray): Experimental expectation values
+        expectation_values_pred (jnp.ndarray): Predicted expectation values
+        target_unitary (jnp.ndarray): Unitary used to calculate weight
+
+    Returns:
+        jnp.ndarray: Loss value
+    """
     coefficients = direct_AFG_estimation_coefficients(target_unitary)
     # The absolute difference between the expectation values
     diff = jnp.abs(expectation_values_true - expectation_values_pred)
@@ -293,15 +331,24 @@ def WAEE_loss(
 def calculate_Pauli_AGF(
     Wos: Wos,
 ) -> dict[str, jnp.ndarray]:
+    """Calculate AGF of Wo with respect to Pauli observable
+
+    Args:
+        Wos (Wos): Wos operator
+
+    Returns:
+        dict[str, jnp.ndarray]: The AGF in dict form
+    """
     AGF_paulis: dict[str, jnp.ndarray] = {}
     # assert isinstance(Wo_params, dict)
     # Calculate the AGF between Wo_model and the Pauli
-    Wos = ensure_wo_type(Wos)
+    # Wos = ensure_wo_type(Wos)
     for pauli_str, pauli_op in zip(["X", "Y", "Z"], [X, Y, Z]):
         # Wo = Wo_2_level_v3(U=Wo_params[pauli_str]["U"], D=Wo_params[pauli_str]["D"])
         # evaluate the fidleity to the Pauli operator
         fidelity = avg_gate_fidelity_from_superop(
-            to_superop(Wos[pauli_str]), to_superop(pauli_op)
+            to_superop(Wos[pauli_str]),  # type: ignore
+            to_superop(pauli_op),
         )
 
         AGF_paulis[pauli_str] = fidelity
@@ -314,17 +361,25 @@ def get_predict_expectation_value(
     unitaries: jnp.ndarray,
     evaluate_expectation_values: list[ExpectationValue],
 ) -> jnp.ndarray:
+    """Calculate expectation values for given evaluate_expectation_values
+
+    Args:
+        Wos (Wos): Wos operator
+        unitaries (jnp.ndarray): Unitary operators
+        evaluate_expectation_values (list[ExpectationValue]): Order of expectation value to be calculated
+
+    Returns:
+        jnp.ndarray: Expectation value with order as given with `evaluate_expectation_values`
+    """
     predict_expectation_values = jnp.zeros(
         tuple(unitaries.shape[:-2]) + (len(evaluate_expectation_values),)
     )
-
-    Wos = ensure_wo_type(Wos)
 
     # Calculate expectation values for all cases
     for idx, exp_case in enumerate(evaluate_expectation_values):
         batch_expectaion_values = calculate_exp(
             unitaries,
-            Wos[exp_case.observable],
+            Wos[exp_case.observable],  # type: ignore
             exp_case.initial_density_matrix,
         )
         predict_expectation_values = predict_expectation_values.at[..., idx].set(
@@ -397,7 +452,17 @@ def calculate_metric(
     unitaries: jnp.ndarray,
     expectation_values: jnp.ndarray,
     predicted_expectation_values: jnp.ndarray,
-):
+) -> dict[str, jnp.ndarray]:
+    """Calculate MSEE, AEF, WAEF at once.
+
+    Args:
+        unitaries (jnp.ndarray): Ideal unitary operator
+        expectation_values (jnp.ndarray): Experiment expectation value
+        predicted_expectation_values (jnp.ndarray): Predicted expectation value
+
+    Returns:
+        dict[str, jnp.ndarray]: dict of metrics
+    """
     # Calculate the MSE loss
     MSEE = jax.vmap(mse, in_axes=(0, 0))(
         expectation_values, predicted_expectation_values
@@ -428,7 +493,21 @@ def loss_fn(
     model: nn.Module,
     loss_metric: LossMetric,
     model_kwargs: dict = {},
-):
+) -> tuple[jnp.ndarray, dict[str, jnp.ndarray]]:
+    """Calculate losses and return the specified one as the first element in the tuple
+
+    Args:
+        params (VariableDict): Model parameters
+        pulse_parameters (jnp.ndarray): Control parameters
+        unitaries (jnp.ndarray): Ideal unitary
+        expectation_values (jnp.ndarray): Experimental expectation value
+        model (nn.Module): Model instance
+        loss_metric (LossMetric): The choice of loss to be optimized
+        model_kwargs (dict, optional): Keyword arguments for the model. Defaults to {}.
+
+    Returns:
+        tuple[jnp.ndarray, dict[str, jnp.ndarray]]: loss, and all metrices
+    """
     # Calculate the metrics
     metrics = calculate_metrics(
         model=model,
@@ -450,10 +529,17 @@ def loss_fn(
 
 @dataclass
 class ModelState:
+    """Dataclass for storing model configurations and parameters."""
+
     model_config: dict
     model_params: VariableDict
 
     def save(self, path: pathlib.Path | str):
+        """Save model to the given folder
+
+        Args:
+            path (pathlib.Path | str): Path to the folder, will be created if not existed.
+        """
         # turn the dataclass into a dictionary
         model_params = jax.tree.map(lambda x: x.tolist(), self.model_params)
 
@@ -470,6 +556,14 @@ class ModelState:
 
     @classmethod
     def load(cls, path: pathlib.Path | str):
+        """Load model and initialize instance of ModelState from given folder.
+
+        Args:
+            path (pathlib.Path | str): Path of folder to be read model data.
+
+        Returns:
+            ModelState: Intance of ModelState
+        """
         if isinstance(path, str):
             path = pathlib.Path(path)
 
@@ -495,11 +589,18 @@ class ModelState:
 
 @dataclass
 class DataConfig:
+    """Config for pulse sequence and Hamiltonian used for Whitebox"""
+
     EXPERIMENT_IDENTIFIER: str
     hamiltonian: str
     pulse_sequence: dict
 
     def to_file(self, path: typing.Union[str, pathlib.Path]):
+        """Save the data config to file.
+
+        Args:
+            path (typing.Union[str, pathlib.Path]): Path to the folder, will be created if not existed.
+        """
         if isinstance(path, str):
             path = pathlib.Path(path)
 
@@ -516,6 +617,14 @@ class DataConfig:
 
     @classmethod
     def from_file(cls, path: typing.Union[str, pathlib.Path]):
+        """Load model and initialize instance of DataConfig from given folder.
+
+        Args:
+            path (typing.Union[str, pathlib.Path]): Path to the folder, will be created if not existed.
+
+        Returns:
+            DataConfig: Intance of DataConfig read from folder.
+        """
         if isinstance(path, str):
             path = pathlib.Path(path)
         with open(path / "data_config.json", "r") as f:
@@ -536,7 +645,22 @@ def save_model(
     model_params: VariableDict,
     history: typing.Sequence[dict[typing.Any, typing.Any]] | None = None,
     with_auto_datetime: bool = True,
-):
+) -> pathlib.Path:
+    """Function to save training result, including model config, training history, data config.
+
+    Args:
+        path (pathlib.Path | str): Path to folder to save data
+        experiment_identifier (str): Experiment identifier
+        pulse_sequence (PulseSequence): Pulse sequence used in the training
+        hamiltonian (typing.Union[str, typing.Callable]): Ideal Hamiltonian used for Whitebox
+        model_config (dict): Configuration of model, used for model initialization
+        model_params (VariableDict): Parameters of model.
+        history (typing.Sequence[dict[typing.Any, typing.Any]] | None, optional): Training history. Defaults to None.
+        with_auto_datetime (bool, optional): True to automatically append datetime as a parent folder. Defaults to True.
+
+    Returns:
+        pathlib.Path: Path to the saved data.
+    """
     if not isinstance(path, pathlib.Path):
         path = pathlib.Path(path)
 
@@ -571,6 +695,15 @@ def save_model(
 
 
 def load_model(path: pathlib.Path | str, skip_history: bool = False):
+    """Load model state, training history, data config from given folder path
+
+    Args:
+        path (pathlib.Path | str): Path to the folder.
+        skip_history (bool, optional): True to skip reading the history. Defaults to False.
+
+    Returns:
+        (ModelState, pd.DataFrame, DataConfig): tuple of Intance of `ModelState`, `pd.DataFrame`, and `DataConfig`.
+    """
     if isinstance(path, str):
         path = pathlib.Path(path)
     model_state = ModelState.load(path / "model_state")
