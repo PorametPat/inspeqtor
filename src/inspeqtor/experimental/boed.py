@@ -140,9 +140,7 @@ def marginal_loss(
     """
 
     # Marginal loss
-    def loss_fn(
-        param: chex.ArrayTree, key: jnp.ndarray
-    ) -> tuple[jnp.ndarray, AuxEntry]:
+    def loss_fn(param, key: jnp.ndarray) -> tuple[jnp.ndarray, AuxEntry]:
         expanded_design = lexpand(design, num_particles)
 
         # Sample from p(y | d)

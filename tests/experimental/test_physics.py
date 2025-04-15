@@ -6,10 +6,7 @@ from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
 import qiskit.quantum_info as qi  # type: ignore
 from forest.benchmarking import operator_tools as ot  # type: ignore
 import inspeqtor.experimental as sq
-from inspeqtor.external import (
-    qiskit as qk, 
-    benchmarking as bm
-)
+from inspeqtor.external import qiskit as qk, benchmarking as bm
 import pennylane as qml  # type: ignore
 from typing import Callable
 import numpy as np
@@ -255,7 +252,7 @@ def test_run():
     assert unitaries.shape == (batch_size, pulse_sequence.pulse_length_dt, 2, 2)
 
 
-@pytest.mark.skip(reason='4 / 320 mismatch somehow')
+@pytest.mark.skip(reason="4 / 320 mismatch somehow")
 def test_crosscheck_pennylane_difflax():
     qubit_info = sq.predefined.get_mock_qubit_information()
 
