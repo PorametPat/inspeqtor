@@ -15,7 +15,8 @@ import chex
 
 from .pulse import PulseSequence
 from .utils import dataloader, create_step
-from .model import BasicBlackBoxV2, loss_fn, LossMetric, save_model, load_model
+from .model import loss_fn, LossMetric, save_model, load_model
+from ray.tune.search.sample import Domain
 
 
 def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
@@ -104,22 +105,19 @@ def train_model(
 ):
     """Train the BlackBox model
 
-
-    # The number of epochs break down
-    >>> NUM_EPOCH = 150
-    # Total number of iterations as 90% of data is used for training
-    # 10% of the data is used for testing
-    >>> total_iterations = 9 * NUM_EPOCH
-    # The step for optimizer if set to 8 * NUM_EPOCH (should be less than total_iterations)
-    >>> step_for_optimizer = 8 * NUM_EPOCH
-    >>> optimizer = get_default_optimizer(step_for_optimizer)
-    # The warmup steps for the optimizer
-    >>> warmup_steps = 0.1 * step_for_optimizer
-    # The cool down steps for the optimizer
-    >>> cool_down_steps = total_iterations - step_for_optimizer
-
-    >>> total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
-    ```
+    >>> # The number of epochs break down
+    ... NUM_EPOCH = 150
+    ... # Total number of iterations as 90% of data is used for training
+    ... # 10% of the data is used for testing
+    ... total_iterations = 9 * NUM_EPOCH
+    ... # The step for optimizer if set to 8 * NUM_EPOCH (should be less than total_iterations)
+    ... step_for_optimizer = 8 * NUM_EPOCH
+    ... optimizer = get_default_optimizer(step_for_optimizer)
+    ... # The warmup steps for the optimizer
+    ... warmup_steps = 0.1 * step_for_optimizer
+    ... # The cool down steps for the optimizer
+    ... cool_down_steps = total_iterations - step_for_optimizer
+    ... total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
 
     Args:
         key (jnp.ndarray): Random key
@@ -220,12 +218,15 @@ def clean_history_entries(
     return clean_histories
 
 
-def default_trainable_v3(
+def default_trainable_v4(
     pulse_sequence: PulseSequence,
     metric: LossMetric,
     experiment_identifier: str,
     hamiltonian: typing.Callable | str,
-    model_choice: type[nn.Module] = BasicBlackBoxV2,
+    construct_model_fn: typing.Callable[
+        [dict[str, int | list[int]]], tuple[nn.Module, dict[str, typing.Any]]
+    ],
+    calculate_metrics_fn: typing.Callable,
     NUM_EPOCH: int = 1000,
     CHECKPOINT_EVERY: int = 100,
 ):
@@ -246,33 +247,22 @@ def default_trainable_v3(
     from ray import train
 
     def trainable(
-        config: dict[str, int],
+        config: dict[str, int | list[int]],
         train_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         val_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         test_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         train_key: jnp.ndarray,
     ):
-        HIDDEN_LAYER_1_1 = config["hidden_layer_1_1"]
-        HIDDEN_LAYER_1_2 = config["hidden_layer_1_2"]
-        HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
-        HIDDEN_LAYER_2_2 = config["hidden_layer_2_2"]
-
-        HIDDEN_LAYER_1 = [i for i in [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2] if i != 0]
-        HIDDEN_LAYER_2 = [i for i in [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2] if i != 0]
-
-        model_config: dict[str, list[int]] = {
-            "hidden_sizes_1": HIDDEN_LAYER_1,
-            "hidden_sizes_2": HIDDEN_LAYER_2,
-        }
-
         optimizer = get_default_optimizer(8 * NUM_EPOCH)
 
-        model = model_choice(
-            hidden_sizes_1=model_config["hidden_sizes_1"],
-            hidden_sizes_2=model_config["hidden_sizes_2"],
-        )
+        model, model_config = construct_model_fn(config)
 
-        partial_loss_fn = partial(loss_fn, model=model, loss_metric=metric)
+        partial_loss_fn = partial(
+            loss_fn,
+            model=model,
+            loss_metric=metric,
+            calculate_metrics_fn=calculate_metrics_fn,
+        )
 
         def prepare_report(history: list[HistoryEntryV3]):
             metric_types = [LossMetric.MSEE, LossMetric.AEF, LossMetric.WAEE]
@@ -352,6 +342,10 @@ def default_trainable_v3(
     return trainable
 
 
+def sample_from_search_space(search_space: typing.Mapping[str, Domain]):
+    return {key: value.sample() for key, value in search_space.items()}
+
+
 class SearchAlgo(StrEnum):
     HYPEROPT = "hyperopt"
     OPTUNA = "optuna"
@@ -370,20 +364,9 @@ def hypertuner(
     val_expectation_values: jnp.ndarray,
     train_key: jnp.ndarray,
     metric: LossMetric,
+    search_space: typing.Mapping[str, Domain],
     num_samples: int = 100,
     search_algo: SearchAlgo = SearchAlgo.HYPEROPT,
-    search_spaces: dict[str, tuple[int, int]] = {
-        "hidden_layer_1_1": (5, 50),
-        "hidden_layer_1_2": (5, 50),
-        "hidden_layer_2_1": (5, 50),
-        "hidden_layer_2_2": (5, 50),
-    },
-    initial_config: dict[str, int] = {
-        "hidden_layer_1_1": 10,
-        "hidden_layer_1_2": 20,
-        "hidden_layer_2_1": 10,
-        "hidden_layer_2_2": 20,
-    },
 ):
     """Perform hyperparameter tuning
 
@@ -414,28 +397,26 @@ def hypertuner(
     from ray.tune.search import Searcher
 
     # Construct the search space
-    search_space = {}
-    for key, (lower, upper) in search_spaces.items():
-        search_space[key] = tune.randint(lower, upper)
+    # search_space = {}
+    # for key, (lower, upper) in search_spaces.items():
+    #     search_space[key] = tune.randint(lower, upper)
 
-    current_best_params = [initial_config]
+    current_best_params = [{key: value.sample() for key, value in search_space.items()}]
 
-    # Prepend 'test/' to the metric
+    # Prepend 'val/' to the metric
     prepended_metric = f"val/{metric}"
 
     if search_algo == SearchAlgo.HYPEROPT:
         search_algo_instance: Searcher = HyperOptSearch(
-            metric=prepended_metric, mode="min", points_to_evaluate=current_best_params
+            metric=prepended_metric,
+            mode="min",
+            points_to_evaluate=current_best_params,
         )
     elif search_algo == SearchAlgo.OPTUNA:
-        search_algo_instance = OptunaSearch(metric=prepended_metric, mode="min")
-
-    # run_config = train.RunConfig(
-    #     name="tune_experiment",
-    #     checkpoint_config=train.CheckpointConfig(
-    #         num_to_keep=10,
-    #     ),
-    # )
+        search_algo_instance = OptunaSearch(
+            metric=prepended_metric,
+            mode="min",
+        )
 
     run_config = tune.RunConfig(
         name="tune_experiment",
@@ -470,7 +451,7 @@ def hypertuner(
             mode="min",
             num_samples=num_samples,
         ),
-        param_space=search_space,
+        # param_space=search_space, # type: ignore
         run_config=run_config,
     )
 
@@ -487,3 +468,21 @@ def get_best_hypertuner_results(results, metric: LossMetric, loop: str = "val"):
     ).checkpoint.as_directory() as checkpoint_dir:
         model_state, hist, data_config = load_model(checkpoint_dir, skip_history=False)
     return model_state, hist, data_config
+
+
+def construct_BasicBlackBoxModel(config, model_constructor: type[nn.Module]):
+    HIDDEN_LAYER_1_1 = config["hidden_layer_1_1"]
+    HIDDEN_LAYER_1_2 = config["hidden_layer_1_2"]
+    HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
+    HIDDEN_LAYER_2_2 = config["hidden_layer_2_2"]
+
+    HIDDEN_LAYER_1 = [i for i in [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2] if i != 0]
+    HIDDEN_LAYER_2 = [i for i in [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2] if i != 0]
+
+    model_config = {
+        "hidden_sizes_1": HIDDEN_LAYER_1,
+        "hidden_sizes_2": HIDDEN_LAYER_2,
+    }
+
+    model = model_constructor(**model_config)
+    return model, model_config
