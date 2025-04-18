@@ -493,6 +493,7 @@ def loss_fn(
     model: nn.Module,
     loss_metric: LossMetric,
     model_kwargs: dict = {},
+    calculate_metrics_fn: typing.Callable = calculate_metrics,
 ) -> tuple[jnp.ndarray, dict[str, jnp.ndarray]]:
     """Calculate losses and return the specified one as the first element in the tuple
 
@@ -504,12 +505,13 @@ def loss_fn(
         model (nn.Module): Model instance
         loss_metric (LossMetric): The choice of loss to be optimized
         model_kwargs (dict, optional): Keyword arguments for the model. Defaults to {}.
+        calculate_metrics_fn:
 
     Returns:
         tuple[jnp.ndarray, dict[str, jnp.ndarray]]: loss, and all metrices
     """
     # Calculate the metrics
-    metrics = calculate_metrics(
+    metrics = calculate_metrics_fn(
         model=model,
         model_params=params,
         pulse_parameters=pulse_parameters,
