@@ -11,4 +11,5 @@ from . import (
     decorator as decorator,
     boed as boed,
     visualization as visualization,
+    probabilistic as probabilistic,
 )

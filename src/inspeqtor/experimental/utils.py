@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from .pulse import PulseSequence
 from .data import ExperimentData, QubitInformation
 from .model import mse
-from .constant import Z, default_expectation_values_order
+from .constant import Z, default_expectation_values_order, plus_projectors
 from .decorator import warn_not_tested_function
 from .typing import HamiltonianArgs
 from .physics import calculate_exp
@@ -387,3 +387,70 @@ class SyntheticDataModel(typing.NamedTuple):
     total_hamiltonian: typing.Callable[..., jnp.ndarray]
     solver: typing.Callable[..., jnp.ndarray]
     quantum_device: typing.Callable[..., jnp.ndarray] | None
+
+
+def calculate_shots_expectation_value(
+    key: jnp.ndarray,
+    initial_state: jnp.ndarray,
+    unitary: jnp.ndarray,
+    plus_projector: jnp.ndarray,
+    shots: int,
+) -> jnp.ndarray:
+    """Calculate finite-shots estimate of expectation value
+
+    Args:
+        key (jnp.ndarray): Random key
+        initial_state (jnp.ndarray): Inital state
+        unitary (jnp.ndarray): Unitary operator
+        plus_projector (jnp.ndarray): The eigenvector corresponded to +1 eigenvalue of Pauli observable.
+        shots (int): Number of shot to be used in estimation of expectation value
+
+    Returns:
+        jnp.ndarray: Finite-shot estimate expectation value
+    """
+    prob = jnp.trace(unitary @ initial_state @ unitary.conj().T @ plus_projector).real
+
+    return jax.random.choice(
+        key, jnp.array([1, -1]), shape=(shots,), p=jnp.array([prob, 1 - prob])
+    ).mean()
+
+
+def shot_quantum_device(
+    control_parameters: jnp.ndarray,
+    key: jnp.ndarray,
+    solver: typing.Callable[[jnp.ndarray], jnp.ndarray],
+    SHOTS: int,
+) -> jnp.ndarray:
+    """This is the shot estimate expectation value quantum device
+
+    Args:
+        control_parameters (jnp.ndarray): The control parameter to be feed to simlulator
+        key (jnp.ndarray): Random key
+        solver (typing.Callable[[jnp.ndarray], jnp.ndarray]): The ODE solver for propagator
+        SHOTS (int): The number of shots used to estimate expectation values
+
+    Returns:
+        jnp.ndarray: The expectation value of shape (control_parameters.shape[0], 18)
+    """
+
+    expectation_values = jnp.zeros((control_parameters.shape[0], 18))
+    unitaries = jax.vmap(solver)(control_parameters)[:, -1, :, :]
+
+    for idx, exp in enumerate(default_expectation_values_order):
+        key, sample_key = jax.random.split(key)
+        sample_keys = jax.random.split(sample_key, num=unitaries.shape[0])
+
+        expectation_value = jax.vmap(
+            calculate_shots_expectation_value,
+            in_axes=(0, None, 0, None, None),
+        )(
+            sample_keys,
+            exp.initial_density_matrix,
+            unitaries,
+            plus_projectors[exp.observable],
+            SHOTS,
+        )
+
+        expectation_values = expectation_values.at[..., idx].set(expectation_value)
+
+    return expectation_values

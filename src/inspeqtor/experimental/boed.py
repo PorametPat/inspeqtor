@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 from numpyro import handlers  # type: ignore
+
 import optax  # type: ignore
 from alive_progress import alive_it  # type: ignore
 import typing

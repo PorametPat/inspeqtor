@@ -1030,6 +1030,22 @@ wheels = [
 ]
 
 [[package]]
+name = "funsor"
+version = "0.4.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "makefun" },
+    { name = "multipledispatch" },
+    { name = "numpy" },
+    { name = "opt-einsum" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/5f/41b2584c91c611dfa109cd88356c9ff3d09da2768563b0d0f9ac4b5a7db8/funsor-0.4.5.tar.gz", hash = "sha256:08b77e5de04d7cf5213b4013a08a2e756ab52572a48bef6774a0c70664d4fe31", size = 222913 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/92/06ba28f04d94b758ab9066e916f12198f17b8b0a85f248e6439a43993233/funsor-0.4.5-py3-none-any.whl", hash = "sha256:b99a2b5ddb26a93b5e9d28b82dbc8f36efc686c37da2f71086bfa5bc7f45726d", size = 174915 },
+]
+
+[[package]]
 name = "furo"
 version = "2024.8.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1449,6 +1465,7 @@ dependencies = [
     { name = "diffrax" },
     { name = "flax" },
     { name = "forest-benchmarking" },
+    { name = "funsor" },
     { name = "graphviz" },
     { name = "hyperopt" },
     { name = "jax" },
@@ -1495,6 +1512,7 @@ requires-dist = [
     { name = "diffrax", specifier = ">=0.6.0" },
     { name = "flax", specifier = ">=0.10.2" },
     { name = "forest-benchmarking", specifier = ">=0.9.0" },
+    { name = "funsor", specifier = ">=0.4.5" },
     { name = "graphviz", specifier = ">=0.20.3" },
     { name = "hyperopt", specifier = ">=0.2.7" },
     { name = "jax", specifier = ">=0.4.35" },
@@ -1883,6 +1901,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f9/c6/a8b4e4bc6b5a11c7b610083243505d6b693600f2a579b383f292776b1b8e/lmfit-1.3.3.tar.gz", hash = "sha256:73321e6b881f2f686235721a7dfc02af6bb0f030a25efeb66638f62b1c6053a1", size = 632645 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/e1/d5aeb89530550c7e797d3528225fa31012490e79c9df5cf72a0f07cc66d3/lmfit-1.3.3-py3-none-any.whl", hash = "sha256:a9e9ec7d0d0ec962cc6c078ad1ec6c8311d3ac0e5f0947a00a91f5509dacc2b2", size = 100241 },
+]
+
+[[package]]
+name = "makefun"
+version = "1.15.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6f/00/62966769824620717a3c2d76b1d442489648398b599bdcd490af13bff101/makefun-1.15.6.tar.gz", hash = "sha256:26bc63442a6182fb75efed8b51741dd2d1db2f176bec8c64e20a586256b8f149", size = 72583 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/a1/3e145759e776c8866488a71270c399bf7c4e554551ac2e247aa0a18a0596/makefun-1.15.6-py2.py3-none-any.whl", hash = "sha256:e69b870f0bb60304765b1e3db576aaecf2f9b3e5105afe8cfeff8f2afe6ad067", size = 22946 },
 ]
 
 [[package]]

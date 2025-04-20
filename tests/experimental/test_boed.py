@@ -1,5 +1,7 @@
 import jax.numpy as jnp
-from inspeqtor.experimental.boed import _safe_mean_terms
+from inspeqtor.experimental.boed import (
+    _safe_mean_terms,
+)
 
 
 def test_safe_mean_terms():

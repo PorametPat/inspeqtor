@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
+from matplotlib.axes import Axes
+import pandas as pd
+import numpy as np
 from .constant import default_expectation_values_order
 
 
@@ -58,3 +61,35 @@ def plot_expectation_values(
 
     fig.tight_layout()
     return fig, axes
+
+
+def plot_loss_with_moving_average(
+    x: jnp.ndarray,
+    y: jnp.ndarray,
+    ax: Axes,
+    window: int = 50,
+    annotate_at: list[int] = [2000, 4000, 6000, 8000, 10000],
+    **kwargs,
+):
+    moving_average = pd.Series(np.asarray(y)).rolling(window=window).mean()
+
+    ax.plot(
+        x,
+        moving_average,
+        **kwargs,
+    )
+
+    # Annotate the loss values every 1000 iterations
+    for idx in annotate_at:
+        i = idx - 1
+        loss_value = y[i]
+        ax.annotate(
+            f"{loss_value:.2f}",
+            xy=(x[i].item(), y[i].item()),
+            xytext=(-10, 10),  # 10 points vertical offset
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+        )
+
+    return ax
