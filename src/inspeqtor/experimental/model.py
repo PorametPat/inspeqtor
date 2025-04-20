@@ -720,3 +720,156 @@ def load_model(path: pathlib.Path | str, skip_history: bool = False):
         hist_df,
         data_config,
     )
+
+
+def unitary(params: jnp.ndarray) -> jnp.ndarray:
+    """Create unitary matrix from parameters
+
+    Args:
+        params (jnp.ndarray): Parameters parametrize the unitary matrix
+
+    Returns:
+        jnp.ndarray: Unitary matrix of shape (..., 2, 2)
+
+    """
+
+    theta = params[..., 0]
+    alpha = params[..., 1]
+    beta = params[..., 2]
+
+    q_00 = jnp.exp(1j * alpha) * jnp.cos(theta)
+    q_01 = jnp.exp(1j * beta) * jnp.sin(theta)
+    q_10 = -jnp.exp(-1j * beta) * jnp.sin(theta)
+    q_11 = jnp.exp(-1j * alpha) * jnp.cos(theta)
+
+    Q = jnp.zeros(params.shape[:-1] + (2, 2), dtype=jnp.complex_)
+    Q = Q.at[..., 0, 0].set(q_00)
+    Q = Q.at[..., 0, 1].set(q_01)
+    Q = Q.at[..., 1, 0].set(q_10)
+    Q = Q.at[..., 1, 1].set(q_11)
+
+    return Q
+
+
+class UnitaryModel(nn.Module):
+    # feature_size: int
+    hidden_sizes: list[int]
+
+    NUM_UNITARY_PARAMS: int = 3
+
+    @nn.compact
+    def __call__(self, x: jnp.ndarray):
+        # Apply a dense layer for each hidden size
+        # x = nn.Dense(features=self.feature_size)(x)
+        # x = nn.relu(x)
+
+        for hidden_size in self.hidden_sizes:
+            x = nn.Dense(features=hidden_size)(x)
+            x = nn.relu(x)
+
+        # For the unitary part, we use a dense layer with 3 features
+        x = nn.Dense(features=self.NUM_UNITARY_PARAMS)(x)
+        # Apply sigmoid to this layer
+        x = 2 * jnp.pi * nn.hard_sigmoid(x)
+
+        return x
+
+
+def calculate_metrics_v2(
+    # The model to be used for prediction
+    model: UnitaryModel,
+    model_params: VariableDict,
+    # Input data to the model
+    pulse_parameters: jnp.ndarray,
+    unitaries: jnp.ndarray,
+    # Experimental data
+    expectation_values: jnp.ndarray,
+    # model keyword arguments
+    model_kwargs: dict = {},
+):
+    """Caculate for unitary-based Blackbox model
+
+    Args:
+        model (sq.model.nn.Module): The model to be used for prediction
+        model_params (sq.model.VariableDict): The model parameters
+        pulse_parameters (jnp.ndarray): The pulse parameters
+        unitaries (jnp.ndarray): Ideal unitaries
+        expectation_values (jnp.ndarray): Experimental expectation values
+        model_kwargs (dict): Model keyword arguments
+
+    Returns:
+        _type_: _description_
+    """
+
+    # Predict Unitary parameters
+    unitary_params = model.apply(model_params, pulse_parameters, **model_kwargs)
+
+    U = unitary(unitary_params)  # type: ignore
+
+    predicted_expvals = get_predict_expectation_value(
+        {"X": X, "Y": Y, "Z": Z},
+        U,
+        default_expectation_values_order,
+    )
+
+    # Calculate the metrics
+    metrics = calculate_metric(
+        unitaries=unitaries,
+        expectation_values=expectation_values,
+        predicted_expectation_values=predicted_expvals,
+    )
+
+    return metrics
+
+
+def construct_unitary_model_from_config(
+    config: dict[str, int],
+) -> tuple[nn.Module, dict[str, int | list[int]]]:
+    """Construct Unitary-based model from the config
+
+    Args:
+        config (dict[str, int]): Config of the model
+
+    Returns:
+        tuple[nn.Module, dict[str, int | list[int]]]: Unitary-based model
+    """
+
+    model_config: dict[str, int | list[int]] = {
+        "hidden_sizes": [config["hidden_size_1"], config["hidden_size_2"]],
+    }
+
+    return (
+        UnitaryModel(
+            hidden_sizes=[config["hidden_size_1"], config["hidden_size_2"]],
+        ),
+        model_config,
+    )
+
+
+def construct_wo_model_from_config(
+    config: dict[str, int], model_constructor: type[nn.Module]
+):
+    """Construct Wo-based model from config
+
+    Args:
+        config (dict[str, int]): Config of the model
+        model_constructor (type[nn.Module]): Model constructor of the Wo-based model
+
+    Returns:
+        tuple[nn.Module, dict[str, int | list[int]]]: Wo-based model
+    """
+    HIDDEN_LAYER_1_1 = config["hidden_layer_1_1"]
+    HIDDEN_LAYER_1_2 = config["hidden_layer_1_2"]
+    HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
+    HIDDEN_LAYER_2_2 = config["hidden_layer_2_2"]
+
+    HIDDEN_LAYER_1 = [i for i in [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2] if i != 0]
+    HIDDEN_LAYER_2 = [i for i in [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2] if i != 0]
+
+    model_config = {
+        "hidden_sizes_1": HIDDEN_LAYER_1,
+        "hidden_sizes_2": HIDDEN_LAYER_2,
+    }
+
+    model = model_constructor(**model_config)
+    return model, model_config

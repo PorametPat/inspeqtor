@@ -224,7 +224,7 @@ def default_trainable_v4(
     experiment_identifier: str,
     hamiltonian: typing.Callable | str,
     construct_model_fn: typing.Callable[
-        [dict[str, int | list[int]]], tuple[nn.Module, dict[str, typing.Any]]
+        [dict[str, int]], tuple[nn.Module, dict[str, typing.Any]]
     ],
     calculate_metrics_fn: typing.Callable,
     NUM_EPOCH: int = 1000,
@@ -247,7 +247,7 @@ def default_trainable_v4(
     from ray import train
 
     def trainable(
-        config: dict[str, int | list[int]],
+        config: dict[str, int],
         train_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         val_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         test_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
@@ -451,7 +451,7 @@ def hypertuner(
             mode="min",
             num_samples=num_samples,
         ),
-        # param_space=search_space, # type: ignore
+        param_space=search_space,  # type: ignore
         run_config=run_config,
     )
 
@@ -468,21 +468,3 @@ def get_best_hypertuner_results(results, metric: LossMetric, loop: str = "val"):
     ).checkpoint.as_directory() as checkpoint_dir:
         model_state, hist, data_config = load_model(checkpoint_dir, skip_history=False)
     return model_state, hist, data_config
-
-
-def construct_BasicBlackBoxModel(config, model_constructor: type[nn.Module]):
-    HIDDEN_LAYER_1_1 = config["hidden_layer_1_1"]
-    HIDDEN_LAYER_1_2 = config["hidden_layer_1_2"]
-    HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
-    HIDDEN_LAYER_2_2 = config["hidden_layer_2_2"]
-
-    HIDDEN_LAYER_1 = [i for i in [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2] if i != 0]
-    HIDDEN_LAYER_2 = [i for i in [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2] if i != 0]
-
-    model_config = {
-        "hidden_sizes_1": HIDDEN_LAYER_1,
-        "hidden_sizes_2": HIDDEN_LAYER_2,
-    }
-
-    model = model_constructor(**model_config)
-    return model, model_config

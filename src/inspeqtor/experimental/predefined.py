@@ -10,7 +10,6 @@ from .data import (
     QubitInformation,
     ExperimentConfiguration,
     ExperimentData,
-    State,
     make_row,
 )
 from .pulse import (
@@ -26,7 +25,7 @@ from .physics import (
     signal_func_v5,
     make_trotterization_whitebox,
 )
-from .constant import X, Y, Z, default_expectation_values_order
+from .constant import X, Y, Z, default_expectation_values_order, plus_projectors
 from .decorator import warn_not_tested_function
 from .utils import (
     center_location,
@@ -34,6 +33,7 @@ from .utils import (
     LoadedData,
     prepare_data,
     calculate_expectation_values,
+    calculate_shots_expectation_value,
 )
 from .model import DataConfig
 import itertools
@@ -483,39 +483,6 @@ class SimulationStrategy(Enum):
     RANDOM = "random"
     SHOT = "shot"
     NOISY = "noisy"
-
-
-plus_projectors = {
-    "X": State.from_label("+", dm=True),
-    "Y": State.from_label("r", dm=True),
-    "Z": State.from_label("0", dm=True),
-}
-
-
-def calculate_shots_expectation_value(
-    key: jnp.ndarray,
-    initial_state: jnp.ndarray,
-    unitary: jnp.ndarray,
-    plus_projector: jnp.ndarray,
-    shots: int,
-) -> jnp.ndarray:
-    """Calculate finite-shots estimate of expectation value
-
-    Args:
-        key (jnp.ndarray): Random key
-        initial_state (jnp.ndarray): Inital state
-        unitary (jnp.ndarray): Unitary operator
-        plus_projector (jnp.ndarray): The eigenvector corresponded to +1 eigenvalue of Pauli observable.
-        shots (int): Number of shot to be used in estimation of expectation value
-
-    Returns:
-        jnp.ndarray: Finite-shot estimate expectation value
-    """
-    prob = jnp.trace(unitary @ initial_state @ unitary.conj().T @ plus_projector).real
-
-    return jax.random.choice(
-        key, jnp.array([1, -1]), shape=(shots,), p=jnp.array([prob, 1 - prob])
-    ).mean()
 
 
 class WhiteboxStrategy(StrEnum):

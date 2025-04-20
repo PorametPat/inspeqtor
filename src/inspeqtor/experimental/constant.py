@@ -1,9 +1,16 @@
-from .data import Operator, ExpectationValue
+from .data import Operator, ExpectationValue, State
 import jax.numpy as jnp
 
 X = Operator.from_label("X")
 Y = Operator.from_label("Y")
 Z = Operator.from_label("Z")
+
+
+plus_projectors = {
+    "X": State.from_label("+", dm=True),
+    "Y": State.from_label("r", dm=True),
+    "Z": State.from_label("0", dm=True),
+}
 
 default_expectation_values_order = [
     ExpectationValue(observable="X", initial_state="+"),
