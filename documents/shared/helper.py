@@ -67,7 +67,7 @@ def get_gaussian_pulse_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = sq.pulse.PulseSequence(
+    pulse_sequence = sq.pulse.ControlSequence(
         pulses=[
             sq.predefined.GaussianPulse(
                 duration=total_length,

@@ -242,7 +242,6 @@ def make_probabilistic_model(
         unitaries: jnp.ndarray,
         observables: jnp.ndarray | None = None,
     ):
-
         expvals = graybox_fn(control_parameters, unitaries)
 
         if observables is None:
@@ -306,7 +305,7 @@ def load_pytree_from_json(path: str | pathlib.Path, array_keys: list[str] = []):
     """Load pytree from json
 
     Args:
-        path (str | pathlib.Path): Path to JSON file containing pytree 
+        path (str | pathlib.Path): Path to JSON file containing pytree
         array_keys (list[str], optional): list of key to convert to jnp.numpy. Defaults to [].
 
     Raises:
@@ -359,6 +358,24 @@ def get_args_of_distribution(x):
         return x
 
 
+def construct_normal_priors(posterior):
+    """Construct a dict of Normal Distributions with posterior
+
+    Args:
+        posterior (_type_): Dict of Normal distribution arguments
+
+    Returns:
+        _type_: dict of Normal distributions
+    """
+    posterior_distributions = {}
+    assert isinstance(posterior, dict)
+    for name, value in posterior.items():
+        assert isinstance(name, str)
+        assert isinstance(value, dict)
+        posterior_distributions[name] = dist.Normal(value["loc"], value["scale"])  # type: ignore
+    return posterior_distributions
+
+
 def construct_normal_prior_from_samples(
     posterior_samples: dict[str, jnp.ndarray],
 ) -> dict[str, dist.Distribution]:
@@ -383,15 +400,14 @@ def construct_normal_prior_from_samples(
 
 @dataclass
 class ProbabilisticModel:
-    """Dataclass to save and load probabilistic model from inference result and file. 
-    """
+    """Dataclass to save and load probabilistic model from inference result and file."""
+
     posterior: dict[str, jnp.ndarray]
     shots: int
     hidden_sizes: list[list[int]]
 
     @classmethod
     def from_file(cls, path: str | pathlib.Path) -> "ProbabilisticModel":
-
         data = load_pytree_from_json(path, array_keys=["posterior"])
 
         return cls(
@@ -411,7 +427,6 @@ class ProbabilisticModel:
         sample_shape: tuple[int, ...] = (10000,),
         prefix: str = "graybox/",
     ):
-
         posterior_samples = guide.sample_posterior(
             key, svi_params, sample_shape=sample_shape
         )

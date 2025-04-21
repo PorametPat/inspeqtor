@@ -1,14 +1,14 @@
 import pytest
 import jax
 import jax.numpy as jnp
-import numpyro.distributions as dist # type: ignore
+import numpyro.distributions as dist  # type: ignore
 from inspeqtor.experimental.probabilistic import (
     eigenvalue_to_binary,
     binary_to_eigenvalue,
     expectation_value_to_eigenvalue,
     construct_normal_prior_from_samples,
     get_args_of_distribution,
-    ProbabilisticModel
+    ProbabilisticModel,
 )
 
 
@@ -57,7 +57,6 @@ def test_expectation_value_to_eigenvalue():
 
 @pytest.mark.skip("Not finished")
 def test_save_and_load_model(guide, svi_params, shots, hidden_sizes):
-
     posterior_samples = guide.sample_posterior(
         jax.random.key(0), svi_params, sample_shape=(10000,)
     )

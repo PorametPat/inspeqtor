@@ -17,11 +17,6 @@ repos:
   hooks:
     # Update the uv lockfile
     - id: uv-lock
-# - repo: https://github.com/RobertCraigie/pyright-python
-#   rev: v1.1.389
-#   hooks:
-#   - id: pyright
-
 - repo: local
   hooks:
     - id: pytest
@@ -30,3 +25,8 @@ repos:
       language: python
       pass_filenames: false
       always_run: true
+- repo: https://github.com/RobertCraigie/pyright-python
+  rev: v1.1.389
+  hooks:
+    - id: pyright
+      args: ["--project", "src/inspeqtor/experimental/."]

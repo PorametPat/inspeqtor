@@ -59,7 +59,7 @@ dev = [
 ]
 
 [tool.pyright]
-exclude = [".venv", "notebooks"]
+exclude = [".venv", "./notebooks", "./src/inspeqtor/legacy", "./src/inspeqtor/external", "./tests/legacy"]
 pythonVersion = "3.11"
 venvPath = "."
 venv = ".venv"

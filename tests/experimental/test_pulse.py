@@ -15,7 +15,7 @@ def test_jax_DRAG_pulse():
 
     # Check to_dict and from_dict
     pulse_sequence_dict = pulse_sequence.to_dict()
-    pulse_sequence_from_dict = sq.pulse.PulseSequence.from_dict(
+    pulse_sequence_from_dict = sq.pulse.ControlSequence.from_dict(
         pulse_sequence_dict, pulses=[sq.predefined.MultiDragPulseV3] * 1
     )
 

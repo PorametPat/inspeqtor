@@ -35,7 +35,7 @@ from ..experimental.data import (
     make_row,
 )
 from ..experimental.typing import ParametersDictType
-from ..experimental.pulse import PulseSequence
+from ..experimental.pulse import ControlSequence
 from ..experimental.physics import CouplingInformation
 
 
@@ -295,7 +295,7 @@ def get_ibm_service_and_backend(
 
 def prepare_experiment(
     config: ExperimentConfiguration,
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     key: jnp.ndarray,
     backend_properties: IBMQDeviceProperties,
 ) -> tuple[pd.DataFrame, list[QuantumCircuit]]:
@@ -718,7 +718,7 @@ class QuantumCircuitData:
 
 def prepare_experiment_v2(
     config: ExperimentConfiguration,
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     key: jnp.ndarray,
     backend_properties: IBMQDeviceProperties,
 ) -> tuple[pd.DataFrame, list[QuantumCircuitData]]:
@@ -777,7 +777,7 @@ def prepare_experiment_v2(
 
 def prepare_parallel_experiment_v2(
     configs: list[ExperimentConfiguration],
-    pulse_sequences: list[PulseSequence],
+    pulse_sequences: list[ControlSequence],
     keys: Sequence[jnp.ndarray],
     backend_properties: IBMQDeviceProperties,
     enable_MCMD: bool = True,
