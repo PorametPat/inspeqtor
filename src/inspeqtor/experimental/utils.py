@@ -4,7 +4,7 @@ import typing
 import optax  # type: ignore
 import jaxtyping
 from dataclasses import dataclass
-from .pulse import PulseSequence
+from .pulse import ControlSequence
 from .data import ExperimentData, QubitInformation
 from .model import mse
 from .constant import Z, default_expectation_values_order, plus_projectors
@@ -20,7 +20,7 @@ class LoadedData:
     pulse_parameters: jnp.ndarray
     unitaries: jnp.ndarray
     expectation_values: jnp.ndarray
-    pulse_sequence: PulseSequence
+    pulse_sequence: ControlSequence
     whitebox: typing.Callable
     noisy_whitebox: typing.Callable | None = None
     noisy_unitaries: jnp.ndarray | None = None
@@ -104,7 +104,7 @@ def detune_hamiltonian(
 
 def prepare_data(
     exp_data: ExperimentData,
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     whitebox: typing.Callable,
 ) -> LoadedData:
     """Prepare the data for easy accessing from experiment data, control sequence, and Whitebox.
@@ -380,7 +380,7 @@ def recursive_vmap(func, in_axes):
 
 
 class SyntheticDataModel(typing.NamedTuple):
-    pulse_sequence: PulseSequence
+    pulse_sequence: ControlSequence
     qubit_information: QubitInformation
     dt: float
     ideal_hamiltonian: typing.Callable[..., jnp.ndarray]

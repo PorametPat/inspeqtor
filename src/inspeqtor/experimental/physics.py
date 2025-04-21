@@ -8,7 +8,7 @@ import diffrax  # type: ignore
 from .typing import ParametersDictType
 from .data import QubitInformation
 from .constant import X, Y, Z
-from .pulse import PulseSequence
+from .pulse import ControlSequence
 
 
 @struct.dataclass
@@ -572,7 +572,7 @@ def unitaries_prod(
 
 def make_trotterization_whitebox(
     hamiltonian: typing.Callable[..., jnp.ndarray],
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     dt: float = 2 / 9,
     trotter_steps: int = 1000,
 ):

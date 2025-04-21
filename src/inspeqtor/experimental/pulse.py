@@ -37,7 +37,7 @@ def sample_params(
 
 
 @dataclass
-class BasePulse(ABC):
+class BaseControl(ABC):
     duration: int
 
     def __post_init__(self):
@@ -119,10 +119,10 @@ class BasePulse(ABC):
 
 
 @dataclass
-class PulseSequence:
+class ControlSequence:
     """Control sequence, expect to be sum of atomic control."""
 
-    pulses: typing.Sequence[BasePulse]
+    pulses: typing.Sequence[BaseControl]
     pulse_length_dt: int
     validate: bool = True
 
@@ -266,8 +266,8 @@ class PulseSequence:
 
     @classmethod
     def from_dict(
-        cls, data: dict[str, typing.Any], pulses: typing.Sequence[type[BasePulse]]
-    ) -> "PulseSequence":
+        cls, data: dict[str, typing.Any], pulses: typing.Sequence[type[BaseControl]]
+    ) -> "ControlSequence":
         """Construct the control sequence from dict.
 
         Args:
@@ -307,8 +307,8 @@ class PulseSequence:
     def from_file(
         cls,
         path: typing.Union[str, pathlib.Path],
-        pulses: typing.Sequence[type[BasePulse]],
-    ) -> "PulseSequence":
+        pulses: typing.Sequence[type[BaseControl]],
+    ) -> "ControlSequence":
         """Construct control seqence from path
 
         Args:
@@ -371,7 +371,7 @@ def list_of_params_to_array(
     return jnp.array(temp)
 
 
-def get_param_array_converter(pulse_sequence: PulseSequence):
+def get_param_array_converter(pulse_sequence: ControlSequence):
     """This function returns two functions that can convert between a list of parameter dictionaries and a flat array.
 
     >>> array_to_list_of_params_fn, list_of_params_to_array_fn = get_param_array_converter(pulse_sequence)
@@ -398,8 +398,8 @@ def get_param_array_converter(pulse_sequence: PulseSequence):
 
 
 def construct_pulse_sequence_reader(
-    pulses: list[type[BasePulse]] = [],
-) -> typing.Callable[[typing.Union[str, pathlib.Path]], PulseSequence]:
+    pulses: list[type[BaseControl]] = [],
+) -> typing.Callable[[typing.Union[str, pathlib.Path]], ControlSequence]:
     """Construct the control sequence reader
 
     Args:
@@ -408,12 +408,12 @@ def construct_pulse_sequence_reader(
     Returns:
         typing.Callable[[typing.Union[str, pathlib.Path]], PulseSequence]: Control sequence reader that will automatically contruct control sequence from path.
     """
-    default_pulses: list[type[BasePulse]] = []
+    default_pulses: list[type[BaseControl]] = []
 
     # Merge the default pulses with the provided pulses
     pulses_list = default_pulses + pulses
 
-    def pulse_sequence_reader(path: typing.Union[str, pathlib.Path]) -> PulseSequence:
+    def pulse_sequence_reader(path: typing.Union[str, pathlib.Path]) -> ControlSequence:
         """Construct control sequence from path
 
         Args:
@@ -435,6 +435,6 @@ def construct_pulse_sequence_reader(
                 if pulse_dict["_name"] == pulse_class.__name__:
                     parsed_pulses.append(pulse_class)
 
-        return PulseSequence.from_dict(pulse_sequence_dict, pulses=parsed_pulses)
+        return ControlSequence.from_dict(pulse_sequence_dict, pulses=parsed_pulses)
 
     return pulse_sequence_reader

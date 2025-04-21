@@ -13,8 +13,8 @@ from .data import (
     make_row,
 )
 from .pulse import (
-    BasePulse,
-    PulseSequence,
+    BaseControl,
+    ControlSequence,
     array_to_list_of_params,
     list_of_params_to_array,
     construct_pulse_sequence_reader,
@@ -105,7 +105,7 @@ def gaussian_envelope(amp, center, sigma):
 
 
 @dataclass
-class GaussianPulse(BasePulse):
+class GaussianPulse(BaseControl):
     duration: int
     # beta: float
     qubit_drive_strength: float
@@ -167,7 +167,7 @@ def get_gaussian_pulse_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = PulseSequence(
+    pulse_sequence = ControlSequence(
         pulses=[
             GaussianPulse(
                 duration=total_length,
@@ -185,7 +185,7 @@ def get_gaussian_pulse_sequence(
 
 
 @dataclass
-class DragPulseV2(BasePulse):
+class DragPulseV2(BaseControl):
     duration: int
     qubit_drive_strength: float
     dt: float
@@ -255,7 +255,7 @@ def get_drag_pulse_v2_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = PulseSequence(
+    pulse_sequence = ControlSequence(
         pulses=[
             DragPulseV2(
                 duration=total_length,
@@ -275,7 +275,7 @@ def get_drag_pulse_v2_sequence(
 
 
 @dataclass
-class DragPulse(BasePulse):
+class DragPulse(BaseControl):
     duration: int
     beta: float
     qubit_drive_strength: float
@@ -325,7 +325,7 @@ def get_drag_pulse_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = PulseSequence(
+    pulse_sequence = ControlSequence(
         pulses=[
             DragPulse(
                 duration=total_length,
@@ -371,7 +371,7 @@ def get_envelope(params: ParametersDictType, order: int, total_length: int):
 
 
 @dataclass
-class MultiDragPulseV3(BasePulse):
+class MultiDragPulseV3(BaseControl):
     duration: int
     order: int = 1
     amp_bound: list[list[float]] = field(default_factory=list)  # [[0.0, 1.0],]
@@ -430,7 +430,7 @@ def get_multi_drag_pulse_sequence_v3():
         global_beta_bound=[-2.0, 2.0],
     )
 
-    pulse_sequence = PulseSequence(
+    pulse_sequence = ControlSequence(
         pulse_length_dt=80,
         pulses=[pulse],
     )
@@ -454,7 +454,7 @@ def get_mock_prefined_exp_v1(
         [], QubitInformation
     ] = get_mock_qubit_information,
     get_pulse_sequence_fn: typing.Callable[
-        [], PulseSequence
+        [], ControlSequence
     ] = get_multi_drag_pulse_sequence_v3,
 ):
     qubit_info = get_qubit_information_fn()
@@ -501,13 +501,13 @@ def generate_experimental_data(
         [], QubitInformation
     ] = get_mock_qubit_information,
     get_pulse_sequence_fn: typing.Callable[
-        [], PulseSequence
+        [], ControlSequence
     ] = get_multi_drag_pulse_sequence_v3,
     max_steps: int = int(2**16),
     method: WhiteboxStrategy = WhiteboxStrategy.ODE,
 ) -> tuple[
     ExperimentData,
-    PulseSequence,
+    ControlSequence,
     jnp.ndarray,
     typing.Callable[[jnp.ndarray], jnp.ndarray],
 ]:
@@ -655,7 +655,7 @@ def generate_experimental_data(
     )
 
 
-def get_envelope_transformer(pulse_sequence: PulseSequence):
+def get_envelope_transformer(pulse_sequence: ControlSequence):
     """Generate get_envelope function with control parameter array as an input instead of list form
 
     Args:
@@ -677,7 +677,7 @@ def get_envelope_transformer(pulse_sequence: PulseSequence):
 
 def get_single_qubit_whitebox(
     hamiltonian: typing.Callable[..., jnp.ndarray],
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     qubit_info: QubitInformation,
     dt: float,
     max_steps: int = int(2**16),
@@ -722,7 +722,7 @@ def get_single_qubit_whitebox(
 
 
 def get_single_qubit_rotating_frame_whitebox(
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     qubit_info: QubitInformation,
     dt: float,
 ) -> typing.Callable[[jnp.ndarray], jnp.ndarray]:

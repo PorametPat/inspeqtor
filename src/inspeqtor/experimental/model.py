@@ -24,7 +24,7 @@ from .physics import (
     Y,
     Z,
 )
-from .pulse import PulseSequence
+from .pulse import ControlSequence
 from .typing import Wos
 
 jax.config.update("jax_enable_x64", True)
@@ -641,7 +641,7 @@ def generate_path_with_datetime(sub_dir: pathlib.Path):
 def save_model(
     path: pathlib.Path | str,
     experiment_identifier: str,
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     hamiltonian: typing.Union[str, typing.Callable],
     model_config: dict,
     model_params: VariableDict,

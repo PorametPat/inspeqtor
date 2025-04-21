@@ -13,7 +13,7 @@ import tempfile
 from enum import StrEnum
 import chex
 
-from .pulse import PulseSequence
+from .pulse import ControlSequence
 from .utils import dataloader, create_step
 from .model import loss_fn, LossMetric, save_model, load_model
 from ray.tune.search.sample import Domain
@@ -219,7 +219,7 @@ def clean_history_entries(
 
 
 def default_trainable_v4(
-    pulse_sequence: PulseSequence,
+    pulse_sequence: ControlSequence,
     metric: LossMetric,
     experiment_identifier: str,
     hamiltonian: typing.Callable | str,
