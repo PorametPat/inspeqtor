@@ -165,9 +165,10 @@ def test_signal_func_v3():
 def test_hamiltonian_fn():
     qubit_info = sq.predefined.get_mock_qubit_information()
     pulse_sequence = sq.predefined.get_drag_pulse_sequence(qubit_info)
+    # pulse_sequence = sq.predefined.get_gaussian_pulse_sequence(qubit_info)
     dt = 2 / 9
 
-    key = jax.random.PRNGKey(0)
+    key = jax.random.key(0)
     params = pulse_sequence.sample_params(key)
 
     total_hamiltonian = sq.physics.gen_hamiltonian_from(
@@ -252,10 +253,231 @@ def test_run():
     assert unitaries.shape == (batch_size, pulse_sequence.pulse_length_dt, 2, 2)
 
 
+def setup_crosscheck_setting():
+    qubit_info = sq.predefined.get_mock_qubit_information()
+    # pulse_sequence = sq.predefined.get_drag_pulse_sequence(qubit_info)
+    pulse_sequence = sq.predefined.get_gaussian_pulse_sequence(qubit_info)
+
+    key = jax.random.PRNGKey(0)
+    params = pulse_sequence.sample_params(key)
+    # angle = 0
+    # params: list[sq.typing.ParametersDictType] = [
+    #     {
+    #         "theta": jnp.array(angle),
+    #         # "beta": jnp.array(1.0)
+    #     }
+    # ]
+
+    time_step = 2 / 9
+    t_eval = jnp.linspace(
+        0, pulse_sequence.pulse_length_dt * time_step, pulse_sequence.pulse_length_dt
+    )
+
+    return qubit_info, pulse_sequence, params, t_eval, time_step
+
+
+def solve_with_manual_rotate():
+    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+    # NOTE: This hamiltonian is the analytical rotated Hamiltonian of single qubit
+    hamiltonian = partial(
+        sq.predefined.rotating_transmon_hamiltonian,
+        qubit_info=qubit_info,
+        signal=sq.physics.signal_func_v3(
+            pulse_sequence.get_envelope, qubit_info.frequency, 2 / 9
+        ),
+    )
+
+    jitted_simulator = jax.jit(
+        partial(
+            sq.physics.solver,
+            t_eval=t_eval,
+            hamiltonian=hamiltonian,
+            y0=jnp.eye(2, dtype=jnp.complex64),
+            t0=0,
+            t1=pulse_sequence.pulse_length_dt * time_step,
+        )
+    )
+
+    hamil_params = sq.physics.SignalParameters(pulse_params=params, phase=0)
+
+    unitaries_manual_rotated = jitted_simulator(hamil_params)
+    return unitaries_manual_rotated
+
+
+def solve_with_auto_rotate():
+    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+    # NOTE: For the auto rotating test
+    hamiltonian = partial(
+        sq.predefined.transmon_hamiltonian,  # This hamiltonian is in the lab frame
+        qubit_info=qubit_info,
+        signal=sq.physics.signal_func_v3(
+            pulse_sequence.get_envelope, qubit_info.frequency, 2 / 9
+        ),
+    )
+
+    frame = (jnp.pi * qubit_info.frequency) * sq.constant.Z
+
+    rotating_hamiltonian = sq.physics.auto_rotating_frame_hamiltonian(
+        hamiltonian, frame
+    )
+
+    jitted_simulator = jax.jit(
+        partial(
+            sq.physics.solver,
+            t_eval=t_eval,
+            hamiltonian=rotating_hamiltonian,
+            y0=jnp.eye(2, dtype=jnp.complex64),
+            t0=0,
+            t1=pulse_sequence.pulse_length_dt * time_step,
+        )
+    )
+
+    hamil_params = sq.physics.SignalParameters(pulse_params=params, phase=0)
+    auto_rotated_unitaries = jitted_simulator(hamil_params)
+
+    return auto_rotated_unitaries
+
+
+def solve_with_pennylane():
+    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+
+    qml_simulator = get_simulator(
+        qubit_info=qubit_info,
+        t_eval=t_eval,
+        hamiltonian=rotating_transmon_hamiltonian,
+    )
+    qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
+
+    return qml_unitary
+
+
+def solve_with_auto_hamiltonian_extractor():
+    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+
+    backend = FakeJakartaV2()
+    backend_properties = qk.IBMQDeviceProperties.from_backend(
+        backend=backend, qubit_indices=[0]
+    )
+    backend_properties.qubit_informations = [qubit_info]
+
+    coupling_infos = qk.get_coupling_strengths(backend_properties)
+
+    total_hamiltonian = sq.physics.gen_hamiltonian_from(
+        qubit_informations=backend_properties.qubit_informations,
+        coupling_constants=coupling_infos,
+        dims=2,
+    )
+
+    drive_terms = list(filter(sq.physics.pick_drive, total_hamiltonian))
+    static_terms = list(filter(sq.physics.pick_static, total_hamiltonian))
+
+    signals = {
+        drive_term: sq.physics.signal_func_v3(
+            pulse_sequence.get_envelope,
+            drive_frequency=backend_properties.qubit_informations[
+                int(drive_term[-1])
+            ].frequency,
+            dt=backend_properties.dt,
+        )
+        for drive_term in drive_terms
+    }
+
+    hamiltonian = partial(
+        sq.physics.hamiltonian_fn,
+        signals=signals,
+        hamiltonian_terms=total_hamiltonian,
+        static_terms=static_terms,
+    )
+
+    hamiltonian_args = {
+        drive_terms[0]: sq.physics.SignalParameters(
+            pulse_params=params,
+            phase=0.0,
+        )
+    }
+
+    frame = total_hamiltonian[static_terms[0]].operator
+    rotating_hamiltonian = sq.physics.auto_rotating_frame_hamiltonian(
+        hamiltonian, frame
+    )
+
+    unitaries_hamiltonian_fn = sq.physics.solver(
+        hamiltonian_args,
+        t_eval=t_eval,
+        hamiltonian=rotating_hamiltonian,
+        y0=jnp.eye(2, dtype=jnp.complex64),
+        t0=0,
+        t1=pulse_sequence.pulse_length_dt * time_step,
+    )
+
+    return unitaries_hamiltonian_fn
+
+
+def solve_with_signal_v5():
+    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+
+    whitebox_v5 = sq.predefined.get_single_qubit_rotating_frame_whitebox(
+        pulse_sequence=pulse_sequence,
+        qubit_info=qubit_info,
+        dt=time_step,
+    )
+
+    unitaries_v5 = whitebox_v5(
+        sq.pulse.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
+    )
+
+    return unitaries_v5
+
+
+def solver_with_trotterization():
+    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+
+    hamiltonian = partial(
+        sq.predefined.rotating_transmon_hamiltonian,
+        qubit_info=qubit_info,
+        signal=sq.physics.signal_func_v5(
+            get_envelope=sq.predefined.get_envelope_transformer(
+                pulse_sequence=pulse_sequence
+            ),
+            drive_frequency=qubit_info.frequency,  # * (1 + detune),
+            dt=time_step,
+        ),
+    )
+
+    whitebox = sq.physics.make_trotterization_whitebox(
+        hamiltonian, pulse_sequence, time_step, trotter_steps=1000
+    )
+
+    unitary = whitebox(
+        sq.pulse.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
+    )
+
+    return unitary
+
+
+@pytest.mark.parametrize(
+    "unitaries",
+    [
+        (solve_with_signal_v5(), solve_with_auto_hamiltonian_extractor()),
+        (solve_with_signal_v5(), solve_with_pennylane()),
+        (solve_with_signal_v5(), solve_with_auto_rotate()),
+        (solve_with_signal_v5(), solver_with_trotterization()),
+    ],
+)
+def test_crosscheck(unitaries):
+    # uni_1, uni_2 = (solve_with_manual_rotate(), solve_with_pennylane())
+    uni_1, uni_2 = unitaries
+    # fidelities = jax.vmap(sq.physics.gate_fidelity, in_axes=(0, 0))(uni_1, uni_2)
+    fidelities = sq.physics.gate_fidelity(uni_1[-1], uni_2[-1])
+
+    # assert jnp.allclose(fidelities, jnp.ones_like(fidelities), rtol=1e-3)
+    chex.assert_trees_all_close(fidelities, jnp.ones_like(fidelities))
+    # chex.assert_trees_all_close(fidelities[-1], jnp.ones_like(fidelities[-1]))
+
+
 @pytest.mark.skip(reason="4 / 320 mismatch somehow")
 def test_crosscheck_pennylane_difflax():
     qubit_info = sq.predefined.get_mock_qubit_information()
-
     pulse_sequence = sq.predefined.get_drag_pulse_sequence(qubit_info)
 
     key = jax.random.PRNGKey(0)

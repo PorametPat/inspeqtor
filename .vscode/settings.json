@@ -6,4 +6,8 @@
 	"python.analysis.indexing": true,
 	"python.analysis.autoImportCompletions": true,
 	"python.analysis.completeFunctionParens": false,
+	"editor.defaultFormatter": "charliermarsh.ruff",
+	"[jsonc]": {
+		"editor.defaultFormatter": "vscode.json-language-features"
+	}
 }
