@@ -2,8 +2,7 @@
 
 - [`uv`](https://docs.astral.sh/uv/concepts/projects/init/#applications) for package manager.
 - [Github action](https://www.youtube.com/watch?v=Y6D2XaFV3Cc) for CI/CD.
-
--[Sphinx tutorial](https://youtu.be/KKfQnxQBoWE?si=JbCm1rioptxYjqMW) for documentation.
+- [Sphinx tutorial](https://youtu.be/KKfQnxQBoWE?si=JbCm1rioptxYjqMW) for documentation.
 
 ## Useful command lines
 

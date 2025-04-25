@@ -1,87 +1,83 @@
-import jax
 import jax.numpy as jnp
-import optax  # type: ignore
-from alive_progress import alive_it  # type: ignore
-import typing
 import inspeqtor.experimental as sq
 from functools import partial
 
 
-def gate_optimizer(
-    params,
-    lower,
-    upper,
-    func: typing.Callable,
-    optimizer: optax.GradientTransformation,
-    maxiter: int = 1000,
-):
-    opt_state = optimizer.init(params)
-    history = []
+# def gate_optimizer(
+#     params,
+#     lower,
+#     upper,
+#     func: typing.Callable,
+#     optimizer: optax.GradientTransformation,
+#     maxiter: int = 1000,
+# ):
+#     opt_state = optimizer.init(params)
+#     history = []
 
-    for _ in alive_it(range(maxiter), force_tty=True):
-        grads, aux = jax.grad(func, has_aux=True)(params)
-        updates, opt_state = optimizer.update(grads, opt_state, params)
-        params = optax.apply_updates(params, updates)
+#     for _ in alive_it(range(maxiter), force_tty=True):
+#         grads, aux = jax.grad(func, has_aux=True)(params)
+#         updates, opt_state = optimizer.update(grads, opt_state, params)
+#         params = optax.apply_updates(params, updates)
 
-        # Apply projection
-        params = optax.projections.projection_box(params, lower, upper)
+#         # Apply projection
+#         params = optax.projections.projection_box(params, lower, upper)
 
-        # Log the history
-        aux["params"] = params
-        history.append(aux)
+#         # Log the history
+#         aux["params"] = params
+#         history.append(aux)
 
-    return params, history
-
-
-def detune_x_hamiltonian(
-    hamiltonian: typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray],
-    detune: float,
-) -> typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray]:
-    def detuned_hamiltonian(
-        params: sq.typing.HamiltonianArgs,
-        t: jnp.ndarray,
-        *args,
-        **kwargs,
-    ) -> jnp.ndarray:
-        return hamiltonian(params, t, *args, **kwargs) + detune * sq.constant.X
-
-    return detuned_hamiltonian
+#     return params, history
 
 
-def get_default_optimizer(n_iterations):
-    return optax.adamw(
-        learning_rate=optax.warmup_cosine_decay_schedule(
-            init_value=1e-6,
-            peak_value=1e-2,
-            warmup_steps=int(0.1 * n_iterations),
-            decay_steps=n_iterations,
-            end_value=1e-6,
-        )
-    )
+# def detune_x_hamiltonian(
+#     hamiltonian: typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray],
+#     detune: float,
+# ) -> typing.Callable[[sq.typing.HamiltonianArgs, jnp.ndarray], jnp.ndarray]:
+#     def detuned_hamiltonian(
+#         params: sq.typing.HamiltonianArgs,
+#         t: jnp.ndarray,
+#         *args,
+#         **kwargs,
+#     ) -> jnp.ndarray:
+#         return hamiltonian(params, t, *args, **kwargs) + detune * sq.constant.X
+
+#     return detuned_hamiltonian
 
 
-def get_gaussian_pulse_sequence(
-    qubit_info: sq.data.QubitInformation,
-    max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
-):
-    total_length = 320
-    dt = 2 / 9
+# def get_default_optimizer(n_iterations):
+#     return optax.adamw(
+#         learning_rate=optax.warmup_cosine_decay_schedule(
+#             init_value=1e-6,
+#             peak_value=1e-2,
+#             warmup_steps=int(0.1 * n_iterations),
+#             decay_steps=n_iterations,
+#             end_value=1e-6,
+#         )
+#     )
 
-    pulse_sequence = sq.pulse.ControlSequence(
-        pulses=[
-            sq.predefined.GaussianPulse(
-                duration=total_length,
-                qubit_drive_strength=qubit_info.drive_strength,
-                dt=dt,
-                max_amp=max_amp,
-                min_theta=0.0,
-                max_theta=2 * jnp.pi,
-            ),
-        ],
-        pulse_length_dt=total_length,
-    )
 
-    return pulse_sequence
+# def get_gaussian_pulse_sequence(
+#     qubit_info: sq.data.QubitInformation,
+#     max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
+# ):
+#     total_length = 320
+#     dt = 2 / 9
+
+#     pulse_sequence = sq.pulse.ControlSequence(
+#         pulses=[
+#             sq.predefined.GaussianPulse(
+#                 duration=total_length,
+#                 qubit_drive_strength=qubit_info.drive_strength,
+#                 dt=dt,
+#                 max_amp=max_amp,
+#                 min_theta=0.0,
+#                 max_theta=2 * jnp.pi,
+#             ),
+#         ],
+#         pulse_length_dt=total_length,
+#     )
+
+#     return pulse_sequence
 
 
 def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDataModel:

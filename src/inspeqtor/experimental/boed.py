@@ -200,7 +200,7 @@ def init_params_from_guide(
     *args,
     key: jnp.ndarray,
     design: jnp.ndarray,
-    num_particles: int,
+    # num_particles: int,
 ) -> chex.ArrayTree:
     """Initlalize parameters of marginal guide.
 
@@ -214,10 +214,10 @@ def init_params_from_guide(
         chex.ArrayTree: Random parameters for marginal guide to be optimized.
     """
     key, subkey = jax.random.split(key)
-    expanded_design = lexpand(design, num_particles)
+    # expanded_design = lexpand(design, num_particles)
     marginal_guide_trace = handlers.trace(
         handlers.seed(marginal_guide, subkey)
-    ).get_trace(expanded_design, *args, observation_labels=[], target_labels=[])
+    ).get_trace(design, *args, observation_labels=[], target_labels=[])
 
     # Get only nodes that are parameters
     params = {
@@ -275,7 +275,7 @@ def opt_eig_ape_loss(
     return params, history
 
 
-def marginal_eig(
+def estimate_eig(
     key: jnp.ndarray,
     model: typing.Callable,
     marginal_guide: typing.Callable,
@@ -285,8 +285,9 @@ def marginal_eig(
     num_optimization_steps: int,
     observation_labels: list[str],
     target_labels: list[str],
-    num_particles: int,
-    final_num_particles: int | None = None,
+    num_particles: tuple[int, int] | int,
+    final_num_particles: tuple[int, int] | int | None = None,
+    loss_fn: typing.Callable = marginal_loss,
 ) -> tuple[jnp.ndarray, dict[str, typing.Any]]:
     """Optimize for marginal EIG
 
@@ -308,18 +309,22 @@ def marginal_eig(
     # NOTE: In final evalution, if final_num_particles != num_particles,
     # the code will error because we train params with num_particles
     # the shape will mismatch
-    final_num_particles = final_num_particles or num_particles
+    # final_num_particles = final_num_particles or num_particles
 
     # Initialize the parameters by using trace from the marginal_guide
     key, subkey = jax.random.split(key)
     params = init_params_from_guide(
-        marginal_guide, *args, key=subkey, design=design, num_particles=num_particles
+        marginal_guide,
+        *args,
+        key=subkey,
+        design=design,
+        # , num_particles=num_particles
     )
 
     # Optimize the loss function first to get the optimal parameters
     # for marginal guide
     params, history = opt_eig_ape_loss(
-        loss_fn=marginal_loss(
+        loss_fn=loss_fn(
             model,
             marginal_guide,
             design,
@@ -337,7 +342,7 @@ def marginal_eig(
 
     key, subkey = jax.random.split(key)
     # Evaluate the loss
-    _, aux = marginal_loss(
+    _, aux = loss_fn(
         model,
         marginal_guide,
         design,

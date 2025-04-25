@@ -760,6 +760,8 @@ hamiltonian_mapper = {
 def load_data_from_path(
     path: str | pathlib.Path,
     model_path: str | pathlib.Path,
+    trotterization: bool = False,
+    trotter_steps: int = 1000,
 ) -> LoadedData:
     if isinstance(path, str):
         path = pathlib.Path(path)
@@ -773,12 +775,34 @@ def load_data_from_path(
     # Read hamiltonian from data config
     data_config = DataConfig.from_file(model_path)
 
-    whitebox = get_single_qubit_whitebox(
-        hamiltonian_mapper[data_config.hamiltonian],
-        pulse_sequence,
-        exp_data.experiment_config.qubits[0],
-        exp_data.experiment_config.device_cycle_time_ns,
-    )
+    hamiltonian = hamiltonian_mapper[data_config.hamiltonian]
+    qubit_info = exp_data.experiment_config.qubits[0]
+    dt = exp_data.experiment_config.device_cycle_time_ns
+
+    if trotterization:
+        hamiltonian = partial(
+            hamiltonian,
+            qubit_info=qubit_info,
+            signal=signal_func_v5(
+                get_envelope=get_envelope_transformer(pulse_sequence=pulse_sequence),
+                drive_frequency=qubit_info.frequency,
+                dt=dt,
+            ),
+        )
+
+        whitebox = make_trotterization_whitebox(
+            hamiltonian=hamiltonian,
+            pulse_sequence=pulse_sequence,
+            dt=exp_data.experiment_config.device_cycle_time_ns,
+            trotter_steps=trotter_steps,
+        )
+    else:
+        whitebox = get_single_qubit_whitebox(
+            hamiltonian,
+            pulse_sequence,
+            qubit_info,
+            dt,
+        )
 
     return prepare_data(exp_data, pulse_sequence, whitebox)
 
@@ -800,195 +824,3 @@ def detune_x_hamiltonian(
         return hamiltonian(params, t, *args, **kwargs) + detune * X
 
     return detuned_hamiltonian
-
-
-# @warn_not_tested_function
-# def generate_mock_experiment_data(
-#     key: jnp.ndarray,
-#     sample_size: int = 10,
-#     shots: int = 1000,
-#     strategy: SimulationStrategy = SimulationStrategy.RANDOM,
-#     hamiltonian_transformers: list[
-#         typing.Callable[
-#             [typing.Callable[..., jnp.ndarray]], typing.Callable[..., jnp.ndarray]
-#         ]
-#     ] = [],
-#     get_qubit_information_fn: typing.Callable[
-#         [], QubitInformation
-#     ] = get_mock_qubit_information,
-#     get_pulse_sequence_fn: typing.Callable[
-#         [], PulseSequence
-#     ] = get_multi_drag_pulse_sequence_v3,
-#     max_steps: int = int(2**16),
-#     method: WhiteboxStrategy = WhiteboxStrategy.ODE,
-# ):
-#     qubit_info, pulse_sequence, config = get_mock_prefined_exp_v1(
-#         sample_size=sample_size,
-#         shots=shots,
-#         get_pulse_sequence_fn=get_pulse_sequence_fn,
-#         get_qubit_information_fn=get_qubit_information_fn,
-#     )
-
-#     # Generate mock expectation value
-#     key, exp_key = jax.random.split(key)
-
-#     dt = config.device_cycle_time_ns
-
-#     ideal_hamiltonian = partial(
-#         rotating_transmon_hamiltonian,
-#         qubit_info=qubit_info,
-#         signal=signal_func_v5(
-#             get_envelope_transformer(pulse_sequence),
-#             qubit_info.frequency,
-#             dt,
-#         ),
-#     )
-
-#     # hamiltonian = ideal_hamiltonian
-#     # for transformer in hamiltonian_transformers:
-#     #     hamiltonian = transformer(hamiltonian)
-
-#     hamiltonian = reduce(lambda x, y: y(x), hamiltonian_transformers, ideal_hamiltonian)
-
-#     if method == WhiteboxStrategy.TROTTER:
-#         whitebox = jax.jit(
-#             make_trotterization_whitebox(
-#                 hamiltonian=ideal_hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
-#             )
-#         )
-
-#         noisy_simulator = jax.jit(
-#             make_trotterization_whitebox(
-#                 hamiltonian=hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
-#             )
-#         )
-#     else:
-#         t_eval = jnp.linspace(
-#             0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
-#         )
-
-#         whitebox = jax.jit(
-#             partial(
-#                 solver,
-#                 t_eval=t_eval,
-#                 hamiltonian=ideal_hamiltonian,
-#                 y0=jnp.eye(2, dtype=jnp.complex64),
-#                 t0=0,
-#                 t1=pulse_sequence.pulse_length_dt * dt,
-#                 max_steps=max_steps,
-#             )
-#         )
-
-#         noisy_simulator = jax.jit(
-#             partial(
-#                 solver,
-#                 t_eval=t_eval,
-#                 hamiltonian=hamiltonian,
-#                 y0=jnp.eye(2, dtype=jnp.complex64),
-#                 t0=0,
-#                 t1=pulse_sequence.pulse_length_dt * dt,
-#                 max_steps=max_steps,
-#             )
-#         )
-
-#     SHOTS = config.shots
-
-#     rows = []
-#     pulse_params_list = []
-#     signal_params_list: list[SignalParameters] = []
-#     pulse_parameters: list[jnp.ndarray] = []
-#     parameter_structure = pulse_sequence.get_parameter_names()
-#     for sample_idx in range(config.sample_size):
-#         key, subkey = jax.random.split(key)
-#         pulse_params = pulse_sequence.sample_params(subkey)
-#         pulse_params_list.append(pulse_params)
-
-#         signal_param = SignalParameters(pulse_params=pulse_params, phase=0)
-#         signal_params_list.append(signal_param)
-
-#         pulse_parameters.append(
-#             list_of_params_to_array(pulse_params, parameter_structure)
-#         )
-
-#     pulse_parameters = jnp.array(pulse_parameters)
-
-#     unitaries = jax.vmap(noisy_simulator)(pulse_parameters)
-
-#     # Calculate the expectation values depending on the strategy
-#     expectation_values: jnp.ndarray
-#     expvals = []
-#     final_unitaries = jnp.array(unitaries)[:, -1, :, :]
-
-#     assert final_unitaries.shape == (
-#         sample_size,
-#         2,
-#         2,
-#     ), f"Final unitaries shape is {final_unitaries.shape}"
-
-#     if strategy == SimulationStrategy.RANDOM:
-#         # Just random expectation values with key
-#         expectation_values = 2 * (
-#             jax.random.uniform(exp_key, shape=(config.sample_size, 18)) - (1 / 2)
-#         )
-#     elif strategy == SimulationStrategy.IDEAL:
-#         for exp in default_expectation_values_order:
-#             expval = calculate_exp(
-#                 final_unitaries, exp.observable_matrix, exp.initial_density_matrix
-#             )
-
-#             expvals.append(expval)
-
-#         expectation_values = jnp.transpose(jnp.array(expvals))
-
-#     elif strategy == SimulationStrategy.SHOT:
-#         for exp in default_expectation_values_order:
-#             key, sample_key = jax.random.split(key)
-#             sample_keys = jax.random.split(sample_key, num=final_unitaries.shape[0])
-
-#             expval = jax.vmap(
-#                 calculate_shots_expectation_value, in_axes=(0, None, 0, None, None)
-#             )(
-#                 sample_keys,
-#                 exp.initial_density_matrix,
-#                 final_unitaries,
-#                 plus_projectors[exp.observable],
-#                 SHOTS,
-#             )
-
-#             expvals.append(expval)
-
-#         expectation_values = jnp.transpose(jnp.array(expvals))
-
-#     else:
-#         raise NotImplementedError
-
-#     assert expectation_values.shape == (
-#         sample_size,
-#         18,
-#     ), f"Expectation values shape is {expectation_values.shape}"
-
-#     for sample_idx in range(config.sample_size):
-#         for exp_idx, exp in enumerate(default_expectation_values_order):
-#             row = make_row(
-#                 expectation_value=float(expectation_values[sample_idx, exp_idx]),
-#                 initial_state=exp.initial_state,
-#                 observable=exp.observable,
-#                 parameters_list=pulse_params_list[sample_idx],
-#                 parameters_id=sample_idx,
-#             )
-
-#             rows.append(row)
-
-#     df = pd.DataFrame(rows)
-
-#     exp_data = ExperimentData(experiment_config=config, preprocess_data=df)
-
-#     return (
-#         exp_data,
-#         pulse_sequence,
-#         jnp.array(unitaries),
-#         signal_params_list,
-#         noisy_simulator,
-#         whitebox,
-#         (ideal_hamiltonian, hamiltonian),
-#     )
