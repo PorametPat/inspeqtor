@@ -24,7 +24,7 @@ from .physics import (
     Y,
     Z,
 )
-from .pulse import ControlSequence
+from .control import ControlSequence
 from .typing import Wos
 
 jax.config.update("jax_enable_x64", True)

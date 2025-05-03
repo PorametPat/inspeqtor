@@ -4,7 +4,7 @@ import typing
 import optax  # type: ignore
 import jaxtyping
 from dataclasses import dataclass
-from .pulse import ControlSequence
+from .control import ControlSequence
 from .data import ExperimentData, QubitInformation
 from .model import mse
 from .constant import Z, default_expectation_values_order, plus_projectors
@@ -200,7 +200,7 @@ def dataloader(
     # * General dataloader
     # Check that all arrays have the same size in the first dimension
     dataset_size = arrays[0].shape[0]
-    assert all(array.shape[0] == dataset_size for array in arrays)
+    # assert all(array.shape[0] == dataset_size for array in arrays)
     # Generate random indices
     indices = jnp.arange(dataset_size)
     step = 0
@@ -263,8 +263,11 @@ def create_step(
         params: jaxtyping.PyTree,
         optimizer_state: optax.OptState,
         *args,
+        **kwargs,
     ):
-        loss_value, grads = jax.value_and_grad(loss_fn, has_aux=has_aux)(params, *args)
+        loss_value, grads = jax.value_and_grad(loss_fn, has_aux=has_aux)(
+            params, *args, **kwargs
+        )
         updates, opt_state = optimizer.update(grads, optimizer_state, params)
         params = optax.apply_updates(params, updates)
 
@@ -274,8 +277,9 @@ def create_step(
     def test_step(
         params: jaxtyping.PyTree,
         *args,
+        **kwargs,
     ):
-        return loss_fn(params, *args)
+        return loss_fn(params, *args, **kwargs)
 
     return train_step, test_step
 

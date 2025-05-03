@@ -13,7 +13,7 @@ import tempfile
 from enum import StrEnum
 import chex
 
-from .pulse import ControlSequence
+from .control import ControlSequence
 from .utils import dataloader, create_step
 from .model import loss_fn, LossMetric, save_model, load_model
 from ray.tune.search.sample import Domain
@@ -39,7 +39,7 @@ def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
     )
 
 
-def gate_optimizer(
+def minimize(
     params: chex.ArrayTree,
     lower: chex.ArrayTree,
     upper: chex.ArrayTree,

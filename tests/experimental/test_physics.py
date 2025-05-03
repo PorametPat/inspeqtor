@@ -423,7 +423,7 @@ def solve_with_signal_v5():
     )
 
     unitaries_v5 = whitebox_v5(
-        sq.pulse.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
+        sq.control.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
     )
 
     return unitaries_v5
@@ -449,7 +449,7 @@ def solver_with_trotterization():
     )
 
     unitary = whitebox(
-        sq.pulse.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
+        sq.control.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
     )
 
     return unitary
@@ -611,7 +611,7 @@ def test_crosscheck_pennylane_difflax():
     )
 
     unitaries_v5 = whitebox_v5(
-        sq.pulse.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
+        sq.control.list_of_params_to_array(params, pulse_sequence.get_parameter_names())
     )
 
     unitaries_tuple = [

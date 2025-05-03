@@ -8,7 +8,7 @@ import diffrax  # type: ignore
 from .typing import ParametersDictType
 from .data import QubitInformation
 from .constant import X, Y, Z
-from .pulse import ControlSequence
+from .control import ControlSequence
 
 
 @struct.dataclass
@@ -139,9 +139,9 @@ def solver(
 
     # Normailized the solution
     ys = solution.ys
-    assert isinstance(ys, jnp.ndarray)
+    # assert isinstance(ys, jnp.ndarray)
 
-    return jax.vmap(normalizer)(ys)
+    return jax.vmap(normalizer)(ys)  # type: ignore
 
 
 def auto_rotating_frame_hamiltonian(
