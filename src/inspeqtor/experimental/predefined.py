@@ -12,7 +12,7 @@ from .data import (
     ExperimentData,
     make_row,
 )
-from .pulse import (
+from .control import (
     BaseControl,
     ControlSequence,
     array_to_list_of_params,
@@ -185,6 +185,105 @@ def get_gaussian_pulse_sequence(
 
 
 @dataclass
+class TwoAxisGaussianPulse(BaseControl):
+    duration: int
+    qubit_drive_strength: float
+    dt: float
+    max_amp: float = 0.25
+
+    # Rotation angles for both axes
+    min_theta_x: float = 0.0
+    max_theta_x: float = 2 * jnp.pi
+    min_theta_y: float = 0.0
+    max_theta_y: float = 2 * jnp.pi
+
+    def __post_init__(self):
+        self.t_eval = jnp.arange(self.duration, dtype=jnp.float_)
+
+        # Correction factor that will cancel the factor in the front of hamiltonian
+        self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
+
+        # The standard deviation of Gaussian pulse is kept fixed for the given max_amp
+        self.sigma = jnp.sqrt(2 * jnp.pi) / (self.max_amp * self.correction)
+
+        # The center position is set at the center of the duration
+        self.center_position = self.duration // 2
+
+    def get_bounds(
+        self,
+    ) -> tuple[ParametersDictType, ParametersDictType]:
+        lower: ParametersDictType = {}
+        upper: ParametersDictType = {}
+
+        # Bounds for X-axis rotation
+        lower["theta_x"] = self.min_theta_x
+        upper["theta_x"] = self.max_theta_x
+
+        # Bounds for Y-axis rotation
+        lower["theta_y"] = self.min_theta_y
+        upper["theta_y"] = self.max_theta_y
+
+        return lower, upper
+
+    def get_envelope(
+        self, params: ParametersDictType
+    ) -> typing.Callable[..., typing.Any]:
+        # Calculate areas for both axes
+        area_x = params["theta_x"] / self.correction
+        area_y = params["theta_y"] / self.correction
+
+        def envelope_fn(t):
+            # Gaussian envelope for both axes
+            x_axis = gaussian_envelope(
+                amp=area_x, center=self.center_position, sigma=self.sigma
+            )(t)
+
+            y_axis = gaussian_envelope(
+                amp=area_y, center=self.center_position, sigma=self.sigma
+            )(t)
+
+            # Return complex envelope with x and y components
+            return x_axis + 1j * y_axis
+
+        return envelope_fn
+
+
+def get_two_axis_gaussian_pulse_sequence(
+    qubit_info: QubitInformation,
+    max_amp: float = 0.5,
+):
+    """Get predefined two-axis Gaussian control sequence.
+
+    Args:
+        qubit_info (QubitInformation): Qubit information
+        max_amp (float, optional): The maximum amplitude. Defaults to 0.5.
+
+    Returns:
+        PulseSequence: Control sequence instance
+    """
+    total_length = 320
+    dt = 2 / 9
+
+    pulse_sequence = ControlSequence(
+        pulses=[
+            TwoAxisGaussianPulse(
+                duration=total_length,
+                qubit_drive_strength=qubit_info.drive_strength,
+                dt=dt,
+                max_amp=max_amp,
+                min_theta_x=-2 * jnp.pi,
+                max_theta_x=2 * jnp.pi,
+                min_theta_y=-2 * jnp.pi,
+                max_theta_y=2 * jnp.pi,
+            ),
+        ],
+        pulse_length_dt=total_length,
+    )
+
+    return pulse_sequence
+
+
+@dataclass
 class DragPulseV2(BaseControl):
     duration: int
     qubit_drive_strength: float
@@ -264,7 +363,7 @@ def get_drag_pulse_v2_sequence(
                 max_amp=max_amp,
                 min_theta=0.0,
                 max_theta=2 * jnp.pi,
-                min_beta=0.0,
+                min_beta=-2.0,
                 max_beta=2.0,
             ),
         ],
@@ -505,6 +604,7 @@ def generate_experimental_data(
     ] = get_multi_drag_pulse_sequence_v3,
     max_steps: int = int(2**16),
     method: WhiteboxStrategy = WhiteboxStrategy.ODE,
+    trotter_steps: int = 1000,
 ) -> tuple[
     ExperimentData,
     ControlSequence,
@@ -545,7 +645,10 @@ def generate_experimental_data(
     if method == WhiteboxStrategy.TROTTER:
         noisy_simulator = jax.jit(
             make_trotterization_whitebox(
-                hamiltonian=hamiltonian, pulse_sequence=pulse_sequence, dt=2 / 9
+                hamiltonian=hamiltonian,
+                pulse_sequence=pulse_sequence,
+                dt=2 / 9,
+                trotter_steps=trotter_steps,
             )
         )
     else:
@@ -747,7 +850,13 @@ def get_single_qubit_rotating_frame_whitebox(
 
 
 pulse_reader = construct_pulse_sequence_reader(
-    pulses=[DragPulse, MultiDragPulseV3, GaussianPulse]
+    pulses=[
+        DragPulse,
+        MultiDragPulseV3,
+        GaussianPulse,
+        DragPulseV2,
+        TwoAxisGaussianPulse,
+    ]
 )
 
 hamiltonian_mapper = {

@@ -15,7 +15,7 @@ def test_jax_DRAG_pulse():
 
     # Check to_dict and from_dict
     pulse_sequence_dict = pulse_sequence.to_dict()
-    pulse_sequence_from_dict = sq.pulse.ControlSequence.from_dict(
+    pulse_sequence_from_dict = sq.control.ControlSequence.from_dict(
         pulse_sequence_dict, pulses=[sq.predefined.MultiDragPulseV3] * 1
     )
 
@@ -31,7 +31,7 @@ def test_pulse_sequence_reader(tmp_path):
     pulse_sequence = sq.predefined.get_multi_drag_pulse_sequence_v3()
     pulse_sequence.to_file(tmp_path)
 
-    reader = sq.pulse.construct_pulse_sequence_reader(
+    reader = sq.control.construct_pulse_sequence_reader(
         pulses=[sq.predefined.MultiDragPulseV3]
     )
 

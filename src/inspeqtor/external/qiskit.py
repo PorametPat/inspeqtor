@@ -35,7 +35,7 @@ from ..experimental.data import (
     make_row,
 )
 from ..experimental.typing import ParametersDictType
-from ..experimental.pulse import ControlSequence
+from ..experimental.control import ControlSequence
 from ..experimental.physics import CouplingInformation
 
 

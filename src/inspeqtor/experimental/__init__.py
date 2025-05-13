@@ -1,6 +1,6 @@
 from . import (
+    control as control,
     data as data,
-    pulse as pulse,
     typing as typing,
     utils as utils,
     constant as constant,
