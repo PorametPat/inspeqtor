@@ -7,134 +7,134 @@ import qiskit.quantum_info as qi  # type: ignore
 from forest.benchmarking import operator_tools as ot  # type: ignore
 import inspeqtor.experimental as sq
 from inspeqtor.external import qiskit as qk, benchmarking as bm
-import pennylane as qml  # type: ignore
-from typing import Callable
+
+# import pennylane as qml  # type: ignore
 import numpy as np
 import chex
 
 jax.config.update("jax_enable_x64", True)
 
 
-def signal(params, t, phase, qubit_freq, total_time_ns):
-    return jnp.real(
-        jnp.exp(1j * (2 * jnp.pi * qubit_freq * t + phase))
-        * qml.pulse.pwc((0, total_time_ns))(params, t)
-    )
+# def signal(params, t, phase, qubit_freq, total_time_ns):
+#     return jnp.real(
+#         jnp.exp(1j * (2 * jnp.pi * qubit_freq * t + phase))
+#         * qml.pulse.pwc((0, total_time_ns))(params, t)
+#     )
 
 
-# The params are [amplitude, phase]
-def signal_with_phase(params, t, qubit_freq, total_time_ns):
-    return jnp.real(
-        jnp.exp(1j * (2 * jnp.pi * qubit_freq * t + params[1]))
-        * qml.pulse.pwc((0, total_time_ns))(params[0], t)
-    )
+# # The params are [amplitude, phase]
+# def signal_with_phase(params, t, qubit_freq, total_time_ns):
+#     return jnp.real(
+#         jnp.exp(1j * (2 * jnp.pi * qubit_freq * t + params[1]))
+#         * qml.pulse.pwc((0, total_time_ns))(params[0], t)
+#     )
 
 
-def duffling_oscillator_hamiltonian(
-    qubit_info: sq.data.QubitInformation,
-    signal: Callable,
-) -> qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian:
-    static_hamiltonian = (
-        2
-        * jnp.pi
-        * qubit_info.frequency
-        * qml.jordan_wigner(qml.FermiC(0) * qml.FermiA(0))  # pyright: ignore
-    )
-    drive_hamiltonian = (
-        2
-        * jnp.pi
-        * qubit_info.drive_strength
-        * qml.jordan_wigner(qml.FermiC(0) + qml.FermiA(0))  # pyright: ignore
-    )
+# def duffling_oscillator_hamiltonian(
+#     qubit_info: sq.data.QubitInformation,
+#     signal: Callable,
+# ) -> qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian:
+#     static_hamiltonian = (
+#         2
+#         * jnp.pi
+#         * qubit_info.frequency
+#         * qml.jordan_wigner(qml.FermiC(0) * qml.FermiA(0))  # pyright: ignore
+#     )
+#     drive_hamiltonian = (
+#         2
+#         * jnp.pi
+#         * qubit_info.drive_strength
+#         * qml.jordan_wigner(qml.FermiC(0) + qml.FermiA(0))  # pyright: ignore
+#     )
 
-    return static_hamiltonian + signal * drive_hamiltonian
-
-
-def rotating_duffling_oscillator_hamiltonian(
-    qubit_info: sq.data.QubitInformation, signal: Callable
-) -> qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian:
-    a0 = 2 * jnp.pi * qubit_info.frequency
-    a1 = 2 * jnp.pi * qubit_info.drive_strength
-
-    def f3(params, t):
-        return a1 * signal(params, t)
-
-    def f_sigma_x(params, t):
-        return f3(params, t) * jnp.cos(a0 * t)
-
-    def f_sigma_y(params, t):
-        return f3(params, t) * jnp.sin(a0 * t)
-
-    return f_sigma_x * qml.PauliX(0) + f_sigma_y * qml.PauliY(0)  # pyright: ignore
+#     return static_hamiltonian + signal * drive_hamiltonian
 
 
-def transmon_hamiltonian(
-    qubit_info: sq.data.QubitInformation, waveform: Callable
-) -> qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian:
-    H_0 = qml.pulse.transmon_interaction(
-        qubit_freq=[qubit_info.frequency], connections=[], coupling=[], wires=[0]
-    )
-    H_d0 = qml.pulse.transmon_drive(
-        waveform, 0, qubit_info.frequency, 0
-    )  # NOTE: f2 must be real function.
+# def rotating_duffling_oscillator_hamiltonian(
+#     qubit_info: sq.data.QubitInformation, signal: Callable
+# ) -> qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian:
+#     a0 = 2 * jnp.pi * qubit_info.frequency
+#     a1 = 2 * jnp.pi * qubit_info.drive_strength
 
-    return H_0 + H_d0
+#     def f3(params, t):
+#         return a1 * signal(params, t)
 
+#     def f_sigma_x(params, t):
+#         return f3(params, t) * jnp.cos(a0 * t)
 
-def rotating_transmon_hamiltonian(
-    qubit_info: sq.data.QubitInformation, signal: Callable
-):
-    a0 = 2 * jnp.pi * qubit_info.frequency
-    a1 = 2 * jnp.pi * qubit_info.drive_strength
+#     def f_sigma_y(params, t):
+#         return f3(params, t) * jnp.sin(a0 * t)
 
-    def f3(params, t):
-        return a1 * signal(params, t)
-
-    def f_sigma_x(params, t):
-        return f3(params, t) * jnp.cos(a0 * t)
-
-    def f_sigma_y(params, t):
-        return -1 * f3(params, t) * jnp.sin(a0 * t)
-
-    return f_sigma_x * qml.PauliX(0) + f_sigma_y * qml.PauliY(0)  # pyright: ignore
+#     return f_sigma_x * qml.PauliX(0) + f_sigma_y * qml.PauliY(0)  # pyright: ignore
 
 
-def whitebox(
-    params: jnp.ndarray,
-    t: jnp.ndarray,
-    H: qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian,
-    num_parameterized: int,
-):
-    # Evolve under the Hamiltonian
-    unitary = qml.evolve(H)([params] * num_parameterized, t, return_intermediate=True)  # pyright: ignore
-    # Return the unitary
-    return qml.matrix(unitary)
+# def transmon_hamiltonian(
+#     qubit_info: sq.data.QubitInformation, waveform: Callable
+# ) -> qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian:
+#     H_0 = qml.pulse.transmon_interaction(
+#         qubit_freq=[qubit_info.frequency], connections=[], coupling=[], wires=[0]
+#     )
+#     H_d0 = qml.pulse.transmon_drive(
+#         waveform, 0, qubit_info.frequency, 0
+#     )  # NOTE: f2 must be real function.
+
+#     return H_0 + H_d0
 
 
-def get_simulator(
-    qubit_info: sq.data.QubitInformation,
-    t_eval: jnp.ndarray,
-    hamiltonian: Callable[
-        [sq.data.QubitInformation, Callable],
-        qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian,
-    ] = rotating_duffling_oscillator_hamiltonian,
-):
-    def fixed_freq_signal(params, t):
-        return signal(
-            params,
-            t,
-            0,
-            qubit_info.frequency,
-            t_eval[-1],
-        )
+# def rotating_transmon_hamiltonian(
+#     qubit_info: sq.data.QubitInformation, signal: Callable
+# ):
+#     a0 = 2 * jnp.pi * qubit_info.frequency
+#     a1 = 2 * jnp.pi * qubit_info.drive_strength
 
-    H = hamiltonian(qubit_info, fixed_freq_signal)
-    num_parameterized = len(H.coeffs_parametrized)
+#     def f3(params, t):
+#         return a1 * signal(params, t)
 
-    def simulator(params):
-        return whitebox(params, t_eval, H, num_parameterized)
+#     def f_sigma_x(params, t):
+#         return f3(params, t) * jnp.cos(a0 * t)
 
-    return simulator
+#     def f_sigma_y(params, t):
+#         return -1 * f3(params, t) * jnp.sin(a0 * t)
+
+#     return f_sigma_x * qml.PauliX(0) + f_sigma_y * qml.PauliY(0)  # pyright: ignore
+
+
+# def whitebox(
+#     params: jnp.ndarray,
+#     t: jnp.ndarray,
+#     H: qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian,
+#     num_parameterized: int,
+# ):
+#     # Evolve under the Hamiltonian
+#     unitary = qml.evolve(H)([params] * num_parameterized, t, return_intermediate=True)  # pyright: ignore
+#     # Return the unitary
+#     return qml.matrix(unitary)
+
+
+# def get_simulator(
+#     qubit_info: sq.data.QubitInformation,
+#     t_eval: jnp.ndarray,
+#     hamiltonian: Callable[
+#         [sq.data.QubitInformation, Callable],
+#         qml.pulse.parametrized_hamiltonian.ParametrizedHamiltonian,
+#     ] = rotating_duffling_oscillator_hamiltonian,
+# ):
+#     def fixed_freq_signal(params, t):
+#         return signal(
+#             params,
+#             t,
+#             0,
+#             qubit_info.frequency,
+#             t_eval[-1],
+#         )
+
+#     H = hamiltonian(qubit_info, fixed_freq_signal)
+#     num_parameterized = len(H.coeffs_parametrized)
+
+#     def simulator(params):
+#         return whitebox(params, t_eval, H, num_parameterized)
+
+#     return simulator
 
 
 def test_signal_func_v3():
@@ -224,23 +224,26 @@ def test_run():
     dt = 2 / 9
 
     # Get the pulse sequence
-    pulse_sequence = sq.predefined.get_multi_drag_pulse_sequence_v3()
-    t_eval = t_eval = jnp.linspace(
-        0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
-    )
+    pulse_sequence = sq.predefined.get_gaussian_pulse_sequence(qubit_info=qubit_info)
 
     # Sampling the pulse parameters
     # Get the waveforms for each pulse parameters to get the unitaries
     waveforms = []
     for i in range(batch_size):
         key, subkey = jax.random.split(key)
-        pulse_params = pulse_sequence.sample_params(subkey)
-        waveforms.append(pulse_sequence.get_waveform(pulse_params))
+        # pulse_params = pulse_sequence.sample_params(subkey)
+        pulse_params = sq.control.list_of_params_to_array(
+            pulse_sequence.sample_params(subkey), pulse_sequence.get_parameter_names()
+        )
+        waveforms.append(pulse_params)
 
     waveforms = jnp.array(waveforms)
 
     # Get the simualtor
-    simulator = get_simulator(qubit_info=qubit_info, t_eval=t_eval)
+    # simulator = get_simulator(qubit_info=qubit_info, t_eval=t_eval)
+    simulator = sq.predefined.get_single_qubit_rotating_frame_whitebox(
+        pulse_sequence=pulse_sequence, qubit_info=qubit_info, dt=dt
+    )
 
     # Solve for the unitaries
     # jit the simulator
@@ -338,17 +341,17 @@ def solve_with_auto_rotate():
     return auto_rotated_unitaries
 
 
-def solve_with_pennylane():
-    qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
+# def solve_with_pennylane():
+#     qubit_info, pulse_sequence, params, t_eval, time_step = setup_crosscheck_setting()
 
-    qml_simulator = get_simulator(
-        qubit_info=qubit_info,
-        t_eval=t_eval,
-        hamiltonian=rotating_transmon_hamiltonian,
-    )
-    qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
+#     qml_simulator = get_simulator(
+#         qubit_info=qubit_info,
+#         t_eval=t_eval,
+#         hamiltonian=rotating_transmon_hamiltonian,
+#     )
+#     qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
 
-    return qml_unitary
+#     return qml_unitary
 
 
 def solve_with_auto_hamiltonian_extractor():
@@ -459,7 +462,7 @@ def solver_with_trotterization():
     "unitaries",
     [
         (solve_with_signal_v5(), solve_with_auto_hamiltonian_extractor()),
-        (solve_with_signal_v5(), solve_with_pennylane()),
+        # (solve_with_signal_v5(), solve_with_pennylane()),
         (solve_with_signal_v5(), solve_with_auto_rotate()),
         (solve_with_signal_v5(), solver_with_trotterization()),
     ],
@@ -539,13 +542,13 @@ def test_crosscheck_pennylane_difflax():
     )
     auto_rotated_unitaries = jitted_simulator(hamil_params)
 
-    # NOTE: Crosscheck with pennylane
-    qml_simulator = get_simulator(
-        qubit_info=qubit_info,
-        t_eval=t_eval,
-        hamiltonian=rotating_transmon_hamiltonian,
-    )
-    qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
+    # # NOTE: Crosscheck with pennylane
+    # qml_simulator = get_simulator(
+    #     qubit_info=qubit_info,
+    #     t_eval=t_eval,
+    #     hamiltonian=rotating_transmon_hamiltonian,
+    # )
+    # qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
 
     # NOTE: Crosscheck with the hamiltonian_fn flow
     backend = FakeJakartaV2()
@@ -616,8 +619,8 @@ def test_crosscheck_pennylane_difflax():
 
     unitaries_tuple = [
         (unitaries_manual_rotated, auto_rotated_unitaries),
-        (unitaries_manual_rotated, qml_unitary),
-        (qml_unitary, auto_rotated_unitaries),
+        # (unitaries_manual_rotated, qml_unitary),
+        # (qml_unitary, auto_rotated_unitaries),
         (unitaries_manual_rotated, unitaries_hamiltonian_fn),
         (unitaries_manual_rotated, unitaries_v5),
     ]

@@ -391,6 +391,7 @@ class SyntheticDataModel(typing.NamedTuple):
     total_hamiltonian: typing.Callable[..., jnp.ndarray]
     solver: typing.Callable[..., jnp.ndarray]
     quantum_device: typing.Callable[..., jnp.ndarray] | None
+    whitebox: typing.Callable[..., jnp.ndarray] | None
 
 
 def calculate_shots_expectation_value(
