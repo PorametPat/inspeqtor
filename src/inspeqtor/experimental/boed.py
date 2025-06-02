@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from numpyro import handlers  # type: ignore
+from numpyro import handlers, plate_stack  # type: ignore
 
 import optax  # type: ignore
 from alive_progress import alive_it  # type: ignore
@@ -110,8 +110,16 @@ class AuxEntry(typing.NamedTuple):
         eig (jnp.ndarray): Expected information gain
     """
 
-    terms: jnp.ndarray
+    terms: jnp.ndarray | None
     eig: jnp.ndarray
+
+
+def vectorized(fn, *shape, name="vectorization_plate"):
+    def wrapper_fn(*args, **kwargs):
+        with plate_stack(name, [*shape]):
+            return fn(*args, **kwargs)
+
+    return wrapper_fn
 
 
 def marginal_loss(
@@ -143,7 +151,7 @@ def marginal_loss(
     # Marginal loss
     def loss_fn(param, key: jnp.ndarray) -> tuple[jnp.ndarray, AuxEntry]:
         expanded_design = lexpand(design, num_particles)
-
+        # vectorized(model, num_particles)
         # Sample from p(y | d)
         key, subkey = jax.random.split(key)
         trace = handlers.trace(handlers.seed(model, subkey)).get_trace(
@@ -189,8 +197,9 @@ def marginal_loss(
             ).sum(axis=0)
 
         agg_loss, loss = _safe_mean_terms_v2(terms)
+        # return agg_loss, AuxEntry(terms=None, eig=None)
         # return agg_loss, {"terms": terms, "eig": loss}
-        return agg_loss, AuxEntry(terms=terms, eig=loss)
+        return agg_loss, AuxEntry(terms=None, eig=loss)
 
     return loss_fn
 
@@ -243,6 +252,8 @@ def opt_eig_ape_loss(
     num_steps: int,
     optim: optax.GradientTransformation,
     key: jnp.ndarray,
+    progress: bool = True,
+    callbacks: list = [],
 ) -> tuple[chex.ArrayTree, list[typing.Any]]:
     """Optimize the EIG loss function.
 
@@ -261,8 +272,12 @@ def opt_eig_ape_loss(
     # jit the loss function
     loss_fn = jax.jit(loss_fn)
 
+    iterator = (
+        alive_it(range(num_steps), force_tty=True) if progress else range(num_steps)
+    )
+
     history = []
-    for step in alive_it(range(num_steps), force_tty=True):
+    for step in iterator:
         key, subkey = jax.random.split(key)
         # Compute the loss and its gradient
         (loss, aux), grad = jax.value_and_grad(loss_fn, has_aux=True)(params, subkey)
@@ -271,6 +286,9 @@ def opt_eig_ape_loss(
         params = optax.apply_updates(params, updates)
 
         history.append((step, loss, aux))
+
+        for callback in callbacks:
+            callback(history[-1])
 
     return params, history
 
@@ -288,6 +306,8 @@ def estimate_eig(
     num_particles: tuple[int, int] | int,
     final_num_particles: tuple[int, int] | int | None = None,
     loss_fn: typing.Callable = marginal_loss,
+    progress: bool = True,
+    callbacks: list = [],
 ) -> tuple[jnp.ndarray, dict[str, typing.Any]]:
     """Optimize for marginal EIG
 
@@ -338,6 +358,8 @@ def estimate_eig(
         num_steps=num_optimization_steps,
         optim=optimizer,
         key=subkey,
+        progress=progress,
+        callbacks=callbacks,
     )
 
     key, subkey = jax.random.split(key)

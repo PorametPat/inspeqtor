@@ -124,6 +124,7 @@ def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDat
         total_hamiltonian=total_hamiltonian,
         solver=solver if not trotterization_solver else trotter_solver,
         quantum_device=None,
+        whitebox=None,
     )
 
 

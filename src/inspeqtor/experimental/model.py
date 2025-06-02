@@ -371,8 +371,11 @@ def get_predict_expectation_value(
     Returns:
         jnp.ndarray: Expectation value with order as given with `evaluate_expectation_values`
     """
+    # predict_expectation_values = jnp.zeros(
+    #     tuple(unitaries.shape[:-2]) + (len(evaluate_expectation_values),)
+    # )
     predict_expectation_values = jnp.zeros(
-        tuple(unitaries.shape[:-2]) + (len(evaluate_expectation_values),)
+        tuple(Wos["X"].shape[:-2]) + (len(evaluate_expectation_values),)  # type: ignore
     )
 
     # Calculate expectation values for all cases

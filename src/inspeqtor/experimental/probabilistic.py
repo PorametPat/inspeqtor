@@ -175,6 +175,8 @@ def make_probabilistic_model(
     block_graybox: bool = False,
     enable_bnn: bool = True,
     separate_observables: bool = False,
+    custom_random_module: typing.Callable = random_flax_module,
+    keep_expvals: bool = False,
 ):
     """Make probabilistic model from the Statistical model with priors
 
@@ -190,7 +192,9 @@ def make_probabilistic_model(
     Returns:
         typing.Callable: Probabilistic Graybox Model
     """
-    module = partial(random_flax_module, prior=bnn_prior) if enable_bnn else flax_module
+    module = (
+        partial(custom_random_module, prior=bnn_prior) if enable_bnn else flax_module
+    )
 
     def graybox_probabilistic_model(
         control_parameters: jnp.ndarray,
@@ -243,6 +247,9 @@ def make_probabilistic_model(
         observables: jnp.ndarray | None = None,
     ):
         expvals = graybox_fn(control_parameters, unitaries)
+
+        if keep_expvals:
+            numpyro.deterministic("expvals", expvals)
 
         if observables is None:
             sizes = control_parameters.shape[:-1] + (18,)
@@ -509,3 +516,65 @@ def make_predictive_fn(
         if learning_model == LearningModel.BernoulliProbs
         else normal_predict_expectation_values
     )
+
+
+def make_pdf(sample: jnp.ndarray, bins: int, srange=(-1, 1)):
+    density, bin_edges = jnp.histogram(sample, bins=bins, range=srange, density=True)
+    dx = jnp.diff(bin_edges)
+    p = density * dx
+    return p
+
+
+def safe_kl_divergence(p: jnp.ndarray, q: jnp.ndarray):
+    return jnp.sum(jnp.nan_to_num(jax.scipy.special.rel_entr(p, q), posinf=0.0))
+
+
+def kl_divergence(p: jnp.ndarray, q: jnp.ndarray):
+    return jnp.sum(jax.scipy.special.rel_entr(p, q))
+
+
+def safe_jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
+    # Implement following: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.jensenshannon.html
+    # Compute pointwise mean of p and q
+    m = (p + q) / 2
+    return (safe_kl_divergence(p, m) + safe_kl_divergence(q, m)) / 2
+
+
+def jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
+    """Calculate the Jensen-Shannon Divergence from PMF
+
+    Example
+    ```python
+    key = jax.random.key(0)
+    key_1, key_2 = jax.random.split(key)
+    sample_1 = jax.random.normal(key_1, shape=(10000, ))
+    sample_2 = jax.random.normal(key_2, shape=(10000, ))
+
+    # Determine srange from sample
+    merged_sample = jnp.concat([sample_1, sample_2])
+    srange = jnp.min(merged_sample), jnp.max(merged_sample)
+
+    # https://stats.stackexchange.com/questions/510699/discrete-kl-divergence-with-decreasing-bin-width
+    # Recommend this book: https://catalog.lib.uchicago.edu/vufind/Record/6093380/TOC
+    bins = int(2 * (sample_2.shape[0]) ** (1/3))
+    # bins = 10
+    dis_1 = sq.probabilistic.make_pdf(sample_1, bins=bins, srange=srange)
+    dis_2 = sq.probabilistic.make_pdf(sample_2, bins=bins, srange=srange)
+
+    jsd = sq.probabilistic.jensenshannon_divergence(dis_1, dis_2)
+
+    ```
+
+
+    Args:
+        p (jnp.ndarray): The 1st probability mass function
+        q (jnp.ndarray): The 1st probability mass function
+
+    Returns:
+        jnp.ndarray: The Jensen-Shannon Divergence of p and q
+    """
+    # Note for JSD: https://medium.com/data-science/how-to-understand-and-use-jensen-shannon-divergence-b10e11b03fd6
+    # Implement following: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.jensenshannon.html
+    # Compute pointwise mean of p and q
+    m = (p + q) / 2
+    return (kl_divergence(p, m) + kl_divergence(q, m)) / 2
