@@ -5,15 +5,18 @@ from numpyro.infer import svi as svilib  # type: ignore
 import numpyro  # type: ignore
 from numpyro import handlers
 from numpyro.contrib.module import random_flax_module, flax_module  # type: ignore
+import numpyro.util
 import numpyro.distributions as dist  # type: ignore
-from numpyro.infer import autoguide
+from numpyro.infer import autoguide, Predictive
 import typing
-from functools import partial
+from functools import partial, reduce
 from flax import linen as nn
 from dataclasses import dataclass
 import pathlib
 import json
 from enum import StrEnum, auto
+from numpyro.contrib.module import ParamShape
+import chex
 
 from .constant import default_expectation_values_order, X, Y, Z
 from .model import get_predict_expectation_value, unitary
@@ -167,34 +170,14 @@ def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarra
     )
 
 
-def make_probabilistic_model(
+def make_flax_probabilistic_graybox_model(
+    name: str,  # graybox
     base_model: nn.Module,
     model_prediction_to_expvals_fn: typing.Callable[..., jnp.ndarray],
-    bnn_prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
-    shots: int = 1,
-    block_graybox: bool = False,
+    prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
     enable_bnn: bool = True,
-    separate_observables: bool = False,
-    custom_random_module: typing.Callable = random_flax_module,
-    keep_expvals: bool = False,
 ):
-    """Make probabilistic model from the Statistical model with priors
-
-    Args:
-        base_model (nn.Module): The statistical based model, currently only support flax.linen module
-        model_prediction_to_expvals_fn (typing.Callable[..., jnp.ndarray]): Function to convert output from model to expectation values array
-        bnn_prior (dict[str, dist.Distribution] | dist.Distribution, optional): The priors of BNN. Defaults to dist.Normal(0.0, 1.0).
-        shots (int, optional): The number of shots forcing PGM to sample. Defaults to 1.
-        block_graybox (bool, optional): If true, the latent variables in Graybox model will be hidden, i.e. not traced by `numpyro`. Defaults to False.
-        enable_bnn (bool, optional): If true, the statistical model will be convert to probabilistic model. Defaults to True.
-        separate_observables (bool, optional): If true, the observable will be separate into dict form. Defaults to False.
-
-    Returns:
-        typing.Callable: Probabilistic Graybox Model
-    """
-    module = (
-        partial(custom_random_module, prior=bnn_prior) if enable_bnn else flax_module
-    )
+    module = partial(random_flax_module, prior=prior) if enable_bnn else flax_module
 
     def graybox_probabilistic_model(
         control_parameters: jnp.ndarray,
@@ -214,7 +197,7 @@ def make_probabilistic_model(
 
         # Initialize BMLP model
         model = module(
-            "graybox",
+            name,
             base_model,
             input_shape=control_parameters.shape,
         )
@@ -225,9 +208,32 @@ def make_probabilistic_model(
         # With unitary and Wo, calculate expectation values
         expvals = model_prediction_to_expvals_fn(output, unitaries)
 
-        numpyro.deterministic("expectation_values", expvals)
-
         return expvals
+
+    return graybox_probabilistic_model
+
+
+def make_probabilistic_model(
+    graybox_probabilistic_model: typing.Callable[..., jnp.ndarray],
+    shots: int = 1,
+    block_graybox: bool = False,
+    separate_observables: bool = False,
+    log_expectation_values: bool = False,
+):
+    """Make probabilistic model from the Statistical model with priors
+
+    Args:
+        base_model (nn.Module): The statistical based model, currently only support flax.linen module
+        model_prediction_to_expvals_fn (typing.Callable[..., jnp.ndarray]): Function to convert output from model to expectation values array
+        bnn_prior (dict[str, dist.Distribution] | dist.Distribution, optional): The priors of BNN. Defaults to dist.Normal(0.0, 1.0).
+        shots (int, optional): The number of shots forcing PGM to sample. Defaults to 1.
+        block_graybox (bool, optional): If true, the latent variables in Graybox model will be hidden, i.e. not traced by `numpyro`. Defaults to False.
+        enable_bnn (bool, optional): If true, the statistical model will be convert to probabilistic model. Defaults to True.
+        separate_observables (bool, optional): If true, the observable will be separate into dict form. Defaults to False.
+
+    Returns:
+        typing.Callable: Probabilistic Graybox Model
+    """
 
     def block_graybox_fn(
         control_parameters: jnp.ndarray,
@@ -248,8 +254,8 @@ def make_probabilistic_model(
     ):
         expvals = graybox_fn(control_parameters, unitaries)
 
-        if keep_expvals:
-            numpyro.deterministic("expvals", expvals)
+        if log_expectation_values:
+            numpyro.deterministic("expectation_values", expvals)
 
         if observables is None:
             sizes = control_parameters.shape[:-1] + (18,)
@@ -258,25 +264,34 @@ def make_probabilistic_model(
         else:
             sizes = observables.shape
 
-        if separate_observables:
-            expvals_samples = {}
+        # The plate is for the shots prediction to work properly
+        with numpyro.util.optional(
+            shots > 1, numpyro.plate_stack("plate", sizes=list(sizes)[:-1])
+        ):
+            if separate_observables:
+                expvals_samples = {}
 
-            for idx, exp in enumerate(default_expectation_values_order):
-                s = numpyro.sample(
-                    f"obs/{exp.initial_state}/{exp.observable}",
-                    dist.BernoulliProbs(
-                        probs=expectation_value_to_prob_minus(expvals[..., idx])
-                    ),
-                    obs=(observables[..., idx] if observables is not None else None),
-                )
+                for idx, exp in enumerate(default_expectation_values_order):
+                    s = numpyro.sample(
+                        f"obs/{exp.initial_state}/{exp.observable}",
+                        dist.BernoulliProbs(
+                            probs=expectation_value_to_prob_minus(
+                                jnp.expand_dims(expvals[..., idx], axis=-1)
+                            )
+                        ).to_event(1),
+                        obs=(
+                            observables[..., idx] if observables is not None else None
+                        ),
+                    )
 
-                expvals_samples[f"obs/{exp.initial_state}/{exp.observable}"] = s
+                    expvals_samples[f"obs/{exp.initial_state}/{exp.observable}"] = s
 
-        else:
-            with numpyro.plate_stack("plate", sizes=list(sizes)):
+            else:
                 expvals_samples = numpyro.sample(
                     "obs",
-                    dist.BernoulliProbs(probs=expectation_value_to_prob_minus(expvals)),
+                    dist.BernoulliProbs(
+                        probs=expectation_value_to_prob_minus(expvals)
+                    ).to_event(1),
                     obs=observables,
                     infer={"enumerate": "parallel"},
                 )
@@ -284,69 +299,6 @@ def make_probabilistic_model(
         return expvals_samples
 
     return bernoulli_model
-
-
-def save_pytree_to_json(pytree, path: str | pathlib.Path):
-    """Save given pytree to json file, the path must end with extension of .json
-
-    Args:
-        pytree (_type_): The pytree to save
-        path (str | pathlib.Path): File path to save
-
-    """
-
-    data = jax.tree.map(
-        lambda x: x.tolist() if isinstance(x, jnp.ndarray) else x, pytree
-    )
-
-    if isinstance(path, str):
-        path = pathlib.Path(path)
-
-    path.parent.mkdir(exist_ok=True, parents=True)
-
-    with open(path, "w") as f:
-        json.dump(data, f, indent=4)
-
-
-def load_pytree_from_json(path: str | pathlib.Path, array_keys: list[str] = []):
-    """Load pytree from json
-
-    Args:
-        path (str | pathlib.Path): Path to JSON file containing pytree
-        array_keys (list[str], optional): list of key to convert to jnp.numpy. Defaults to [].
-
-    Raises:
-        ValueError: Provided path is not point to .json file
-
-    Returns:
-        _type_: Pytree loaded from JSON
-    """
-
-    # Validate that file extension is .json
-    extension = str(path).split(".")[-1]
-
-    if extension != "json":
-        raise ValueError("File extension must be json")
-
-    if isinstance(path, str):
-        path = pathlib.Path(path)
-
-    with open(path, "r") as f:
-        data = json.load(f)
-
-    def is_leaf(x):
-        return isinstance(x, list)
-
-    temp_data = {}
-    for key, value in data.items():
-        if key in array_keys:
-            temp_data[key] = jax.tree.map(
-                lambda x: jnp.array(x), value, is_leaf=is_leaf
-            )
-        else:
-            temp_data[key] = value
-
-    return temp_data
 
 
 def get_args_of_distribution(x):
@@ -540,7 +492,7 @@ def safe_jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
     return (safe_kl_divergence(p, m) + safe_kl_divergence(q, m)) / 2
 
 
-def jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
+def jensenshannon_divergence_from_pdf(p: jnp.ndarray, q: jnp.ndarray):
     """Calculate the Jensen-Shannon Divergence from PMF
 
     Example
@@ -561,10 +513,9 @@ def jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
     dis_1 = sq.probabilistic.make_pdf(sample_1, bins=bins, srange=srange)
     dis_2 = sq.probabilistic.make_pdf(sample_2, bins=bins, srange=srange)
 
-    jsd = sq.probabilistic.jensenshannon_divergence(dis_1, dis_2)
+    jsd = sq.probabilistic.jensenshannon_divergence_from_pdf(dis_1, dis_2)
 
     ```
-
 
     Args:
         p (jnp.ndarray): The 1st probability mass function
@@ -578,3 +529,316 @@ def jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
     # Compute pointwise mean of p and q
     m = (p + q) / 2
     return (kl_divergence(p, m) + kl_divergence(q, m)) / 2
+
+
+def jensenshannon_divergence_from_sample(
+    sample_1: jnp.ndarray, sample_2: jnp.ndarray
+) -> jnp.ndarray:
+    merged_sample = jnp.concat([sample_1, sample_2])
+    bins = int(2 * (sample_2.shape[0]) ** (1 / 3))
+    srange = jnp.min(merged_sample), jnp.max(merged_sample)
+
+    dis_1 = make_pdf(sample_1, bins=bins, srange=srange)
+    dis_2 = make_pdf(sample_2, bins=bins, srange=srange)
+
+    return jensenshannon_divergence_from_pdf(dis_1, dis_2)
+
+
+def batched_matmul(x, w, b):
+    return jnp.einsum(x, (..., 0), w, (..., 0, 1), (..., 1)) + b
+
+
+def get_trace(fn, key=jax.random.key(0)):
+    def inner(*args, **kwargs):
+        return numpyro.handlers.trace(numpyro.handlers.seed(fn, key)).get_trace(
+            *args, **kwargs
+        )
+
+    return inner
+
+
+def default_priors_fn(param_name: str):
+    if param_name.endswith("sigma"):
+        return dist.LogNormal(0, 1)
+
+    return dist.Normal(0, 1)
+
+
+def dense_layer(
+    x: jnp.ndarray,
+    name: str,
+    in_features: int,
+    out_features: int,
+    priors_fn: typing.Callable[[str], dist.Distribution] = default_priors_fn,
+):
+    w_name = f"{name}.kernel"
+    w = numpyro.sample(
+        w_name,
+        priors_fn(w_name).expand((in_features, out_features)).to_event(2),  # type: ignore
+    )
+    b_name = f"{name}.bias"
+    b = numpyro.sample(
+        b_name,
+        priors_fn(b_name).expand((out_features,)).to_event(1),  # type: ignore
+    )
+    return batched_matmul(x, w, b)  # type: ignore
+
+
+def init_default(params_name: str):
+    if params_name.endswith("kernel"):
+        return jnp.ones
+    elif params_name.endswith("bias"):
+        return lambda x: 0.1 * jnp.ones(x)
+    else:
+        raise ValueError("Unsupport param name")
+
+
+def dense_deterministic_layer(
+    x,
+    name: str,
+    in_features: int,
+    out_features: int,
+    batch_shape: tuple[int, ...] = (),
+    init_fn=init_default,
+):
+    # Sample weights - shape (in_features, out_features)
+    weight_shape = batch_shape + (in_features, out_features)
+    W_name = f"{name}.kernel"
+    W = numpyro.param(
+        W_name,
+        init_fn(W_name)(shape=weight_shape),  # type: ignore
+    )
+
+    # Sample bias - shape (out_features,)
+    bias_shape = batch_shape + (out_features,)
+    b_name = f"{name}.bias"
+    b = numpyro.param(b_name, init_fn(b_name)(shape=bias_shape))  # type: ignore
+
+    return batched_matmul(x, W, b)  # type: ignore
+
+
+def make_posteriors_fn(guide, params, num_samples=10000):
+    posterior_distribution = Predictive(
+        model=guide, params=params, num_samples=num_samples
+    )(jax.random.key(0))
+
+    posterior_dict = construct_normal_prior_from_samples(posterior_distribution)
+
+    def posteriors_fn(param_name: str):
+        return posterior_dict[param_name]
+
+    return posteriors_fn
+
+
+def auto_diagonal_noraml_guide(
+    model, *args, block_sample: bool = False, init_loc_fn=jnp.zeros
+):
+    model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
+        *args
+    )
+    # get the trace of the model
+    # Then get only the sample site with observed equal to false
+    sample_sites = [v for k, v in model_trace.items() if v["type"] == "sample"]
+    non_observed_sites = [v for v in sample_sites if not v["is_observed"]]
+    params_sites = [
+        {"name": v["name"], "shape": v["value"].shape} for v in non_observed_sites
+    ]
+
+    def guide(
+        *args,
+        **kwargs,
+    ):
+        params_loc = {
+            param["name"]: numpyro.param(
+                f"{param['name']}_loc", init_loc_fn(param["shape"])
+            )
+            for param in params_sites
+        }
+
+        params_scale = {
+            param["name"]: numpyro.param(
+                f"{param['name']}_scale",
+                0.1 * jnp.ones(param["shape"]),
+                constraint=dist.constraints.softplus_positive,
+            )
+            for param in params_sites
+        }
+
+        samples = {}
+
+        if block_sample:
+            with handlers.block():
+                # Sample from Normal distribution
+                for (k_loc, v_loc), (k_scale, v_scale) in zip(
+                    params_loc.items(), params_scale.items(), strict=True
+                ):
+                    s = numpyro.sample(
+                        k_loc,
+                        dist.Normal(v_loc, v_scale).to_event(),  # type: ignore
+                    )
+                    samples[k_loc] = s
+        else:
+            # Sample from Normal distribution
+            for (k_loc, v_loc), (k_scale, v_scale) in zip(
+                params_loc.items(), params_scale.items(), strict=True
+            ):
+                s = numpyro.sample(
+                    k_loc,
+                    dist.Normal(v_loc, v_scale).to_event(),  # type: ignore
+                )
+                samples[k_loc] = s
+
+        return samples
+
+    return guide
+
+
+def is_leaf_array(x):
+    return isinstance(x, list)
+
+
+def to_array(x):
+    return jnp.array(x) if is_leaf_array(x) else x
+
+
+def is_dict_paramshape(x):
+    if isinstance(x, dict) and len(x) == 1 and "shape" in x:
+        return True
+
+    return False
+
+
+def parse_param_shape(x):
+    if is_dict_paramshape(x):
+        return ParamShape(shape=tuple(x["shape"]))
+    else:
+        return x
+
+
+def load_pytree_from_json(path: str | pathlib.Path, array_keys: list[str] = []):
+    """Load pytree from json
+
+    Args:
+        path (str | pathlib.Path): Path to JSON file containing pytree
+        array_keys (list[str], optional): list of key to convert to jnp.numpy. Defaults to [].
+
+    Raises:
+        ValueError: Provided path is not point to .json file
+
+    Returns:
+        _type_: Pytree loaded from JSON
+    """
+
+    # Validate that file extension is .json
+    extension = str(path).split(".")[-1]
+
+    if extension != "json":
+        raise ValueError("File extension must be json")
+
+    if isinstance(path, str):
+        path = pathlib.Path(path)
+
+    with open(path, "r") as f:
+        data = json.load(f)
+
+    # def is_leaf(x):
+    #     return isinstance(x, list)
+
+    temp_data = {}
+    for key, value in data.items():
+        if key in array_keys:
+            temp_data[key] = jax.tree.map(
+                parse_param_shape, value, is_leaf=is_dict_paramshape
+            )
+
+            # Parse list to jnp.ndarray
+            temp_data[key] = jax.tree.map(
+                to_array, temp_data[key], is_leaf=is_leaf_array
+            )
+        else:
+            temp_data[key] = value
+
+    return temp_data
+
+
+def param_shape_to_dict(x):
+    if isinstance(x, dict):
+        r = {}
+        for k, v in x.items():
+            r[k] = {"shape": v.shape}
+        return r
+    else:
+        return x
+
+
+def is_param_shape(x):
+    # Check if it is the dict of ParamShape
+    if isinstance(x, dict):
+        r = True
+        for k, v in x.items():
+            r = r and isinstance(v, ParamShape)
+        return r
+    return False
+
+
+def save_pytree_to_json(pytree, path: str | pathlib.Path):
+    """Save given pytree to json file, the path must end with extension of .json
+
+    Args:
+        pytree (_type_): The pytree to save
+        path (str | pathlib.Path): File path to save
+
+    """
+
+    # Convert jax.ndarray
+    data = jax.tree.map(
+        lambda x: x.tolist() if isinstance(x, jnp.ndarray) else x, pytree
+    )
+    # Convert ParamShape
+    data = jax.tree.map(param_shape_to_dict, data, is_leaf=is_param_shape)
+
+    if isinstance(path, str):
+        path = pathlib.Path(path)
+
+    path.parent.mkdir(exist_ok=True, parents=True)
+
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+@dataclass
+class SVIResult:
+    params: chex.ArrayTree
+    config: dict[str, typing.Any]
+
+    def to_file(self, path: str | pathlib.Path):
+        data = {
+            "params": self.params,
+            "config": self.config,
+        }
+
+        save_pytree_to_json(data, path)
+
+    @classmethod
+    def from_file(cls, path: str | pathlib.Path) -> "SVIResult":
+        data = load_pytree_from_json(path, array_keys=["params"])
+
+        return cls(
+            params=data["params"],
+            config=data["config"],
+        )
+
+    def __eq__(self, value):
+        if not isinstance(value, type(self)):
+            raise ValueError("The compared value is not SVIResult object")
+
+        try:
+            chex.assert_trees_all_close(self.params, value.params)
+        except AssertionError:
+            return False
+
+        return True if value.config == self.config else False
+
+
+def compose(functions):
+    return reduce(lambda f, g: lambda x: g(f(x)), functions, lambda x: x)

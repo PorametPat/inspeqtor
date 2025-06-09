@@ -41,10 +41,10 @@ def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
 
 def minimize(
     params: chex.ArrayTree,
-    lower: chex.ArrayTree,
-    upper: chex.ArrayTree,
     func: typing.Callable[[jnp.ndarray], tuple[jnp.ndarray, typing.Any]],
     optimizer: optax.GradientTransformation,
+    lower: chex.ArrayTree | None = None,
+    upper: chex.ArrayTree | None = None,
     maxiter: int = 1000,
 ) -> tuple[chex.ArrayTree, list[typing.Any]]:
     """Optimize the loss function with bounded parameters.
@@ -68,8 +68,9 @@ def minimize(
         updates, opt_state = optimizer.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
 
-        # Apply projection
-        params = optax.projections.projection_box(params, lower, upper)
+        if lower is not None and upper is not None:
+            # Apply projection
+            params = optax.projections.projection_box(params, lower, upper)
 
         # Log the history
         aux["params"] = params

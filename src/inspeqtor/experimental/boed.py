@@ -379,3 +379,18 @@ def estimate_eig(
         "params": params,
         "history": history,
     }
+
+
+def vectorized_for_eig(model):
+    def wrapper(
+        design: jnp.ndarray,
+        *args,
+        # unitaries: jnp.ndarray,
+        # observables: jnp.ndarray | None = None,
+    ):
+        # This wrapper has the same call signature as the probabilistic graybox model
+        # Expect the design to has shape == (extra, design, feature)
+        with plate_stack(prefix="vectorized_plate", sizes=[*design.shape[:2]]):
+            return model(design, *args)
+
+    return wrapper
