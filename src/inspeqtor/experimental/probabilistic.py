@@ -1,3 +1,4 @@
+from deprecated import deprecated
 import jax
 import jax.numpy as jnp
 from collections import namedtuple
@@ -20,6 +21,7 @@ import chex
 
 from .constant import default_expectation_values_order, X, Y, Z
 from .model import get_predict_expectation_value, unitary
+from .data import save_pytree_to_json, load_pytree_from_json
 
 
 def expectation_value_to_prob_plus(expectation_value: jnp.ndarray) -> jnp.ndarray:
@@ -367,7 +369,8 @@ class ProbabilisticModel:
 
     @classmethod
     def from_file(cls, path: str | pathlib.Path) -> "ProbabilisticModel":
-        data = load_pytree_from_json(path, array_keys=["posterior"])
+        # data = load_pytree_from_json(path, array_keys=["posterior"])
+        data = load_pytree_from_json(path)
 
         return cls(
             posterior=data["posterior"],
@@ -715,7 +718,8 @@ def parse_param_shape(x):
         return x
 
 
-def load_pytree_from_json(path: str | pathlib.Path, array_keys: list[str] = []):
+@deprecated
+def load_pytree_from_json_old(path: str | pathlib.Path, array_keys: list[str] = []):
     """Load pytree from json
 
     Args:
@@ -761,51 +765,6 @@ def load_pytree_from_json(path: str | pathlib.Path, array_keys: list[str] = []):
     return temp_data
 
 
-def param_shape_to_dict(x):
-    if isinstance(x, dict):
-        r = {}
-        for k, v in x.items():
-            r[k] = {"shape": v.shape}
-        return r
-    else:
-        return x
-
-
-def is_param_shape(x):
-    # Check if it is the dict of ParamShape
-    if isinstance(x, dict):
-        r = True
-        for k, v in x.items():
-            r = r and isinstance(v, ParamShape)
-        return r
-    return False
-
-
-def save_pytree_to_json(pytree, path: str | pathlib.Path):
-    """Save given pytree to json file, the path must end with extension of .json
-
-    Args:
-        pytree (_type_): The pytree to save
-        path (str | pathlib.Path): File path to save
-
-    """
-
-    # Convert jax.ndarray
-    data = jax.tree.map(
-        lambda x: x.tolist() if isinstance(x, jnp.ndarray) else x, pytree
-    )
-    # Convert ParamShape
-    data = jax.tree.map(param_shape_to_dict, data, is_leaf=is_param_shape)
-
-    if isinstance(path, str):
-        path = pathlib.Path(path)
-
-    path.parent.mkdir(exist_ok=True, parents=True)
-
-    with open(path, "w") as f:
-        json.dump(data, f, indent=4)
-
-
 @dataclass
 class SVIResult:
     params: chex.ArrayTree
@@ -821,7 +780,8 @@ class SVIResult:
 
     @classmethod
     def from_file(cls, path: str | pathlib.Path) -> "SVIResult":
-        data = load_pytree_from_json(path, array_keys=["params"])
+        # data = load_pytree_from_json(path, array_keys=["params"])
+        data = load_pytree_from_json(path)
 
         return cls(
             params=data["params"],
@@ -842,3 +802,24 @@ class SVIResult:
 
 def compose(functions):
     return reduce(lambda f, g: lambda x: g(f(x)), functions, lambda x: x)
+
+
+DataBundled = namedtuple(
+    "DataBundled", ["control_params", "unitaries", "observables", "aux"]
+)
+
+
+def make_predictive_model_fn_v2(
+    model,
+    guide,
+    params,
+    shots,
+):
+    predictive = Predictive(
+        model, guide=guide, params=params, num_samples=shots, return_sites=["obs"]
+    )
+
+    def predictive_fn(*args, **kwargs):
+        return predictive(*args, **kwargs)["obs"]
+
+    return predictive_fn

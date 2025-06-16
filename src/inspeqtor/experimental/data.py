@@ -8,6 +8,7 @@ import numpy as np
 from pathlib import Path
 import pandas as pd
 import logging
+from numpyro.contrib.module import ParamShape
 
 from .typing import ParametersDictType
 
@@ -565,7 +566,9 @@ class ExperimentData:
                     ignore_index=True
                 )
             )
-        ), "The preprocess_data and postprocessed_data does not have the same parameters."
+        ), (
+            "The preprocess_data and postprocessed_data does not have the same parameters."
+        )
         logging.info("Preprocess data and postprocess data have the same parameters")
 
     def __eq__(self, __value: object) -> bool:
@@ -588,9 +591,9 @@ class ExperimentData:
         """
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert (
-                    col.name in self.preprocess_data.columns
-                ), f"Column {col.name} is required but not found in the preprocess_data."
+                assert col.name in self.preprocess_data.columns, (
+                    f"Column {col.name} is required but not found in the preprocess_data."
+                )
 
         # Validate that the preprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
@@ -598,9 +601,9 @@ class ExperimentData:
         )
 
         for _col in required_parameters_columns:
-            assert (
-                _col in self.preprocess_data.columns
-            ), f"Column {_col} is required but not found in the preprocess_data."
+            assert _col in self.preprocess_data.columns, (
+                f"Column {_col} is required but not found in the preprocess_data."
+            )
 
     def validate_postprocess_data(self, post_data: pd.DataFrame):
         """Validate postprocess dataset, by check the requirements given by `PredefinedCol` instance of each column
@@ -613,25 +616,25 @@ class ExperimentData:
         # Validate that the postprocess_data have all the required columns
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert (
-                    col.name in post_data.columns
-                ), f"Column {col.name} is required but not found in the postprocess_data."
+                assert col.name in post_data.columns, (
+                    f"Column {col.name} is required but not found in the postprocess_data."
+                )
 
         # Validate the check functions
         for col in REQUIRED_COLUMNS:
             for check in col.checks:
-                assert all(
-                    [check(v) for v in post_data[col.name]]
-                ), f"Column {col.name} failed the check function {check}"
+                assert all([check(v) for v in post_data[col.name]]), (
+                    f"Column {col.name} failed the check function {check}"
+                )
 
         # Validate that the postprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
             self.experiment_config.parameter_names
         )
         for _col in required_parameters_columns:
-            assert (
-                _col in post_data.columns
-            ), f"Column {_col} is required but not found in the postprocess_data."
+            assert _col in post_data.columns, (
+                f"Column {_col} is required but not found in the postprocess_data."
+            )
 
     def transform_preprocess_data_to_postprocess_data(self) -> pd.DataFrame:
         """Internal method to post process the dataset.
@@ -837,3 +840,103 @@ def read_from_json(
         return config_dict
     else:
         return dataclass(**config_dict)
+
+
+def recursive_parse(data: dict, parse_fn):
+    temp_dict = {}
+    for key, value in data.items():
+        is_leaf, parse_value = parse_fn(key, value)
+
+        if not is_leaf:
+            parse_value = recursive_parse(value, parse_fn)
+
+        temp_dict[key] = parse_value
+
+    return temp_dict
+
+
+def default_parse_fn(key, value):
+    if isinstance(value, list):
+        return True, jnp.array(value)
+    elif isinstance(value, dict) and len(value) == 1 and "shape" in value:
+        return True, ParamShape(shape=tuple(value["shape"]))
+    elif isinstance(value, dict):
+        return False, None
+    else:
+        return True, value
+
+
+def load_pytree_from_json(path: str | Path, parse_fn=default_parse_fn):
+    """Load pytree from json
+
+    Args:
+        path (str | Path): Path to JSON file containing pytree
+        array_keys (list[str], optional): list of key to convert to jnp.numpy. Defaults to [].
+
+    Raises:
+        ValueError: Provided path is not point to .json file
+
+    Returns:
+        _type_: Pytree loaded from JSON
+    """
+
+    # Validate that file extension is .json
+    extension = str(path).split(".")[-1]
+
+    if extension != "json":
+        raise ValueError("File extension must be json")
+
+    if isinstance(path, str):
+        path = Path(path)
+
+    with open(path, "r") as f:
+        data = json.load(f)
+
+    data = recursive_parse(data, parse_fn=parse_fn)
+
+    return data
+
+
+def param_shape_to_dict(x):
+    if isinstance(x, dict):
+        r = {}
+        for k, v in x.items():
+            r[k] = {"shape": v.shape}
+        return r
+    else:
+        return x
+
+
+def is_param_shape(x):
+    # Check if it is the dict of ParamShape
+    if isinstance(x, dict):
+        r = True
+        for k, v in x.items():
+            r = r and isinstance(v, ParamShape)
+        return r
+    return False
+
+
+def save_pytree_to_json(pytree, path: str | Path):
+    """Save given pytree to json file, the path must end with extension of .json
+
+    Args:
+        pytree (_type_): The pytree to save
+        path (str | Path): File path to save
+
+    """
+
+    # Convert jax.ndarray
+    data = jax.tree.map(
+        lambda x: x.tolist() if isinstance(x, jnp.ndarray) else x, pytree
+    )
+    # Convert ParamShape
+    data = jax.tree.map(param_shape_to_dict, data, is_leaf=is_param_shape)
+
+    if isinstance(path, str):
+        path = Path(path)
+
+    path.parent.mkdir(exist_ok=True, parents=True)
+
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
