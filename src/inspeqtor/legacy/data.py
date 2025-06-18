@@ -692,7 +692,7 @@ def generate_path_with_datetime(sub_dir: typing.Union[str, None] = None):
 class DataConfig:
     EXPERIMENT_IDENTIFIER: str
     hamiltonian: str
-    pulse_sequence: dict
+    control_sequence: dict
 
     def to_file(self, path: typing.Union[str, Path]):
         if isinstance(path, str):

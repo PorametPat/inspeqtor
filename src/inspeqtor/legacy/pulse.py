@@ -128,17 +128,17 @@ class BasePulseSequence(ABC):
 
     def to_file(self, path: str):
         os.makedirs(path, exist_ok=True)
-        with open(f"{path}/pulse_sequence.json", "w") as f:
+        with open(f"{path}/control_sequence.json", "w") as f:
             json.dump(self.to_dict(), f, indent=4)
 
     @classmethod
     def from_file(
         cls, path: str, pulses: typing.Sequence[type[BasePulse]]
     ) -> "BasePulseSequence":
-        with open(f"{path}/pulse_sequence.json", "r") as f:
-            dict_pulse_sequence = json.load(f)
+        with open(f"{path}/control_sequence.json", "r") as f:
+            dict_control_sequence = json.load(f)
 
-        return cls.from_dict(dict_pulse_sequence, pulses=pulses)
+        return cls.from_dict(dict_control_sequence, pulses=pulses)
 
     def draw(
         self,
@@ -296,7 +296,7 @@ def list_of_params_to_array(
     return jnp.array(temp)
 
 
-def construct_pulse_sequence_reader(
+def construct_control_sequence_reader(
     pulses: list[type[BasePulse]] = [],
 ) -> typing.Callable[[str], BasePulseSequence]:
     default_pulses: list[type[BasePulse]] = []
@@ -304,19 +304,19 @@ def construct_pulse_sequence_reader(
     # Merge the default pulses with the provided pulses
     pulses_list = default_pulses + pulses
 
-    def pulse_sequence_reader(path) -> BasePulseSequence:
-        with open(f"{path}/pulse_sequence.json", "r") as f:
-            pulse_sequence_dict = json.load(f)
+    def control_sequence_reader(path) -> BasePulseSequence:
+        with open(f"{path}/control_sequence.json", "r") as f:
+            control_sequence_dict = json.load(f)
 
         parsed_pulses = []
 
-        for pulse_dict in pulse_sequence_dict["pulses"]:
+        for pulse_dict in control_sequence_dict["pulses"]:
             for pulse_class in pulses_list:
                 if pulse_dict["_name"] == pulse_class.__name__:
                     parsed_pulses.append(pulse_class)
 
         return JaxBasedPulseSequence.from_dict(
-            pulse_sequence_dict, pulses=parsed_pulses
+            control_sequence_dict, pulses=parsed_pulses
         )
 
-    return pulse_sequence_reader
+    return control_sequence_reader

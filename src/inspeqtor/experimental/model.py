@@ -598,7 +598,7 @@ class DataConfig:
 
     EXPERIMENT_IDENTIFIER: str
     hamiltonian: str
-    pulse_sequence: dict
+    control_sequence: dict
 
     def to_file(self, path: typing.Union[str, pathlib.Path]):
         """Save the data config to file.
@@ -644,7 +644,7 @@ def generate_path_with_datetime(sub_dir: pathlib.Path):
 def save_model(
     path: pathlib.Path | str,
     experiment_identifier: str,
-    pulse_sequence: ControlSequence,
+    control_sequence: ControlSequence,
     hamiltonian: typing.Union[str, typing.Callable],
     model_config: dict,
     model_params: VariableDict,
@@ -656,7 +656,7 @@ def save_model(
     Args:
         path (pathlib.Path | str): Path to folder to save data
         experiment_identifier (str): Experiment identifier
-        pulse_sequence (PulseSequence): Pulse sequence used in the training
+        control_sequence (PulseSequence): Pulse sequence used in the training
         hamiltonian (typing.Union[str, typing.Callable]): Ideal Hamiltonian used for Whitebox
         model_config (dict): Configuration of model, used for model initialization
         model_params (VariableDict): Parameters of model.
@@ -691,7 +691,7 @@ def save_model(
         hamiltonian=(
             hamiltonian if isinstance(hamiltonian, str) else hamiltonian.__name__
         ),
-        pulse_sequence=pulse_sequence.to_dict(),
+        control_sequence=control_sequence.to_dict(),
     )
 
     data_config.to_file(path)
@@ -876,3 +876,77 @@ def construct_wo_model_from_config(
 
     model = model_constructor(**model_config)
     return model, model_config
+
+
+def make_dropout_blackbox_model(
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
+    * jnp.pi
+    * nn.hard_sigmoid(x),
+    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        2 * nn.hard_sigmoid(x)
+    )
+    - 1,
+) -> type[nn.Module]:
+    """Function to create Blackbox constructor with custom activation functions for unitary and diagonal output
+
+    Args:
+        unitary_activation_fn (_type_, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
+        diagonal_activation_fn (_type_, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
+
+    Returns:
+        type[nn.Module]: Constructor of the Blackbox model
+    """
+
+    class BlackBox(nn.Module):
+        dropout_rate: float = 0.2
+        hidden_sizes_1: typing.Sequence[int] = (20, 10)
+        hidden_sizes_2: typing.Sequence[int] = (20, 10)
+        pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
+
+        NUM_UNITARY_PARAMS: int = 3
+        NUM_DIAGONAL_PARAMS: int = 2
+
+        _unitary_activation_fn: typing.Callable = unitary_activation_fn
+        _diagonal_activation_fn: typing.Callable = diagonal_activation_fn
+
+        @nn.compact
+        def __call__(
+            self, x: jnp.ndarray, stochastic: bool = True
+        ) -> dict[str, jnp.ndarray]:
+            # Apply a dense layer for each hidden size
+            for hidden_size in self.hidden_sizes_1:
+                x = nn.Dense(features=hidden_size)(x)
+                x = nn.relu(x)
+                x = nn.Dropout(rate=self.dropout_rate, deterministic=not stochastic)(x)
+
+            # Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
+            Wos: dict[str, jnp.ndarray] = dict()
+            for op in self.pauli_operators:
+                # Sub hidden layer
+                # Copy the input
+                _x = jnp.copy(x)
+                for hidden_size in self.hidden_sizes_2:
+                    _x = nn.Dense(features=hidden_size)(_x)
+                    _x = nn.relu(_x)
+                    _x = nn.Dropout(
+                        rate=self.dropout_rate, deterministic=not stochastic
+                    )(_x)
+
+                # For the unitary part, we use a dense layer with 3 features
+                unitary_params = nn.Dense(
+                    features=self.NUM_UNITARY_PARAMS, name=f"U_{op}"
+                )(_x)
+                # Apply sigmoid to this layer
+                unitary_params = self._unitary_activation_fn(unitary_params)
+                # For the diagonal part, we use a dense layer with 1 feature
+                diag_params = nn.Dense(
+                    features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}"
+                )(_x)
+                # Apply the activation function
+                diag_params = self._diagonal_activation_fn(diag_params)
+
+                Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+
+            return Wos
+
+    return BlackBox

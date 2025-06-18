@@ -572,7 +572,7 @@ def unitaries_prod(
 
 def make_trotterization_whitebox(
     hamiltonian: typing.Callable[..., jnp.ndarray],
-    pulse_sequence: ControlSequence,
+    control_sequence: ControlSequence,
     dt: float = 2 / 9,
     trotter_steps: int = 1000,
 ):
@@ -580,7 +580,7 @@ def make_trotterization_whitebox(
 
     Args:
         hamiltonian (typing.Callable[..., jnp.ndarray]): The Hamiltonian function of the system
-        pulse_sequence (PulseSequence): The pulse sequence instance
+        control_sequence (PulseSequence): The pulse sequence instance
         dt (float, optional): The duration of time step in nanosecond. Defaults to 2/9.
         trotter_steps (int, optional): The number of trotterization step. Defaults to 1000.
 
@@ -588,7 +588,7 @@ def make_trotterization_whitebox(
         typing.Callable[..., jnp.ndarray]: Trotterization Whitebox function
     """
     hamiltonian = jax.jit(hamiltonian)
-    time_step = jnp.linspace(0, pulse_sequence.pulse_length_dt * dt, trotter_steps)
+    time_step = jnp.linspace(0, control_sequence.pulse_length_dt * dt, trotter_steps)
 
     def whitebox(pulse_parameter: jnp.ndarray):
         hamiltonians = jax.vmap(hamiltonian, in_axes=(None, 0))(

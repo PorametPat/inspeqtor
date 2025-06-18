@@ -146,7 +146,7 @@ class MultiDragPulseV2(JaxBasedPulse):
         return self.get_envelope(params)(self.t_eval)
 
 
-def get_multi_drag_pulse_sequence_v2(
+def get_multi_drag_control_sequence_v2(
     drag_version: int = 1,
     min_amp: float = 0,
     max_amp: float = 1,
@@ -157,7 +157,7 @@ def get_multi_drag_pulse_sequence_v2(
 ) -> JaxBasedPulseSequence:
     pulse_length_dt = 80
 
-    pulse_sequence = JaxBasedPulseSequence(
+    control_sequence = JaxBasedPulseSequence(
         pulses=[
             MultiDragPulseV2(
                 total_length=pulse_length_dt,
@@ -175,7 +175,7 @@ def get_multi_drag_pulse_sequence_v2(
         pulse_length_dt=pulse_length_dt,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 def get_mock_qubit_information() -> QubitInformation:
@@ -194,29 +194,29 @@ def get_mock_prefined_exp_v1(
     get_qubit_information_fn: typing.Callable[
         [], QubitInformation
     ] = get_mock_qubit_information,
-    get_pulse_sequence_fn: typing.Callable[
+    get_control_sequence_fn: typing.Callable[
         [], JaxBasedPulseSequence
-    ] = get_multi_drag_pulse_sequence_v2,
+    ] = get_multi_drag_control_sequence_v2,
 ):
     qubit_info = get_qubit_information_fn()
-    pulse_sequence = get_pulse_sequence_fn()
+    control_sequence = get_control_sequence_fn()
 
     config = ExperimentConfiguration(
         qubits=[qubit_info],
         expectation_values_order=default_expectation_values_order,
-        parameter_names=pulse_sequence.get_parameter_names(),
+        parameter_names=control_sequence.get_parameter_names(),
         backend_name="fake_ibm_test",
         shots=shots,
         EXPERIMENT_IDENTIFIER="test",
         EXPERIMENT_TAGS=["test"],
         description="Generated for test",
         device_cycle_time_ns=2 / 9,
-        sequence_duration_dt=pulse_sequence.pulse_length_dt,
+        sequence_duration_dt=control_sequence.pulse_length_dt,
         instance="inspeqtor/tester",
         sample_size=sample_size,
     )
 
-    return qubit_info, pulse_sequence, config
+    return qubit_info, control_sequence, config
 
 
 @dataclass
@@ -283,7 +283,7 @@ class JaxDragPulse(JaxBasedPulse):
         return amps
 
 
-def get_jax_based_pulse_sequence() -> JaxBasedPulseSequence:
+def get_jax_based_control_sequence() -> JaxBasedPulseSequence:
     drive_str = 0.11
     dt = 2 / 9
     total_length = 80
@@ -291,7 +291,7 @@ def get_jax_based_pulse_sequence() -> JaxBasedPulseSequence:
     area = 1 / (2 * drive_str * amp) / dt
     sigma = (1 * area) / (amp * jnp.sqrt(2 * jnp.pi))
 
-    pulse_sequence = JaxBasedPulseSequence(
+    control_sequence = JaxBasedPulseSequence(
         pulses=[
             JaxDragPulse(
                 total_length=total_length,
@@ -306,7 +306,7 @@ def get_jax_based_pulse_sequence() -> JaxBasedPulseSequence:
         pulse_length_dt=total_length,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 @dataclass
@@ -376,7 +376,7 @@ class DragPulse(JaxBasedPulse):
         )
 
 
-def get_drag_pulse_sequence(
+def get_drag_control_sequence(
     qubit_info: QubitInformation,
     amp: float = 0.25,  # NOTE: Choice of amplitude is arbitrary
 ):
@@ -387,7 +387,7 @@ def get_drag_pulse_sequence(
     )  # NOTE: Choice of area is arbitrary e.g. pi pulse
     sigma = (1 * area) / (amp * jnp.sqrt(2 * jnp.pi))
 
-    pulse_sequence = JaxBasedPulseSequence(
+    control_sequence = JaxBasedPulseSequence(
         pulses=[
             DragPulse(
                 total_length=total_length,
@@ -403,7 +403,7 @@ def get_drag_pulse_sequence(
         pulse_length_dt=total_length,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 def rotating_transmon_hamiltonian(
@@ -620,7 +620,7 @@ def get_envelope(params: ParametersDictType, order: int, total_length: int):
     return lambda t: real_part_fn(t) + 1j * params["beta"] * drag_part_fn(t)
 
 
-def get_multi_drag_pulse_sequence_v3():
+def get_multi_drag_control_sequence_v3():
     order = 4
     amp_bounds = list([[0, 1]] * order)
     order_amp_bound = tuple(
@@ -643,8 +643,8 @@ def get_multi_drag_pulse_sequence_v3():
         global_beta_bound=(-2, 2),
     )
 
-    pulse_sequence = JaxBasedPulseSequence(
+    control_sequence = JaxBasedPulseSequence(
         pulse_length_dt=80,
         pulses=[pulse],
     )
-    return pulse_sequence
+    return control_sequence

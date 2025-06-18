@@ -7,7 +7,7 @@ def test_training_loop_v2():
     key = jax.random.key(0)
     (
         exp_data,
-        pulse_sequence,
+        control_sequence,
         noisy_unitaries,
         signal_parameters_list,
         noisy_simulator,
@@ -16,7 +16,7 @@ def test_training_loop_v2():
     )
 
     loaded_data = sq.utils.helper.prepare_data(
-        exp_data=exp_data, pulse_sequence=pulse_sequence
+        exp_data=exp_data, control_sequence=control_sequence
     )
 
     train_dataloader, validation_data_loader, test_dataloader = sq.data.prepare_dataset(

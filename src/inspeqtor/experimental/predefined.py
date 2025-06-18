@@ -17,7 +17,7 @@ from .control import (
     ControlSequence,
     array_to_list_of_params,
     list_of_params_to_array,
-    construct_pulse_sequence_reader,
+    construct_control_sequence_reader,
 )
 from .typing import ParametersDictType, HamiltonianArgs
 from .physics import (
@@ -151,7 +151,7 @@ class GaussianPulse(BaseControl):
         )
 
 
-def get_gaussian_pulse_sequence(
+def get_gaussian_control_sequence(
     qubit_info: QubitInformation,
     max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
 ):
@@ -167,7 +167,7 @@ def get_gaussian_pulse_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = ControlSequence(
+    control_sequence = ControlSequence(
         pulses=[
             GaussianPulse(
                 duration=total_length,
@@ -181,7 +181,7 @@ def get_gaussian_pulse_sequence(
         pulse_length_dt=total_length,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 @dataclass
@@ -248,7 +248,7 @@ class TwoAxisGaussianPulse(BaseControl):
         return envelope_fn
 
 
-def get_two_axis_gaussian_pulse_sequence(
+def get_two_axis_gaussian_control_sequence(
     qubit_info: QubitInformation,
     max_amp: float = 0.5,
 ):
@@ -264,7 +264,7 @@ def get_two_axis_gaussian_pulse_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = ControlSequence(
+    control_sequence = ControlSequence(
         pulses=[
             TwoAxisGaussianPulse(
                 duration=total_length,
@@ -280,7 +280,7 @@ def get_two_axis_gaussian_pulse_sequence(
         pulse_length_dt=total_length,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 @dataclass
@@ -354,7 +354,7 @@ def get_drag_pulse_v2_sequence(
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = ControlSequence(
+    control_sequence = ControlSequence(
         pulses=[
             DragPulseV2(
                 duration=total_length,
@@ -370,7 +370,7 @@ def get_drag_pulse_v2_sequence(
         pulse_length_dt=total_length,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 @dataclass
@@ -417,14 +417,14 @@ class DragPulse(BaseControl):
         )
 
 
-def get_drag_pulse_sequence(
+def get_drag_control_sequence(
     qubit_info: QubitInformation,
     amp: float = 0.5,  # NOTE: Choice of amplitude is arbitrary
 ):
     total_length = 320
     dt = 2 / 9
 
-    pulse_sequence = ControlSequence(
+    control_sequence = ControlSequence(
         pulses=[
             DragPulse(
                 duration=total_length,
@@ -440,7 +440,7 @@ def get_drag_pulse_sequence(
         pulse_length_dt=total_length,
     )
 
-    return pulse_sequence
+    return control_sequence
 
 
 def get_envelope(params: ParametersDictType, order: int, total_length: int):
@@ -506,7 +506,7 @@ class MultiDragPulseV3(BaseControl):
         return get_envelope(params, self.order, self.duration)
 
 
-def get_multi_drag_pulse_sequence_v3():
+def get_multi_drag_control_sequence_v3():
     order = 4
     amp_bounds = list([[0.0, 1.0]] * order)
     order_amp_bound = list(
@@ -529,11 +529,11 @@ def get_multi_drag_pulse_sequence_v3():
         global_beta_bound=[-2.0, 2.0],
     )
 
-    pulse_sequence = ControlSequence(
+    control_sequence = ControlSequence(
         pulse_length_dt=80,
         pulses=[pulse],
     )
-    return pulse_sequence
+    return control_sequence
 
 
 def get_mock_qubit_information() -> QubitInformation:
@@ -552,29 +552,29 @@ def get_mock_prefined_exp_v1(
     get_qubit_information_fn: typing.Callable[
         [], QubitInformation
     ] = get_mock_qubit_information,
-    get_pulse_sequence_fn: typing.Callable[
+    get_control_sequence_fn: typing.Callable[
         [], ControlSequence
-    ] = get_multi_drag_pulse_sequence_v3,
+    ] = get_multi_drag_control_sequence_v3,
 ):
     qubit_info = get_qubit_information_fn()
-    pulse_sequence = get_pulse_sequence_fn()
+    control_sequence = get_control_sequence_fn()
 
     config = ExperimentConfiguration(
         qubits=[qubit_info],
         expectation_values_order=default_expectation_values_order,
-        parameter_names=pulse_sequence.get_parameter_names(),
+        parameter_names=control_sequence.get_parameter_names(),
         backend_name="fake_ibm_test",
         shots=shots,
         EXPERIMENT_IDENTIFIER="test",
         EXPERIMENT_TAGS=["test"],
         description="Generated for test",
         device_cycle_time_ns=2 / 9,
-        sequence_duration_dt=pulse_sequence.pulse_length_dt,
+        sequence_duration_dt=control_sequence.pulse_length_dt,
         instance="inspeqtor/tester",
         sample_size=sample_size,
     )
 
-    return qubit_info, pulse_sequence, config
+    return qubit_info, control_sequence, config
 
 
 class SimulationStrategy(Enum):
@@ -599,9 +599,9 @@ def generate_experimental_data(
     get_qubit_information_fn: typing.Callable[
         [], QubitInformation
     ] = get_mock_qubit_information,
-    get_pulse_sequence_fn: typing.Callable[
+    get_control_sequence_fn: typing.Callable[
         [], ControlSequence
-    ] = get_multi_drag_pulse_sequence_v3,
+    ] = get_multi_drag_control_sequence_v3,
     max_steps: int = int(2**16),
     method: WhiteboxStrategy = WhiteboxStrategy.ODE,
     trotter_steps: int = 1000,
@@ -620,7 +620,7 @@ def generate_experimental_data(
         shots (int, optional): Number of shots used to estimate expectation value, will be used if `SimulationStrategy` is `SHOT`, otherwise ignored. Defaults to 1000.
         strategy (SimulationStrategy, optional): Simulation strategy. Defaults to SimulationStrategy.RANDOM.
         get_qubit_information_fn (typing.Callable[ [], QubitInformation ], optional): Function that return qubit information. Defaults to get_mock_qubit_information.
-        get_pulse_sequence_fn (typing.Callable[ [], PulseSequence ], optional): Function that return control sequence. Defaults to get_multi_drag_pulse_sequence_v3.
+        get_control_sequence_fn (typing.Callable[ [], PulseSequence ], optional): Function that return control sequence. Defaults to get_multi_drag_control_sequence_v3.
         max_steps (int, optional): Maximum step of solver. Defaults to int(2**16).
         method (WhiteboxStrategy, optional): Unitary solver method. Defaults to WhiteboxStrategy.ODE.
 
@@ -630,10 +630,10 @@ def generate_experimental_data(
     Returns:
         tuple[ExperimentData, PulseSequence, jnp.ndarray, typing.Callable[[jnp.ndarray], jnp.ndarray]]: tuple of (1) Experiment data, (2) Pulse sequence, (3) Noisy unitary, (4) Noisy solver
     """
-    qubit_info, pulse_sequence, config = get_mock_prefined_exp_v1(
+    qubit_info, control_sequence, config = get_mock_prefined_exp_v1(
         sample_size=sample_size,
         shots=shots,
-        get_pulse_sequence_fn=get_pulse_sequence_fn,
+        get_control_sequence_fn=get_control_sequence_fn,
         get_qubit_information_fn=get_qubit_information_fn,
     )
 
@@ -646,14 +646,14 @@ def generate_experimental_data(
         noisy_simulator = jax.jit(
             make_trotterization_whitebox(
                 hamiltonian=hamiltonian,
-                pulse_sequence=pulse_sequence,
+                control_sequence=control_sequence,
                 dt=2 / 9,
                 trotter_steps=trotter_steps,
             )
         )
     else:
         t_eval = jnp.linspace(
-            0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+            0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
         )
         noisy_simulator = jax.jit(
             partial(
@@ -662,19 +662,19 @@ def generate_experimental_data(
                 hamiltonian=hamiltonian,
                 y0=jnp.eye(2, dtype=jnp.complex64),
                 t0=0,
-                t1=pulse_sequence.pulse_length_dt * dt,
+                t1=control_sequence.pulse_length_dt * dt,
                 max_steps=max_steps,
             )
         )
 
     control_params_list = []
-    parameter_structure = pulse_sequence.get_parameter_names()
+    parameter_structure = control_sequence.get_parameter_names()
     num_parameters = len(list(itertools.chain.from_iterable(parameter_structure)))
     # control_params: list[jnp.ndarray] = []
     control_params = jnp.empty(shape=(sample_size, num_parameters))
     for control_idx in range(config.sample_size):
         key, subkey = jax.random.split(key)
-        pulse_params = pulse_sequence.sample_params(subkey)
+        pulse_params = control_sequence.sample_params(subkey)
         control_params_list.append(pulse_params)
 
         # control_params.append(
@@ -752,35 +752,35 @@ def generate_experimental_data(
 
     return (
         exp_data,
-        pulse_sequence,
+        control_sequence,
         jnp.array(unitaries),
         noisy_simulator,
     )
 
 
-def get_envelope_transformer(pulse_sequence: ControlSequence):
+def get_envelope_transformer(control_sequence: ControlSequence):
     """Generate get_envelope function with control parameter array as an input instead of list form
 
     Args:
-        pulse_sequence (PulseSequence): Control seqence instance
+        control_sequence (PulseSequence): Control seqence instance
 
     Returns:
         typing.Callable[[jnp.ndarray], typing.Any]: Transformed get envelope function
     """
-    structure = pulse_sequence.get_parameter_names()
+    structure = control_sequence.get_parameter_names()
 
     def array_to_list_of_params_fn(array: jnp.ndarray):
         return array_to_list_of_params(array, structure)
 
     def get_envelope(params: jnp.ndarray) -> typing.Callable[..., typing.Any]:
-        return pulse_sequence.get_envelope(array_to_list_of_params_fn(params))
+        return control_sequence.get_envelope(array_to_list_of_params_fn(params))
 
     return get_envelope
 
 
 def get_single_qubit_whitebox(
     hamiltonian: typing.Callable[..., jnp.ndarray],
-    pulse_sequence: ControlSequence,
+    control_sequence: ControlSequence,
     qubit_info: QubitInformation,
     dt: float,
     max_steps: int = int(2**16),
@@ -789,7 +789,7 @@ def get_single_qubit_whitebox(
 
     Args:
         hamiltonian (typing.Callable[..., jnp.ndarray]): Hamiltonian
-        pulse_sequence (PulseSequence): Control sequence instance
+        control_sequence (PulseSequence): Control sequence instance
         qubit_info (QubitInformation): Qubit information
         dt (float): Duration of 1 timestep in nanosecond
         max_steps (int, optional): Maximum steps of solver. Defaults to int(2**16).
@@ -798,14 +798,14 @@ def get_single_qubit_whitebox(
         typing.Callable[[jnp.ndarray], jnp.ndarray]: Whitebox with ODE solver
     """
     t_eval = jnp.linspace(
-        0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+        0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
     )
 
     hamiltonian = partial(
         hamiltonian,
         qubit_info=qubit_info,
         signal=signal_func_v5(
-            get_envelope_transformer(pulse_sequence),
+            get_envelope_transformer(control_sequence),
             qubit_info.frequency,
             dt,
         ),
@@ -817,7 +817,7 @@ def get_single_qubit_whitebox(
         hamiltonian=hamiltonian,
         y0=jnp.eye(2, dtype=jnp.complex64),
         t0=0,
-        t1=pulse_sequence.pulse_length_dt * dt,
+        t1=control_sequence.pulse_length_dt * dt,
         max_steps=max_steps,
     )
 
@@ -825,14 +825,14 @@ def get_single_qubit_whitebox(
 
 
 def get_single_qubit_rotating_frame_whitebox(
-    pulse_sequence: ControlSequence,
+    control_sequence: ControlSequence,
     qubit_info: QubitInformation,
     dt: float,
 ) -> typing.Callable[[jnp.ndarray], jnp.ndarray]:
     """Generate single qubit whitebox with rotating transmon hamiltonian
 
     Args:
-        pulse_sequence (PulseSequence): Control sequence
+        control_sequence (PulseSequence): Control sequence
         qubit_info (QubitInformation): Qubit information
         dt (float): Duration of 1 timestep in nanosecond
 
@@ -841,7 +841,7 @@ def get_single_qubit_rotating_frame_whitebox(
     """
     whitebox = get_single_qubit_whitebox(
         rotating_transmon_hamiltonian,
-        pulse_sequence,
+        control_sequence,
         qubit_info,
         dt,
     )
@@ -849,7 +849,7 @@ def get_single_qubit_rotating_frame_whitebox(
     return whitebox
 
 
-pulse_reader = construct_pulse_sequence_reader(
+pulse_reader = construct_control_sequence_reader(
     pulses=[
         DragPulse,
         MultiDragPulseV3,
@@ -859,9 +859,15 @@ pulse_reader = construct_pulse_sequence_reader(
     ]
 )
 
+
+class HamiltonianEnum(StrEnum):
+    transmon_hamiltonian = auto()
+    rotating_transmon_hamiltonian = auto()
+
+
 hamiltonian_mapper = {
-    "transmon_hamiltonian": transmon_hamiltonian,
-    "rotating_transmon_hamiltonian": rotating_transmon_hamiltonian,
+    HamiltonianEnum.transmon_hamiltonian.value: transmon_hamiltonian,
+    HamiltonianEnum.rotating_transmon_hamiltonian.value: rotating_transmon_hamiltonian,
 }
 
 
@@ -871,6 +877,7 @@ def load_data_from_path(
     model_path: str | pathlib.Path,
     trotterization: bool = False,
     trotter_steps: int = 1000,
+    hamiltonian_enum: HamiltonianEnum = HamiltonianEnum.rotating_transmon_hamiltonian,
 ) -> LoadedData:
     if isinstance(path, str):
         path = pathlib.Path(path)
@@ -879,7 +886,7 @@ def load_data_from_path(
         model_path = pathlib.Path(model_path)
 
     exp_data = ExperimentData.from_folder(path)
-    pulse_sequence = pulse_reader(path)
+    control_sequence = pulse_reader(path)
 
     # Read hamiltonian from data config
     data_config = DataConfig.from_file(model_path)
@@ -893,7 +900,9 @@ def load_data_from_path(
             hamiltonian,
             qubit_info=qubit_info,
             signal=signal_func_v5(
-                get_envelope=get_envelope_transformer(pulse_sequence=pulse_sequence),
+                get_envelope=get_envelope_transformer(
+                    control_sequence=control_sequence
+                ),
                 drive_frequency=qubit_info.frequency,
                 dt=dt,
             ),
@@ -901,19 +910,19 @@ def load_data_from_path(
 
         whitebox = make_trotterization_whitebox(
             hamiltonian=hamiltonian,
-            pulse_sequence=pulse_sequence,
+            control_sequence=control_sequence,
             dt=exp_data.experiment_config.device_cycle_time_ns,
             trotter_steps=trotter_steps,
         )
     else:
         whitebox = get_single_qubit_whitebox(
             hamiltonian,
-            pulse_sequence,
+            control_sequence,
             qubit_info,
             dt,
         )
 
-    return prepare_data(exp_data, pulse_sequence, whitebox)
+    return prepare_data(exp_data, control_sequence, whitebox)
 
 
 def polynomial_feature_map(x: jnp.ndarray, degree: int):

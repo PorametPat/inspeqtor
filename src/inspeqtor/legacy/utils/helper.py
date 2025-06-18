@@ -20,12 +20,12 @@ from .predefined import (
     get_mock_prefined_exp_v1,
     default_expectation_values_order,
     detune_hamiltonian,
-    get_multi_drag_pulse_sequence_v2,
+    get_multi_drag_control_sequence_v2,
     get_mock_qubit_information,
 )
 from ..pulse import (
     JaxBasedPulseSequence,
-    construct_pulse_sequence_reader,
+    construct_control_sequence_reader,
     list_of_params_to_array,
 )
 from ..data import ExperimentData, State, make_row, ExpectationValue, QubitInformation
@@ -75,7 +75,7 @@ def check_diagonal_matrix(matrix):
     return jnp.count_nonzero(matrix - jnp.diag(jnp.diagonal(matrix))) == 0
 
 
-pulse_reader = construct_pulse_sequence_reader(
+pulse_reader = construct_control_sequence_reader(
     pulses=[DragPulse, JaxDragPulse, MultiDragPulseV2, MultiDragPulseV3]
 )
 
@@ -86,7 +86,7 @@ class LoadedData:
     pulse_parameters: np.ndarray
     unitaries: np.ndarray
     expectation_values: np.ndarray
-    pulse_sequence: JaxBasedPulseSequence
+    control_sequence: JaxBasedPulseSequence
     whitebox: typing.Callable
     noisy_whitebox: typing.Callable | None = None
     noisy_unitaries: jnp.ndarray | None = None
@@ -94,7 +94,7 @@ class LoadedData:
 
 def prepare_data(
     exp_data: ExperimentData,
-    pulse_sequence: JaxBasedPulseSequence,
+    control_sequence: JaxBasedPulseSequence,
 ) -> LoadedData:
     dt = exp_data.experiment_config.device_cycle_time_ns
     qubit_info = exp_data.experiment_config.qubits[0]
@@ -102,14 +102,14 @@ def prepare_data(
     logging.info(f"Loaded data from {exp_data.experiment_config.EXPERIMENT_IDENTIFIER}")
 
     t_eval = jnp.linspace(
-        0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+        0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
     )
 
     hamiltonian = partial(
         rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
         signal=signal_func_v3(
-            pulse_sequence.get_envelope,
+            control_sequence.get_envelope,
             qubit_info.frequency,
             dt,
         ),
@@ -122,7 +122,7 @@ def prepare_data(
             hamiltonian=hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=pulse_sequence.pulse_length_dt * dt,
+            t1=control_sequence.pulse_length_dt * dt,
         )
     )
 
@@ -148,7 +148,7 @@ def prepare_data(
         pulse_parameters=pulse_parameters,
         unitaries=np_unitaries,
         expectation_values=expectations,
-        pulse_sequence=pulse_sequence,
+        control_sequence=control_sequence,
         whitebox=jiited_simulator,
     )
 
@@ -158,11 +158,11 @@ def load_data_from_path(
 ) -> LoadedData:
     # Load the data from the experiment
     exp_data = ExperimentData.from_folder(path)
-    pulse_sequence = pulse_reader(str(path))
+    control_sequence = pulse_reader(str(path))
 
-    assert isinstance(pulse_sequence, JaxBasedPulseSequence)
+    assert isinstance(control_sequence, JaxBasedPulseSequence)
 
-    return prepare_data(exp_data, pulse_sequence)
+    return prepare_data(exp_data, control_sequence)
 
 
 class SimulationStrategy(Enum):
@@ -223,14 +223,14 @@ def generate_mock_experiment_data(
     get_qubit_information_fn: typing.Callable[
         [], QubitInformation
     ] = get_mock_qubit_information,
-    get_pulse_sequence_fn: typing.Callable[
+    get_control_sequence_fn: typing.Callable[
         [], JaxBasedPulseSequence
-    ] = get_multi_drag_pulse_sequence_v2,
+    ] = get_multi_drag_control_sequence_v2,
 ):
-    qubit_info, pulse_sequence, config = get_mock_prefined_exp_v1(
+    qubit_info, control_sequence, config = get_mock_prefined_exp_v1(
         sample_size=sample_size,
         shots=shots,
-        get_pulse_sequence_fn=get_pulse_sequence_fn,
+        get_control_sequence_fn=get_control_sequence_fn,
         get_qubit_information_fn=get_qubit_information_fn,
     )
 
@@ -239,14 +239,14 @@ def generate_mock_experiment_data(
 
     dt = config.device_cycle_time_ns
     t_eval = jnp.linspace(
-        0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+        0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
     )
 
     hamiltonian = partial(
         rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
         signal=signal_func_v3(
-            pulse_sequence.get_envelope,
+            control_sequence.get_envelope,
             qubit_info.frequency,
             dt,
         ),
@@ -263,7 +263,7 @@ def generate_mock_experiment_data(
             hamiltonian=hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=pulse_sequence.pulse_length_dt * dt,
+            t1=control_sequence.pulse_length_dt * dt,
         )
     )
 
@@ -272,10 +272,10 @@ def generate_mock_experiment_data(
     rows = []
     pulse_params_list = []
     signal_params_list: list[SignalParameters] = []
-    # parameter_structure = pulse_sequence.get_parameter_names()
+    # parameter_structure = control_sequence.get_parameter_names()
     for sample_idx in range(config.sample_size):
         key, subkey = jax.random.split(key)
-        pulse_params = pulse_sequence.sample_params(subkey)
+        pulse_params = control_sequence.sample_params(subkey)
         pulse_params_list.append(pulse_params)
 
         signal_param = SignalParameters(pulse_params=pulse_params, phase=0)
@@ -359,7 +359,7 @@ def generate_mock_experiment_data(
 
     return (
         exp_data,
-        pulse_sequence,
+        control_sequence,
         jnp.array(unitaries),
         signal_params_list,
         jiited_simulator,
@@ -415,15 +415,15 @@ def get_index(
     ]
 
 
-def model_summary(model: BasicBlackBox, pulse_sequence: JaxBasedPulseSequence):
-    sample_params = pulse_sequence.sample_params(jax.random.PRNGKey(0))
+def model_summary(model: BasicBlackBox, control_sequence: JaxBasedPulseSequence):
+    sample_params = control_sequence.sample_params(jax.random.PRNGKey(0))
 
     # trainable parameters count
     return model.tabulate(
         jax.random.PRNGKey(0),
         jnp.expand_dims(
             list_of_params_to_array(
-                sample_params, pulse_sequence.get_parameter_names()
+                sample_params, control_sequence.get_parameter_names()
             ),
             0,
         ),

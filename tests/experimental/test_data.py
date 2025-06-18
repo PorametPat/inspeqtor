@@ -156,9 +156,9 @@ def test_get_parameters_dict_list_1():
 
 def test_get_parameters_dict_list_2():
     key = jax.random.PRNGKey(0)
-    pulse_sequence = sq.predefined.get_multi_drag_pulse_sequence_v3()
-    pulse_params = pulse_sequence.sample_params(key)
-    parameters_name = pulse_sequence.get_parameter_names()
+    control_sequence = sq.predefined.get_multi_drag_control_sequence_v3()
+    pulse_params = control_sequence.sample_params(key)
+    parameters_name = control_sequence.get_parameter_names()
     # Flatten the pulse_params
     parameters_dict = {}
     for i, params in enumerate(pulse_params):
@@ -176,7 +176,7 @@ def test_get_parameters_dict_list_2():
 
 
 def test_ExperimentData_1(tmp_path):
-    qubit_info, pulse_sequence, config = sq.predefined.get_mock_prefined_exp_v1()
+    qubit_info, control_sequence, config = sq.predefined.get_mock_prefined_exp_v1()
     key = jax.random.PRNGKey(0)
 
     # Generate mock expectation value
@@ -186,10 +186,10 @@ def test_ExperimentData_1(tmp_path):
     rows = []
     manual_pulse_params_array = []
     pulse_params_list = []
-    parameter_structure = pulse_sequence.get_parameter_names()
+    parameter_structure = control_sequence.get_parameter_names()
     for sample_idx in range(config.sample_size):
         key, subkey = jax.random.split(key)
-        pulse_params = pulse_sequence.sample_params(subkey)
+        pulse_params = control_sequence.sample_params(subkey)
         pulse_params = jax.tree.map(float, pulse_params)
         pulse_params_list.append(pulse_params)
         manual_pulse_params_array.append(

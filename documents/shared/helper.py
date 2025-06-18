@@ -56,14 +56,14 @@ from functools import partial
 #     )
 
 
-# def get_gaussian_pulse_sequence(
+# def get_gaussian_control_sequence(
 #     qubit_info: sq.data.QubitInformation,
 #     max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
 # ):
 #     total_length = 320
 #     dt = 2 / 9
 
-#     pulse_sequence = sq.pulse.ControlSequence(
+#     control_sequence = sq.pulse.ControlSequence(
 #         pulses=[
 #             sq.predefined.GaussianPulse(
 #                 duration=total_length,
@@ -77,12 +77,14 @@ from functools import partial
 #         pulse_length_dt=total_length,
 #     )
 
-#     return pulse_sequence
+#     return control_sequence
 
 
 def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDataModel:
     qubit_info = sq.predefined.get_mock_qubit_information()
-    pulse_sequence = sq.predefined.get_gaussian_pulse_sequence(qubit_info=qubit_info)
+    control_sequence = sq.predefined.get_gaussian_control_sequence(
+        qubit_info=qubit_info
+    )
     dt = 2 / 9
 
     ideal_hamiltonian = partial(
@@ -90,7 +92,7 @@ def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDat
         qubit_info=qubit_info,
         signal=sq.physics.signal_func_v5(
             get_envelope=sq.predefined.get_envelope_transformer(
-                pulse_sequence=pulse_sequence
+                control_sequence=control_sequence
             ),
             drive_frequency=qubit_info.frequency,
             dt=dt,
@@ -104,20 +106,20 @@ def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDat
 
     solver = sq.predefined.get_single_qubit_whitebox(
         hamiltonian=total_hamiltonian,
-        pulse_sequence=pulse_sequence,
+        control_sequence=control_sequence,
         qubit_info=qubit_info,
         dt=dt,
     )
 
     trotter_solver = sq.physics.make_trotterization_whitebox(
         hamiltonian=total_hamiltonian,
-        pulse_sequence=pulse_sequence,
+        control_sequence=control_sequence,
         trotter_steps=1000,
         dt=dt,
     )
 
     return sq.utils.SyntheticDataModel(
-        pulse_sequence=pulse_sequence,
+        control_sequence=control_sequence,
         qubit_information=qubit_info,
         dt=dt,
         ideal_hamiltonian=ideal_hamiltonian,

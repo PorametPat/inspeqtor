@@ -12,14 +12,14 @@ jax.config.update("jax_enable_x64", True)
 
 def test_signal_func_v3():
     qubit_info = isq.utils.predefined.get_mock_qubit_information()
-    pulse_sequence = isq.utils.predefined.get_drag_pulse_sequence(qubit_info)
+    control_sequence = isq.utils.predefined.get_drag_control_sequence(qubit_info)
     dt = 2 / 9
 
     key = jax.random.PRNGKey(0)
-    params = pulse_sequence.sample_params(key)
+    params = control_sequence.sample_params(key)
 
     signal = isq.physics.signal_func_v3(
-        pulse_sequence.get_envelope,
+        control_sequence.get_envelope,
         qubit_info.frequency,
         dt,
     )
@@ -27,7 +27,7 @@ def test_signal_func_v3():
     signal_params = isq.physics.SignalParameters(pulse_params=params, phase=0)
 
     discreted_signal = signal(
-        signal_params, jnp.linspace(0, pulse_sequence.pulse_length_dt * dt, 100)
+        signal_params, jnp.linspace(0, control_sequence.pulse_length_dt * dt, 100)
     )
 
     assert discreted_signal.shape == (100,)
@@ -35,11 +35,11 @@ def test_signal_func_v3():
 
 def test_hamiltonian_fn():
     qubit_info = isq.utils.predefined.get_mock_qubit_information()
-    pulse_sequence = isq.utils.predefined.get_drag_pulse_sequence(qubit_info)
+    control_sequence = isq.utils.predefined.get_drag_control_sequence(qubit_info)
     dt = 2 / 9
 
     key = jax.random.PRNGKey(0)
-    params = pulse_sequence.sample_params(key)
+    params = control_sequence.sample_params(key)
 
     total_hamiltonian = isq.physics.gen_hamiltonian_from(
         qubit_informations=[qubit_info],
@@ -52,7 +52,7 @@ def test_hamiltonian_fn():
 
     signals = {
         drive_term: isq.physics.signal_func_v3(
-            pulse_sequence.get_envelope,
+            control_sequence.get_envelope,
             drive_frequency=qubit_info.frequency,
             dt=dt,
         )
@@ -94,9 +94,9 @@ def test_run():
     dt = 2 / 9
 
     # Get the pulse sequence
-    pulse_sequence = isq.utils.predefined.get_multi_drag_pulse_sequence_v2()
+    control_sequence = isq.utils.predefined.get_multi_drag_control_sequence_v2()
     t_eval = t_eval = jnp.linspace(
-        0, pulse_sequence.pulse_length_dt * dt, pulse_sequence.pulse_length_dt
+        0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
     )
 
     # Sampling the pulse parameters
@@ -104,8 +104,8 @@ def test_run():
     waveforms = []
     for i in range(batch_size):
         key, subkey = jax.random.split(key)
-        pulse_params = pulse_sequence.sample_params(subkey)
-        waveforms.append(pulse_sequence.get_waveform(pulse_params))
+        pulse_params = control_sequence.sample_params(subkey)
+        waveforms.append(control_sequence.get_waveform(pulse_params))
 
     waveforms = jnp.array(waveforms)
 
@@ -120,26 +120,26 @@ def test_run():
     # Get the unitaries
     unitaries = batched_simulator(waveforms)
     # Assert the unitaries shape
-    assert unitaries.shape == (batch_size, pulse_sequence.pulse_length_dt, 2, 2)
+    assert unitaries.shape == (batch_size, control_sequence.pulse_length_dt, 2, 2)
 
 
 def test_crosscheck_pennylane_difflax():
     qubit_info = isq.utils.predefined.get_mock_qubit_information()
 
-    pulse_sequence = isq.utils.predefined.get_drag_pulse_sequence(qubit_info)
+    control_sequence = isq.utils.predefined.get_drag_control_sequence(qubit_info)
 
     key = jax.random.PRNGKey(0)
-    params = pulse_sequence.sample_params(key)
+    params = control_sequence.sample_params(key)
 
     time_step = 2 / 9
-    t_eval = jnp.arange(0, pulse_sequence.pulse_length_dt * time_step, step=time_step)
+    t_eval = jnp.arange(0, control_sequence.pulse_length_dt * time_step, step=time_step)
 
     # NOTE: This hamiltonian is the analytical rotated Hamiltonian of single qubit
     hamiltonian = partial(
         isq.utils.predefined.rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
         signal=isq.physics.signal_func_v3(
-            pulse_sequence.get_envelope, qubit_info.frequency, 2 / 9
+            control_sequence.get_envelope, qubit_info.frequency, 2 / 9
         ),
     )
 
@@ -150,7 +150,7 @@ def test_crosscheck_pennylane_difflax():
             hamiltonian=hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=pulse_sequence.pulse_length_dt * time_step,
+            t1=control_sequence.pulse_length_dt * time_step,
         )
     )
 
@@ -163,7 +163,7 @@ def test_crosscheck_pennylane_difflax():
         isq.utils.predefined.transmon_hamiltonian,  # This hamiltonian is in the lab frame
         qubit_info=qubit_info,
         signal=isq.physics.signal_func_v3(
-            pulse_sequence.get_envelope, qubit_info.frequency, 2 / 9
+            control_sequence.get_envelope, qubit_info.frequency, 2 / 9
         ),
     )
 
@@ -180,7 +180,7 @@ def test_crosscheck_pennylane_difflax():
             hamiltonian=rotating_hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=pulse_sequence.pulse_length_dt * time_step,
+            t1=control_sequence.pulse_length_dt * time_step,
         )
     )
     auto_rotated_unitaries = jitted_simulator(hamil_params)
@@ -191,7 +191,7 @@ def test_crosscheck_pennylane_difflax():
         t_eval=t_eval,
         hamiltonian=isq._pennylane.rotating_transmon_hamiltonian,
     )
-    qml_unitary = qml_simulator(pulse_sequence.get_waveform(params))
+    qml_unitary = qml_simulator(control_sequence.get_waveform(params))
 
     # NOTE: Crosscheck with the hamiltonian_fn flow
     backend = FakeJakartaV2()
@@ -213,7 +213,7 @@ def test_crosscheck_pennylane_difflax():
 
     signals = {
         drive_term: isq.physics.signal_func_v3(
-            pulse_sequence.get_envelope,
+            control_sequence.get_envelope,
             drive_frequency=backend_properties.qubit_informations[
                 int(drive_term[-1])
             ].frequency,
@@ -247,7 +247,7 @@ def test_crosscheck_pennylane_difflax():
         hamiltonian=rotating_hamiltonian,
         y0=jnp.eye(2, dtype=jnp.complex64),
         t0=0,
-        t1=pulse_sequence.pulse_length_dt * time_step,
+        t1=control_sequence.pulse_length_dt * time_step,
     )
 
     unitaries_tuple = [

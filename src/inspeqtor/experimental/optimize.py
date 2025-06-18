@@ -220,7 +220,7 @@ def clean_history_entries(
 
 
 def default_trainable_v4(
-    pulse_sequence: ControlSequence,
+    control_sequence: ControlSequence,
     metric: LossMetric,
     experiment_identifier: str,
     hamiltonian: typing.Callable | str,
@@ -234,7 +234,7 @@ def default_trainable_v4(
     """Create trainable function for `ray.tune` for hyperparameter tuning
 
     Args:
-        pulse_sequence (PulseSequence): Pulse sequence of dataset
+        control_sequence (PulseSequence): Pulse sequence of dataset
         metric (LossMetric): Metric to be minimized for.
         experiment_identifier (str): The experiment identifier
         hamiltonian (typing.Callable | str): Ideal Hamiltonian function or name.
@@ -302,7 +302,7 @@ def default_trainable_v4(
                     _ = save_model(
                         path=tmpdir,
                         experiment_identifier=experiment_identifier,
-                        pulse_sequence=pulse_sequence,
+                        control_sequence=control_sequence,
                         hamiltonian=hamiltonian,
                         model_config=model_config,
                         model_params=model_params,

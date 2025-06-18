@@ -37,20 +37,20 @@ def test_end_to_end(tmp_path):
 
     logging.debug(f"Backend properties: {backend_properties}")
 
-    pulse_sequence = isq.utils.predefined.get_multi_drag_pulse_sequence_v2()
-    pulse_sequence.to_file(str(d))
+    control_sequence = isq.utils.predefined.get_multi_drag_control_sequence_v2()
+    control_sequence.to_file(str(d))
 
     config = isq.data.ExperimentConfiguration(
         qubits=[qubit_info],
         expectation_values_order=isq.utils.predefined.default_expectation_values_order,
-        parameter_names=pulse_sequence.get_parameter_names(),
+        parameter_names=control_sequence.get_parameter_names(),
         backend_name=backend_properties.name,
         shots=SHOTS,
         EXPERIMENT_IDENTIFIER=EXPERIMENT_IDENTIFIER,
         EXPERIMENT_TAGS=EXPERIMENT_TAGS,
         description="The experiment to test random drag sequence",
         device_cycle_time_ns=backend_properties.dt,
-        sequence_duration_dt=pulse_sequence.pulse_length_dt,
+        sequence_duration_dt=control_sequence.pulse_length_dt,
         instance=INSTANCE,
         sample_size=SAMPLE_SIZE,
     )
@@ -58,7 +58,7 @@ def test_end_to_end(tmp_path):
     key = jax.random.PRNGKey(0)
 
     df, circuits = isq.qiskit.prepare_experiment(
-        config, pulse_sequence, key, backend_properties
+        config, control_sequence, key, backend_properties
     )
 
     assert len(circuits) == int(
@@ -97,7 +97,7 @@ def test_end_to_end(tmp_path):
 
     exp_data.save_to_folder(path=str(d))
 
-    # exp_data, pulse_parameters, unitaries, expectations, pulse_sequence, simulator = (
+    # exp_data, pulse_parameters, unitaries, expectations, control_sequence, simulator = (
     #     isq.utils.helper.load_data_from_path(
     #         d,
     #     )
@@ -111,7 +111,7 @@ def test_end_to_end(tmp_path):
     pulse_parameters = loaded_data.pulse_parameters
     unitaries = loaded_data.unitaries
     expectations = loaded_data.expectation_values
-    pulse_sequence = loaded_data.pulse_sequence
+    control_sequence = loaded_data.control_sequence
     simulator = loaded_data.whitebox
 
     # NOTE: flatten the pulse_parameters
@@ -120,7 +120,7 @@ def test_end_to_end(tmp_path):
     # Test the pulse parameter conversion
     sample_pulse_params = pulse_parameters[0]
     recovered_pulse_params = isq.pulse.array_to_list_of_params(
-        sample_pulse_params, pulse_sequence.get_parameter_names()
+        sample_pulse_params, control_sequence.get_parameter_names()
     )
 
     from_exp_data_sample_pulse_params = exp_data.get_parameters_dict_list()[0]
@@ -185,7 +185,7 @@ def test_end_to_end(tmp_path):
     _ = isq.model.save_model(
         str(MODEL_PATH),
         "0020",
-        pulse_sequence,
+        control_sequence,
         isq.utils.predefined.rotating_transmon_hamiltonian,
         asdict(model),
         model_params,
@@ -193,7 +193,7 @@ def test_end_to_end(tmp_path):
         with_auto_datetime=False,
     )
 
-    parameter_structure = pulse_sequence.get_parameter_names()
+    parameter_structure = control_sequence.get_parameter_names()
 
     def array_to_params(x):
         return isq.pulse.array_to_list_of_params(x, parameter_structure)
@@ -210,11 +210,11 @@ def test_end_to_end(tmp_path):
             target_unitary,
         )
 
-    _lower, _upper = pulse_sequence.get_bounds()
+    _lower, _upper = control_sequence.get_bounds()
     lower = isq.pulse.list_of_params_to_array(_lower, parameter_structure)
     upper = isq.pulse.list_of_params_to_array(_upper, parameter_structure)
 
-    pulse_params = pulse_sequence.sample_params(gate_optim_key)
+    pulse_params = control_sequence.sample_params(gate_optim_key)
     x0 = isq.pulse.list_of_params_to_array(pulse_params, parameter_structure)
 
     opt_params, _, _ = isq.optimizer.optimize_v2(x0, lower, upper, func, optimiser, 10)
@@ -225,7 +225,7 @@ def test_end_to_end(tmp_path):
     )
 
     # Calculate the expectation values
-    waveform_opt = pulse_sequence.get_waveform(opt_pulse_params)
+    waveform_opt = control_sequence.get_waveform(opt_pulse_params)
     opt_signal_params = isq.physics.SignalParameters(
         pulse_params=opt_pulse_params, phase=0
     )

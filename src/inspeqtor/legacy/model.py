@@ -80,7 +80,7 @@ class ModelState:
 def save_model(
     path: str,
     experiment_identifier: str,
-    pulse_sequence: BasePulseSequence,
+    control_sequence: BasePulseSequence,
     hamiltonian: typing.Union[str, typing.Callable],
     model_config: dict,
     model_params: VariableDict,
@@ -108,7 +108,7 @@ def save_model(
         hamiltonian=(
             hamiltonian if isinstance(hamiltonian, str) else hamiltonian.__name__
         ),
-        pulse_sequence=pulse_sequence.to_dict(),
+        control_sequence=control_sequence.to_dict(),
     )
 
     data_config.to_file(_path)
@@ -981,7 +981,7 @@ def gate_loss_v2(
 ):
     fidelities_dict: dict[str, jnp.ndarray] = {}
     # x is the pulse parameters in the flattened form
-    # pulse_params = pulse_sequence.array_to_list_of_params(x)
+    # pulse_params = control_sequence.array_to_list_of_params(x)
     pulse_params = array_to_list_of_params(x)
 
     # Get the waveforms
@@ -1029,7 +1029,7 @@ def gate_loss_v4(
 ):
     fidelities_dict: dict[str, jnp.ndarray] = {}
     # x is the pulse parameters in the flattened form
-    # pulse_params = pulse_sequence.array_to_list_of_params(x)
+    # pulse_params = control_sequence.array_to_list_of_params(x)
     pulse_params = array_to_list_of_params(x)
 
     # Get the waveforms
@@ -1118,7 +1118,7 @@ def pure_gate_loss(
 ):
     fidelities_dict: dict[str, jnp.ndarray] = {}
     # x is the pulse parameters in the flattened form
-    # pulse_params = pulse_sequence.array_to_list_of_params(x)
+    # pulse_params = control_sequence.array_to_list_of_params(x)
     pulse_params = array_to_list_of_params(x)
 
     # Get the waveforms
