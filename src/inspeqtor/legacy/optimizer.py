@@ -64,7 +64,7 @@ def optimize_v2(x0, lower, upper, func, optimizer, maxiter=1000):
 
 
 def default_trainable(
-    pulse_sequence: JaxBasedPulseSequence,
+    control_sequence: JaxBasedPulseSequence,
     with_dropout: bool = False,
     loss_type: LossChoice = LossChoice.MSEE,
 ):
@@ -129,7 +129,7 @@ def default_trainable(
                     _ = save_model(
                         path=str(tmpdir),
                         experiment_identifier="test",
-                        pulse_sequence=pulse_sequence,
+                        control_sequence=control_sequence,
                         hamiltonian=rotating_transmon_hamiltonian,
                         model_config=model_config,
                         model_params=model_params,
@@ -179,7 +179,7 @@ def default_trainable(
 
 
 def default_trainable_v2(
-    pulse_sequence: JaxBasedPulseSequence,
+    control_sequence: JaxBasedPulseSequence,
     loss_fn: typing.Callable,
 ):
     def trainable(
@@ -234,7 +234,7 @@ def default_trainable_v2(
                     _ = save_model(
                         path=str(tmpdir),
                         experiment_identifier="test",
-                        pulse_sequence=pulse_sequence,
+                        control_sequence=control_sequence,
                         hamiltonian=rotating_transmon_hamiltonian,
                         model_config=model_config,
                         model_params=model_params,

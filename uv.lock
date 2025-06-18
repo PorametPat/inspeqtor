@@ -221,6 +221,20 @@ wheels = [
 ]
 
 [[package]]
+name = "aquarel"
+version = "0.0.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cycler" },
+    { name = "matplotlib" },
+    { name = "seaborn" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/b0/f3128841565ad019d9e7a4c20175bff6774a60db10a9d2781120f1b1b45e/aquarel-0.0.7.tar.gz", hash = "sha256:6cae3f82c4bc02ed11e368e15e9575b4f007e937be9825d24f8eaa8d8b1fdb02", size = 21323 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/ee/e7888712fe1631ae8589b499a465f1c4d542b5cb3c234b37acc299f46a04/aquarel-0.0.7-py3-none-any.whl", hash = "sha256:908c800494f6b18e316cfb7aa63f4ed0c783f66b8e39bbf587fce0b185c590f0", size = 23099 },
+]
+
+[[package]]
 name = "arviz"
 version = "0.21.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1634,6 +1648,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "aquarel" },
     { name = "arviz" },
     { name = "blackjax" },
     { name = "chex" },
@@ -1682,6 +1697,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aquarel", specifier = ">=0.0.7" },
     { name = "arviz", specifier = ">=0.20.0" },
     { name = "blackjax", specifier = ">=1.2.4" },
     { name = "chex", specifier = ">=0.1.87" },

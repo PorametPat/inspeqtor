@@ -780,7 +780,6 @@ class SVIResult:
 
     @classmethod
     def from_file(cls, path: str | pathlib.Path) -> "SVIResult":
-        # data = load_pytree_from_json(path, array_keys=["params"])
         data = load_pytree_from_json(path)
 
         return cls(
@@ -823,3 +822,48 @@ def make_predictive_model_fn_v2(
         return predictive(*args, **kwargs)["obs"]
 
     return predictive_fn
+
+
+def make_predictive_SGM_model(model, model_params, shots: int):
+    def predictive_model(
+        key: jnp.ndarray, control_param: jnp.ndarray, unitaries: jnp.ndarray
+    ):
+        wo_params = model.apply(
+            model_params,
+            control_param,
+        )
+
+        predicted_expvals = get_predict_expectation_value(
+            wo_params,
+            unitaries,
+            default_expectation_values_order,
+        )
+        return binary_to_eigenvalue(
+            jax.vmap(jax.random.bernoulli, in_axes=(0, None))(
+                jax.random.split(key, shots),
+                expectation_value_to_prob_minus(predicted_expvals),
+            ).astype(jnp.int_)
+        ).mean(axis=0)
+
+    return predictive_model
+
+
+def make_predictive_MCDG_model(model, model_params):
+    def predictive_model(
+        key: jnp.ndarray, control_param: jnp.ndarray, unitaries: jnp.ndarray
+    ):
+        wo_params = model.apply(
+            model_params,
+            control_param,
+            rngs={"dropout": key},
+        )
+
+        predicted_expvals = get_predict_expectation_value(
+            wo_params,
+            unitaries,
+            default_expectation_values_order,
+        )
+
+        return predicted_expvals
+
+    return predictive_model

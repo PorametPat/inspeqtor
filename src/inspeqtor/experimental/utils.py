@@ -20,7 +20,7 @@ class LoadedData:
     pulse_parameters: jnp.ndarray
     unitaries: jnp.ndarray
     expectation_values: jnp.ndarray
-    pulse_sequence: ControlSequence
+    control_sequence: ControlSequence
     whitebox: typing.Callable
     noisy_whitebox: typing.Callable | None = None
     noisy_unitaries: jnp.ndarray | None = None
@@ -104,14 +104,14 @@ def detune_hamiltonian(
 
 def prepare_data(
     exp_data: ExperimentData,
-    pulse_sequence: ControlSequence,
+    control_sequence: ControlSequence,
     whitebox: typing.Callable,
 ) -> LoadedData:
     """Prepare the data for easy accessing from experiment data, control sequence, and Whitebox.
 
     Args:
         exp_data (ExperimentData): `ExperimentData` instance
-        pulse_sequence (PulseSequence): Control sequence of the experiment
+        control_sequence (PulseSequence): Control sequence of the experiment
         whitebox (typing.Callable): Ideal unitary solver.
 
     Returns:
@@ -139,7 +139,7 @@ def prepare_data(
         pulse_parameters=pulse_parameters,
         unitaries=unitaries[:, -1, :, :],
         expectation_values=expectation_values,
-        pulse_sequence=pulse_sequence,
+        control_sequence=control_sequence,
         whitebox=whitebox,
     )
 
@@ -384,7 +384,7 @@ def recursive_vmap(func, in_axes):
 
 
 class SyntheticDataModel(typing.NamedTuple):
-    pulse_sequence: ControlSequence
+    control_sequence: ControlSequence
     qubit_information: QubitInformation
     dt: float
     ideal_hamiltonian: typing.Callable[..., jnp.ndarray]

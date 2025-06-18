@@ -232,8 +232,8 @@ def get_circuit(
             drive_channel = pulse.drive_channel(q_idx)
             pulse.play(pulse.Waveform(waveforms), drive_channel)
 
-        qc.add_calibration("pulse_sequence", [q_idx], test_pulse)
-        custom_gate = Gate(name="pulse_sequence", num_qubits=1, params=[])
+        qc.add_calibration("control_sequence", [q_idx], test_pulse)
+        custom_gate = Gate(name="control_sequence", num_qubits=1, params=[])
         qc.append(custom_gate, [q_idx])
 
     if change_basis:
@@ -264,7 +264,7 @@ def get_ibm_service_and_backend(
 
 def prepare_experiment(
     config: ExperimentConfiguration,
-    pulse_sequence: JaxBasedPulseSequence,
+    control_sequence: JaxBasedPulseSequence,
     key: jnp.ndarray,
     backend_properties: IBMQDeviceProperties,
 ) -> tuple[pd.DataFrame, list[QuantumCircuit]]:
@@ -280,8 +280,8 @@ def prepare_experiment(
         # Split the pulse_key
         key, sample_key = jax.random.split(key)
         # Get the parameters for this sample
-        params = pulse_sequence.sample_params(sample_key)
-        waveform = pulse_sequence.get_waveform(params)
+        params = control_sequence.sample_params(sample_key)
+        waveform = control_sequence.get_waveform(params)
 
         for expectation_value in config.expectation_values_order:
             row = make_row(
@@ -680,7 +680,7 @@ class QuantumCircuitData:
 
 def prepare_experiment_v2(
     config: ExperimentConfiguration,
-    pulse_sequence: JaxBasedPulseSequence,
+    control_sequence: JaxBasedPulseSequence,
     key: jnp.ndarray,
     backend_properties: IBMQDeviceProperties,
 ) -> tuple[pd.DataFrame, list[QuantumCircuitData]]:
@@ -694,7 +694,7 @@ def prepare_experiment_v2(
         # Split the pulse_key
         key, sample_key = jax.random.split(key)
         # Get the parameters for this sample
-        params = pulse_sequence.sample_params(sample_key)
+        params = control_sequence.sample_params(sample_key)
 
         for expectation_value in config.expectation_values_order:
             row = make_row(
@@ -739,7 +739,7 @@ def prepare_experiment_v2(
 
 def prepare_parallel_experiment_v2(
     configs: list[ExperimentConfiguration],
-    pulse_sequences: list[JaxBasedPulseSequence],
+    control_sequences: list[JaxBasedPulseSequence],
     keys: Sequence[jnp.ndarray],
     backend_properties: IBMQDeviceProperties,
     enable_MCMD: bool = True,
@@ -747,10 +747,10 @@ def prepare_parallel_experiment_v2(
     dataframes: list[pd.DataFrame] = []
     quantum_circuits: list[list[QuantumCircuitData]] = []
 
-    for i, (conf, pulse_seq, key) in enumerate(zip(configs, pulse_sequences, keys)):
+    for i, (conf, pulse_seq, key) in enumerate(zip(configs, control_sequences, keys)):
         dataframe, qcs = prepare_experiment_v2(
             config=conf,
-            pulse_sequence=pulse_seq,
+            control_sequence=pulse_seq,
             key=key,
             backend_properties=backend_properties,
         )
@@ -775,7 +775,7 @@ def prepare_parallel_experiment_v2(
             initial_state=qcs[0].initial_state,
             waveforms=[
                 np.array(pulse_seq.get_waveform(qc.parameter))
-                for pulse_seq, qc in zip(pulse_sequences, qcs)
+                for pulse_seq, qc in zip(control_sequences, qcs)
             ],
             observable=qcs[0].observable,
             qubit_indices=[qc.qubit_idx for qc in qcs],

@@ -300,7 +300,7 @@ class ControlSequence:
             path = pathlib.Path(path)
 
         os.makedirs(path, exist_ok=True)
-        with open(path / "pulse_sequence.json", "w") as f:
+        with open(path / "control_sequence.json", "w") as f:
             json.dump(self.to_dict(), f, indent=4)
 
     @classmethod
@@ -321,10 +321,10 @@ class ControlSequence:
         if isinstance(path, str):
             path = pathlib.Path(path)
 
-        with open(path / "pulse_sequence.json", "r") as f:
-            dict_pulse_sequence = json.load(f)
+        with open(path / "control_sequence.json", "r") as f:
+            dict_control_sequence = json.load(f)
 
-        return cls.from_dict(dict_pulse_sequence, pulses=pulses)
+        return cls.from_dict(dict_control_sequence, pulses=pulses)
 
 
 def array_to_list_of_params(
@@ -371,18 +371,18 @@ def list_of_params_to_array(
     return jnp.array(temp)
 
 
-def get_param_array_converter(pulse_sequence: ControlSequence):
+def get_param_array_converter(control_sequence: ControlSequence):
     """This function returns two functions that can convert between a list of parameter dictionaries and a flat array.
 
-    >>> array_to_list_of_params_fn, list_of_params_to_array_fn = get_param_array_converter(pulse_sequence)
+    >>> array_to_list_of_params_fn, list_of_params_to_array_fn = get_param_array_converter(control_sequence)
 
         Args:
-        pulse_sequence (PulseSequence): The pulse sequence object.
+        control_sequence (PulseSequence): The pulse sequence object.
 
     Returns:
         _type_: A tuple containing two functions. The first function converts an array to a list of parameter dictionaries, and the second function converts a list of parameter dictionaries to an array.
     """
-    structure = pulse_sequence.get_parameter_names()
+    structure = control_sequence.get_parameter_names()
 
     def array_to_list_of_params_fn(
         array: jnp.ndarray,
@@ -397,7 +397,7 @@ def get_param_array_converter(pulse_sequence: ControlSequence):
     return array_to_list_of_params_fn, list_of_params_to_array_fn
 
 
-def construct_pulse_sequence_reader(
+def construct_control_sequence_reader(
     pulses: list[type[BaseControl]] = [],
 ) -> typing.Callable[[typing.Union[str, pathlib.Path]], ControlSequence]:
     """Construct the control sequence reader
@@ -413,7 +413,9 @@ def construct_pulse_sequence_reader(
     # Merge the default pulses with the provided pulses
     pulses_list = default_pulses + pulses
 
-    def pulse_sequence_reader(path: typing.Union[str, pathlib.Path]) -> ControlSequence:
+    def control_sequence_reader(
+        path: typing.Union[str, pathlib.Path],
+    ) -> ControlSequence:
         """Construct control sequence from path
 
         Args:
@@ -425,16 +427,16 @@ def construct_pulse_sequence_reader(
         if isinstance(path, str):
             path = pathlib.Path(path)
 
-        with open(path / "pulse_sequence.json", "r") as f:
-            pulse_sequence_dict = json.load(f)
+        with open(path / "control_sequence.json", "r") as f:
+            control_sequence_dict = json.load(f)
 
         parsed_pulses = []
 
-        for pulse_dict in pulse_sequence_dict["pulses"]:
+        for pulse_dict in control_sequence_dict["pulses"]:
             for pulse_class in pulses_list:
                 if pulse_dict["_name"] == pulse_class.__name__:
                     parsed_pulses.append(pulse_class)
 
-        return ControlSequence.from_dict(pulse_sequence_dict, pulses=parsed_pulses)
+        return ControlSequence.from_dict(control_sequence_dict, pulses=parsed_pulses)
 
-    return pulse_sequence_reader
+    return control_sequence_reader

@@ -64,8 +64,8 @@ def plot_expectation_values(
 
 
 def plot_loss_with_moving_average(
-    x: jnp.ndarray,
-    y: jnp.ndarray,
+    x: jnp.ndarray | np.ndarray,
+    y: jnp.ndarray | np.ndarray,
     ax: Axes,
     window: int = 50,
     annotate_at: list[int] = [2000, 4000, 6000, 8000, 10000],
@@ -93,3 +93,9 @@ def plot_loss_with_moving_average(
         )
 
     return ax
+
+
+def assert_list_of_axes(axes) -> list[Axes]:
+    for ax in axes:
+        assert isinstance(ax, Axes)
+    return axes

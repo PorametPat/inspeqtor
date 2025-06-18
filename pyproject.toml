@@ -37,6 +37,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "aquarel>=0.0.7",
     "arviz>=0.20.0",
     "blackjax>=1.2.4",
     "chex>=0.1.87",

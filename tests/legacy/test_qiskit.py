@@ -22,19 +22,19 @@ def test_execute_experiment_using_fake_backend_v2():
         backend=backend, qubit_indices=[QUBIT_IDX]
     )
 
-    pulse_sequence = isq.utils.predefined.get_multi_drag_pulse_sequence_v2()
+    control_sequence = isq.utils.predefined.get_multi_drag_control_sequence_v2()
 
     config = isq.data.ExperimentConfiguration(
         qubits=backend_properties.qubit_informations,
         expectation_values_order=isq.utils.predefined.default_expectation_values_order,
-        parameter_names=pulse_sequence.get_parameter_names(),
+        parameter_names=control_sequence.get_parameter_names(),
         backend_name=backend_properties.name,
         shots=SHOTS,
         EXPERIMENT_IDENTIFIER=EXPERIMENT_IDENTIFIER,
         EXPERIMENT_TAGS=EXPERIMENT_TAGS,
         description="The experiment to test random drag sequence",
         device_cycle_time_ns=backend_properties.dt,
-        sequence_duration_dt=pulse_sequence.pulse_length_dt,
+        sequence_duration_dt=control_sequence.pulse_length_dt,
         instance=INSTANCE,
         sample_size=SAMPLE_SIZE,
     )
@@ -42,7 +42,7 @@ def test_execute_experiment_using_fake_backend_v2():
     key = jax.random.PRNGKey(0)
 
     df, circuits = isq.qiskit.prepare_experiment(
-        config, pulse_sequence, key, backend_properties
+        config, control_sequence, key, backend_properties
     )
 
     assert len(circuits) == int(
@@ -91,7 +91,7 @@ def test_execute_experiment_using_fake_backend_v3():
         backend=backend, qubit_indices=qubit_indices
     )
 
-    pulse_sequence = isq.utils.predefined.get_multi_drag_pulse_sequence_v2()
+    control_sequence = isq.utils.predefined.get_multi_drag_control_sequence_v2()
 
     # Initialize configutations
     configs = []
@@ -99,14 +99,14 @@ def test_execute_experiment_using_fake_backend_v3():
         config = isq.data.ExperimentConfiguration(
             qubits=[backend_properties.qubit_informations[compact_config.qubit_idx]],
             expectation_values_order=isq.utils.predefined.default_expectation_values_order,
-            parameter_names=pulse_sequence.get_parameter_names(),
+            parameter_names=control_sequence.get_parameter_names(),
             backend_name=backend_properties.name,
             shots=compact_config.shots,
             EXPERIMENT_IDENTIFIER=compact_config.identifier,
             EXPERIMENT_TAGS=[compact_config.identifier],
             description="The experiment to test random drag sequence",
             device_cycle_time_ns=backend_properties.dt,
-            sequence_duration_dt=pulse_sequence.pulse_length_dt,
+            sequence_duration_dt=control_sequence.pulse_length_dt,
             instance=INSTANCE,
             sample_size=compact_config.sample_size,
         )
@@ -118,7 +118,7 @@ def test_execute_experiment_using_fake_backend_v3():
     # Prepare the dataframes and generate quantum circuits
     prepared_dfs, qcs = isq.qiskit.prepare_parallel_experiment_v2(
         configs,
-        [pulse_sequence] * len(test_cases),
+        [control_sequence] * len(test_cases),
         keys,
         backend_properties,
     )
