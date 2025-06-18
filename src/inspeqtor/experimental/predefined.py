@@ -26,7 +26,6 @@ from .physics import (
     make_trotterization_whitebox,
 )
 from .constant import X, Y, Z, default_expectation_values_order, plus_projectors
-from .decorator import warn_not_tested_function
 from .utils import (
     center_location,
     drag_envelope_v2,
@@ -35,7 +34,6 @@ from .utils import (
     calculate_expectation_values,
     calculate_shots_expectation_value,
 )
-from .model import DataConfig
 import itertools
 
 
@@ -647,7 +645,7 @@ def generate_experimental_data(
             make_trotterization_whitebox(
                 hamiltonian=hamiltonian,
                 control_sequence=control_sequence,
-                dt=2 / 9,
+                dt=dt,
                 trotter_steps=trotter_steps,
             )
         )
@@ -849,7 +847,7 @@ def get_single_qubit_rotating_frame_whitebox(
     return whitebox
 
 
-pulse_reader = construct_control_sequence_reader(
+default_pulse_reader = construct_control_sequence_reader(
     pulses=[
         DragPulse,
         MultiDragPulseV3,
@@ -859,70 +857,58 @@ pulse_reader = construct_control_sequence_reader(
     ]
 )
 
+# @warn_not_tested_function
+# def load_data_from_path(
+#     path: str | pathlib.Path,
+#     model_path: str | pathlib.Path,
+#     trotterization: bool = False,
+#     trotter_steps: int = 1000,
+#     hamiltonian_enum: HamiltonianEnum = HamiltonianEnum.rotating_transmon_hamiltonian,
+# ) -> LoadedData:
+#     if isinstance(path, str):
+#         path = pathlib.Path(path)
 
-class HamiltonianEnum(StrEnum):
-    transmon_hamiltonian = auto()
-    rotating_transmon_hamiltonian = auto()
+#     if isinstance(model_path, str):
+#         model_path = pathlib.Path(model_path)
 
+#     exp_data = ExperimentData.from_folder(path)
+#     control_sequence = pulse_reader(path)
 
-hamiltonian_mapper = {
-    HamiltonianEnum.transmon_hamiltonian.value: transmon_hamiltonian,
-    HamiltonianEnum.rotating_transmon_hamiltonian.value: rotating_transmon_hamiltonian,
-}
+#     # Read hamiltonian from data config
+#     data_config = DataConfig.from_file(model_path)
 
+#     hamiltonian = hamiltonian_mapper[data_config.hamiltonian]
+#     qubit_info = exp_data.experiment_config.qubits[0]
+#     dt = exp_data.experiment_config.device_cycle_time_ns
 
-@warn_not_tested_function
-def load_data_from_path(
-    path: str | pathlib.Path,
-    model_path: str | pathlib.Path,
-    trotterization: bool = False,
-    trotter_steps: int = 1000,
-    hamiltonian_enum: HamiltonianEnum = HamiltonianEnum.rotating_transmon_hamiltonian,
-) -> LoadedData:
-    if isinstance(path, str):
-        path = pathlib.Path(path)
+#     if trotterization:
+#         hamiltonian = partial(
+#             hamiltonian,
+#             qubit_info=qubit_info,
+#             signal=signal_func_v5(
+#                 get_envelope=get_envelope_transformer(
+#                     control_sequence=control_sequence
+#                 ),
+#                 drive_frequency=qubit_info.frequency,
+#                 dt=dt,
+#             ),
+#         )
 
-    if isinstance(model_path, str):
-        model_path = pathlib.Path(model_path)
+#         whitebox = make_trotterization_whitebox(
+#             hamiltonian=hamiltonian,
+#             control_sequence=control_sequence,
+#             dt=exp_data.experiment_config.device_cycle_time_ns,
+#             trotter_steps=trotter_steps,
+#         )
+#     else:
+#         whitebox = get_single_qubit_whitebox(
+#             hamiltonian,
+#             control_sequence,
+#             qubit_info,
+#             dt,
+#         )
 
-    exp_data = ExperimentData.from_folder(path)
-    control_sequence = pulse_reader(path)
-
-    # Read hamiltonian from data config
-    data_config = DataConfig.from_file(model_path)
-
-    hamiltonian = hamiltonian_mapper[data_config.hamiltonian]
-    qubit_info = exp_data.experiment_config.qubits[0]
-    dt = exp_data.experiment_config.device_cycle_time_ns
-
-    if trotterization:
-        hamiltonian = partial(
-            hamiltonian,
-            qubit_info=qubit_info,
-            signal=signal_func_v5(
-                get_envelope=get_envelope_transformer(
-                    control_sequence=control_sequence
-                ),
-                drive_frequency=qubit_info.frequency,
-                dt=dt,
-            ),
-        )
-
-        whitebox = make_trotterization_whitebox(
-            hamiltonian=hamiltonian,
-            control_sequence=control_sequence,
-            dt=exp_data.experiment_config.device_cycle_time_ns,
-            trotter_steps=trotter_steps,
-        )
-    else:
-        whitebox = get_single_qubit_whitebox(
-            hamiltonian,
-            control_sequence,
-            qubit_info,
-            dt,
-        )
-
-    return prepare_data(exp_data, control_sequence, whitebox)
+#     return prepare_data(exp_data, control_sequence, whitebox)
 
 
 def polynomial_feature_map(x: jnp.ndarray, degree: int):
@@ -942,3 +928,92 @@ def detune_x_hamiltonian(
         return hamiltonian(params, t, *args, **kwargs) + detune * X
 
     return detuned_hamiltonian
+
+
+class HamiltonianEnum(StrEnum):
+    transmon_hamiltonian = auto()
+    rotating_transmon_hamiltonian = auto()
+
+
+@dataclass
+class HamiltonianSpec:
+    method: WhiteboxStrategy
+    hamiltonian_enum: HamiltonianEnum = HamiltonianEnum.rotating_transmon_hamiltonian
+    # For Trotterization
+    trotter_steps: int = 1000
+    # For ODE sovler
+    max_steps = int(2**16)
+
+    def get_hamiltonian_fn(self):
+        if self.hamiltonian_enum == HamiltonianEnum.rotating_transmon_hamiltonian:
+            return rotating_transmon_hamiltonian
+        elif self.hamiltonian_enum == HamiltonianEnum.transmon_hamiltonian:
+            return transmon_hamiltonian
+        else:
+            raise ValueError(f"Unsupport Hamiltonian: {self.hamiltonian_enum}")
+
+    def get_solver(
+        self,
+        control_sequence: ControlSequence,
+        qubit_info: QubitInformation,
+        dt: float,
+    ):
+        if self.method == WhiteboxStrategy.TROTTER:
+            hamiltonian = partial(
+                self.get_hamiltonian_fn(),
+                qubit_info=qubit_info,
+                signal=signal_func_v5(
+                    get_envelope=get_envelope_transformer(
+                        control_sequence=control_sequence
+                    ),
+                    drive_frequency=qubit_info.frequency,
+                    dt=dt,
+                ),
+            )
+
+            whitebox = make_trotterization_whitebox(
+                hamiltonian=hamiltonian,
+                control_sequence=control_sequence,
+                dt=dt,
+                trotter_steps=self.trotter_steps,
+            )
+            return whitebox
+        elif self.method == WhiteboxStrategy.ODE:
+            return get_single_qubit_whitebox(
+                self.get_hamiltonian_fn(),
+                control_sequence,
+                qubit_info,
+                dt,
+                self.max_steps,
+            )
+        else:
+            raise ValueError("Unsupport method")
+
+
+def load_data_from_path(
+    path: str | pathlib.Path,
+    hamiltonian_spec: HamiltonianSpec,
+    pulse_reader=default_pulse_reader,
+) -> LoadedData:
+    exp_data = ExperimentData.from_folder(path)
+    control_sequence = pulse_reader(path)
+
+    qubit_info = exp_data.experiment_config.qubits[0]
+    dt = exp_data.experiment_config.device_cycle_time_ns
+
+    whitebox = hamiltonian_spec.get_solver(control_sequence, qubit_info, dt)
+
+    return prepare_data(exp_data, control_sequence, whitebox)
+
+
+def save_data_to_path(
+    path: str | pathlib.Path,
+    experiment_data: ExperimentData,
+    control_sequence: ControlSequence,
+):
+    path = pathlib.Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    experiment_data.save_to_folder(path)
+    control_sequence.to_file(path)
+
+    return None
