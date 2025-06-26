@@ -17,7 +17,6 @@ import pathlib
 import json
 from enum import StrEnum, auto
 from numpyro.contrib.module import ParamShape
-import chex
 
 from .constant import default_expectation_values_order, X, Y, Z
 from .model import ModelData, get_predict_expectation_value, unitary
