@@ -33,4 +33,3 @@ def warn_not_tested_function(
         return fun(*args, **kwargs)
 
     return new_fun
-

@@ -23,6 +23,7 @@ from ray.tune.search.sample import Domain
 #     "DataBundled", ["control_params", "unitaries", "observables", "aux"]
 # )
 
+
 @dataclass
 class DataBundled:
     control_params: jnp.ndarray
