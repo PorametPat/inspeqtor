@@ -1,3 +1,4 @@
+from deprecated import deprecated
 import jax
 import jax.numpy as jnp
 import typing
@@ -10,9 +11,10 @@ import json
 from datetime import datetime
 from enum import StrEnum
 import pandas as pd
+import chex
+from numpyro.contrib.module import ParamShape
 
-
-from .data import ExpectationValue
+from .data import ExpectationValue, save_pytree_to_json, load_pytree_from_json
 from .constant import default_expectation_values_order
 from .physics import (
     direct_AFG_estimation,
@@ -532,6 +534,7 @@ def loss_fn(
     return (loss, metrics)
 
 
+@deprecated(reason="use ModelData instead")
 @dataclass
 class ModelState:
     """Dataclass for storing model configurations and parameters."""
@@ -592,6 +595,7 @@ class ModelState:
         return cls(model_config, model_params)
 
 
+@deprecated("Prefer explicitly specify hamiltonian to use.")
 @dataclass
 class DataConfig:
     """Config for pulse sequence and Hamiltonian used for Whitebox"""
@@ -950,3 +954,66 @@ def make_dropout_blackbox_model(
             return Wos
 
     return BlackBox
+
+
+def model_parse_fn(key, value):
+    """This is a parse function to be used with `load_pytree_from_file` function.
+    The function will skip parsing config and will return as it is load from file.
+
+    Args:
+        key (_type_): _description_
+        value (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    if key == "config":
+        return True, value
+    elif isinstance(value, list):
+        return True, jnp.array(value)
+    elif isinstance(value, dict) and len(value) == 1 and "shape" in value:
+        return True, ParamShape(shape=tuple(value["shape"]))
+    elif isinstance(value, dict):
+        return False, None
+    else:
+        return True, value
+
+
+@dataclass
+class ModelData:
+    params: chex.ArrayTree
+    config: dict[str, typing.Any]
+
+    def to_file(self, path: str | pathlib.Path):
+        path = pathlib.Path(path)
+
+        data = {
+            "params": self.params,
+            "config": self.config,
+        }
+
+        save_pytree_to_json(data, path)
+
+    @classmethod
+    def from_file(cls, path: str | pathlib.Path) -> typing.Self:
+        data = load_pytree_from_json(path, model_parse_fn)
+
+        return cls(
+            params=data["params"],
+            config=data["config"],
+        )
+
+    def __eq__(self, value):
+        if not isinstance(value, type(self)):
+            raise ValueError("The compared value is not Model object")
+
+        try:
+            chex.assert_trees_all_close(self.params, value.params)
+        except AssertionError:
+            return False
+
+        return True if value.config == self.config else False
+
+
+class StatisticalModel(ModelData):
+    pass

@@ -345,7 +345,7 @@ def hypertuner(
             num_samples=num_samples,
         ),
         param_space=search_space,
-        run_config=run_config,
+        run_config=run_config, # type: ignore
     )
 
     results = tuner.fit()

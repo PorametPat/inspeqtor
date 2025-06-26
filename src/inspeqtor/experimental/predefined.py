@@ -857,59 +857,6 @@ default_pulse_reader = construct_control_sequence_reader(
     ]
 )
 
-# @warn_not_tested_function
-# def load_data_from_path(
-#     path: str | pathlib.Path,
-#     model_path: str | pathlib.Path,
-#     trotterization: bool = False,
-#     trotter_steps: int = 1000,
-#     hamiltonian_enum: HamiltonianEnum = HamiltonianEnum.rotating_transmon_hamiltonian,
-# ) -> LoadedData:
-#     if isinstance(path, str):
-#         path = pathlib.Path(path)
-
-#     if isinstance(model_path, str):
-#         model_path = pathlib.Path(model_path)
-
-#     exp_data = ExperimentData.from_folder(path)
-#     control_sequence = pulse_reader(path)
-
-#     # Read hamiltonian from data config
-#     data_config = DataConfig.from_file(model_path)
-
-#     hamiltonian = hamiltonian_mapper[data_config.hamiltonian]
-#     qubit_info = exp_data.experiment_config.qubits[0]
-#     dt = exp_data.experiment_config.device_cycle_time_ns
-
-#     if trotterization:
-#         hamiltonian = partial(
-#             hamiltonian,
-#             qubit_info=qubit_info,
-#             signal=signal_func_v5(
-#                 get_envelope=get_envelope_transformer(
-#                     control_sequence=control_sequence
-#                 ),
-#                 drive_frequency=qubit_info.frequency,
-#                 dt=dt,
-#             ),
-#         )
-
-#         whitebox = make_trotterization_whitebox(
-#             hamiltonian=hamiltonian,
-#             control_sequence=control_sequence,
-#             dt=exp_data.experiment_config.device_cycle_time_ns,
-#             trotter_steps=trotter_steps,
-#         )
-#     else:
-#         whitebox = get_single_qubit_whitebox(
-#             hamiltonian,
-#             control_sequence,
-#             qubit_info,
-#             dt,
-#         )
-
-#     return prepare_data(exp_data, control_sequence, whitebox)
-
 
 def polynomial_feature_map(x: jnp.ndarray, degree: int):
     return jnp.concatenate([x**i for i in range(1, degree + 1)], axis=-1)

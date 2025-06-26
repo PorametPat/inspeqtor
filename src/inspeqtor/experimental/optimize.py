@@ -18,6 +18,18 @@ from .utils import dataloader, create_step
 from .model import loss_fn, LossMetric, save_model, load_model
 from ray.tune.search.sample import Domain
 
+# from collections import namedtuple
+# DataBundled = namedtuple(
+#     "DataBundled", ["control_params", "unitaries", "observables", "aux"]
+# )
+
+@dataclass
+class DataBundled:
+    control_params: jnp.ndarray
+    unitaries: jnp.ndarray
+    observables: jnp.ndarray
+    aux: jnp.ndarray | None = None
+
 
 def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
     """Generate present optimizer from number of training iteration.
@@ -91,9 +103,9 @@ def train_model(
     # Random key
     key: jnp.ndarray,
     # Data
-    train_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
-    val_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
-    test_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+    train_data: DataBundled,
+    val_data: DataBundled,
+    test_data: DataBundled,
     # Model to be used for training
     model: nn.Module,
     optimizer: optax.GradientTransformation,
@@ -134,9 +146,21 @@ def train_model(
 
     key, loader_key, init_key = jax.random.split(key, 3)
 
-    train_p, train_u, train_ex = train_data
-    val_p, val_u, val_ex = val_data
-    test_p, test_u, test_ex = test_data
+    train_p, train_u, train_ex = (
+        train_data.control_params,
+        train_data.unitaries,
+        train_data.observables,
+    )
+    val_p, val_u, val_ex = (
+        val_data.control_params,
+        val_data.unitaries,
+        val_data.observables,
+    )
+    test_p, test_u, test_ex = (
+        test_data.control_params,
+        test_data.unitaries,
+        test_data.observables,
+    )
 
     BATCH_SIZE = val_p.shape[0]
 
@@ -249,9 +273,9 @@ def default_trainable_v4(
 
     def trainable(
         config: dict[str, int],
-        train_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
-        val_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
-        test_data: tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
+        train_data: DataBundled,
+        val_data: DataBundled,
+        test_data: DataBundled,
         train_key: jnp.ndarray,
     ):
         optimizer = get_default_optimizer(8 * NUM_EPOCH)
@@ -354,15 +378,9 @@ class SearchAlgo(StrEnum):
 
 def hypertuner(
     trainable: typing.Callable,
-    train_pulse_parameters: jnp.ndarray,
-    train_unitaries: jnp.ndarray,
-    train_expectation_values: jnp.ndarray,
-    test_pulse_parameters: jnp.ndarray,
-    test_unitaries: jnp.ndarray,
-    test_expectation_values: jnp.ndarray,
-    val_pulse_parameters: jnp.ndarray,
-    val_unitaries: jnp.ndarray,
-    val_expectation_values: jnp.ndarray,
+    train_data: DataBundled,
+    test_data: DataBundled,
+    val_data: DataBundled,
     train_key: jnp.ndarray,
     metric: LossMetric,
     search_space: typing.Mapping[str, Domain],
@@ -397,11 +415,6 @@ def hypertuner(
     from ray.tune.search.optuna import OptunaSearch
     from ray.tune.search import Searcher
 
-    # Construct the search space
-    # search_space = {}
-    # for key, (lower, upper) in search_spaces.items():
-    #     search_space[key] = tune.randint(lower, upper)
-
     current_best_params = [{key: value.sample() for key, value in search_space.items()}]
 
     # Prepend 'val/' to the metric
@@ -426,24 +439,12 @@ def hypertuner(
         ),
     )
 
-    train_p, train_u, train_ex = (
-        train_pulse_parameters,
-        train_unitaries,
-        train_expectation_values,
-    )
-    val_p, val_u, val_ex = val_pulse_parameters, val_unitaries, val_expectation_values
-    test_p, test_u, test_ex = (
-        test_pulse_parameters,
-        test_unitaries,
-        test_expectation_values,
-    )
-
     tuner = tune.Tuner(
         tune.with_parameters(
             trainable,
-            train_data=(train_p, train_u, train_ex),
-            val_data=(val_p, val_u, val_ex),
-            test_data=(test_p, test_u, test_ex),
+            train_data=train_data,
+            val_data=val_data,
+            test_data=test_data,
             train_key=train_key,
         ),
         tune_config=tune.TuneConfig(
