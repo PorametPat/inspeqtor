@@ -17,7 +17,7 @@ import logging
 @dataclass
 class LoadedData:
     experiment_data: ExperimentData
-    pulse_parameters: jnp.ndarray
+    control_parameters: jnp.ndarray
     unitaries: jnp.ndarray
     expectation_values: jnp.ndarray
     control_sequence: ControlSequence
@@ -119,16 +119,16 @@ def prepare_data(
     """
     logging.info(f"Loaded data from {exp_data.experiment_config.EXPERIMENT_IDENTIFIER}")
 
-    pulse_parameters = jnp.array(exp_data.parameters)
-    # * Attempt to reshape the pulse_parameters to (size, features)
-    if len(pulse_parameters.shape) == 3:
-        pulse_parameters = pulse_parameters.reshape(
-            pulse_parameters.shape[0],
-            pulse_parameters.shape[1] * pulse_parameters.shape[2],
+    control_parameters = jnp.array(exp_data.parameters)
+    # * Attempt to reshape the control_parameters to (size, features)
+    if len(control_parameters.shape) == 3:
+        control_parameters = control_parameters.reshape(
+            control_parameters.shape[0],
+            control_parameters.shape[1] * control_parameters.shape[2],
         )
 
     expectation_values = jnp.array(exp_data.get_expectation_values())
-    unitaries = jax.vmap(whitebox)(pulse_parameters)
+    unitaries = jax.vmap(whitebox)(control_parameters)
 
     logging.info(
         f"Finished preparing the data for the experiment {exp_data.experiment_config.EXPERIMENT_IDENTIFIER}"
@@ -136,7 +136,7 @@ def prepare_data(
 
     return LoadedData(
         experiment_data=exp_data,
-        pulse_parameters=pulse_parameters,
+        control_parameters=control_parameters,
         unitaries=unitaries[:, -1, :, :],
         expectation_values=expectation_values,
         control_sequence=control_sequence,

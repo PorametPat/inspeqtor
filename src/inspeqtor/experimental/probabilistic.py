@@ -20,7 +20,7 @@ from numpyro.contrib.module import ParamShape
 import chex
 
 from .constant import default_expectation_values_order, X, Y, Z
-from .model import get_predict_expectation_value, unitary
+from .model import ModelData, get_predict_expectation_value, unitary
 from .data import save_pytree_to_json, load_pytree_from_json
 
 
@@ -359,6 +359,7 @@ def construct_normal_prior_from_samples(
     return prior
 
 
+@deprecated("Use ModelData instead")
 @dataclass
 class ProbabilisticModel:
     """Dataclass to save and load probabilistic model from inference result and file."""
@@ -765,47 +766,46 @@ def load_pytree_from_json_old(path: str | pathlib.Path, array_keys: list[str] = 
     return temp_data
 
 
-@dataclass
-class SVIResult:
-    params: chex.ArrayTree
-    config: dict[str, typing.Any]
+class SVIResult(ModelData):
+    pass
 
-    def to_file(self, path: str | pathlib.Path):
-        data = {
-            "params": self.params,
-            "config": self.config,
-        }
 
-        save_pytree_to_json(data, path)
+# @dataclass
+# class SVIResult:
+#     params: chex.ArrayTree
+#     config: dict[str, typing.Any]
 
-    @classmethod
-    def from_file(cls, path: str | pathlib.Path) -> "SVIResult":
-        data = load_pytree_from_json(path)
+#     def to_file(self, path: str | pathlib.Path):
+#         data = {
+#             "params": self.params,
+#             "config": self.config,
+#         }
 
-        return cls(
-            params=data["params"],
-            config=data["config"],
-        )
+#         save_pytree_to_json(data, path)
 
-    def __eq__(self, value):
-        if not isinstance(value, type(self)):
-            raise ValueError("The compared value is not SVIResult object")
+#     @classmethod
+#     def from_file(cls, path: str | pathlib.Path) -> "SVIResult":
+#         data = load_pytree_from_json(path)
 
-        try:
-            chex.assert_trees_all_close(self.params, value.params)
-        except AssertionError:
-            return False
+#         return cls(
+#             params=data["params"],
+#             config=data["config"],
+#         )
 
-        return True if value.config == self.config else False
+#     def __eq__(self, value):
+#         if not isinstance(value, type(self)):
+#             raise ValueError("The compared value is not SVIResult object")
+
+#         try:
+#             chex.assert_trees_all_close(self.params, value.params)
+#         except AssertionError:
+#             return False
+
+#         return True if value.config == self.config else False
 
 
 def compose(functions):
     return reduce(lambda f, g: lambda x: g(f(x)), functions, lambda x: x)
-
-
-DataBundled = namedtuple(
-    "DataBundled", ["control_params", "unitaries", "observables", "aux"]
-)
 
 
 def make_predictive_model_fn_v2(
