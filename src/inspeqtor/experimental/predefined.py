@@ -675,14 +675,9 @@ def generate_experimental_data(
         pulse_params = control_sequence.sample_params(subkey)
         control_params_list.append(pulse_params)
 
-        # control_params.append(
-        #     list_of_params_to_array(pulse_params, parameter_structure)
-        # )
         control_params = control_params.at[control_idx].set(
             list_of_params_to_array(pulse_params, parameter_structure)
         )
-
-    # control_params = jnp.array(control_params)
 
     unitaries = jax.vmap(noisy_simulator)(control_params)
     SHOTS = config.shots
@@ -905,6 +900,19 @@ class HamiltonianSpec:
         qubit_info: QubitInformation,
         dt: float,
     ):
+        """Return Unitary solver from the given specification of the Hamiltonian and solver
+
+        Args:
+            control_sequence (ControlSequence): The control sequence object
+            qubit_info (QubitInformation): The qubit information object
+            dt (float): The time step size of the device
+
+        Raises:
+            ValueError: Unsupport Solver method
+
+        Returns:
+            _type_: The unitary solver
+        """
         if self.method == WhiteboxStrategy.TROTTER:
             hamiltonian = partial(
                 self.get_hamiltonian_fn(),
@@ -942,6 +950,16 @@ def load_data_from_path(
     hamiltonian_spec: HamiltonianSpec,
     pulse_reader=default_pulse_reader,
 ) -> LoadedData:
+    """Load and prepare the experimental data from given path and hamiltonian spec.
+
+    Args:
+        path (str | pathlib.Path): The path to the folder that contain experimental data.
+        hamiltonian_spec (HamiltonianSpec): The specification of the Hamiltonian
+        pulse_reader (_type_, optional): _description_. Defaults to default_pulse_reader.
+
+    Returns:
+        LoadedData: The object contatin necessary information for device characterization.
+    """
     exp_data = ExperimentData.from_folder(path)
     control_sequence = pulse_reader(path)
 
@@ -958,6 +976,16 @@ def save_data_to_path(
     experiment_data: ExperimentData,
     control_sequence: ControlSequence,
 ):
+    """Save the experimental data to the path
+
+    Args:
+        path (str | pathlib.Path): The path to folder to save the experimental data
+        experiment_data (ExperimentData): The experimental data object
+        control_sequence (ControlSequence): The control sequence that used to create the experimental data.
+
+    Returns:
+        None:
+    """
     path = pathlib.Path(path)
     path.mkdir(parents=True, exist_ok=True)
     experiment_data.save_to_folder(path)

@@ -14,7 +14,6 @@ from functools import partial, reduce
 from flax import linen as nn
 from dataclasses import dataclass
 import pathlib
-import json
 from enum import StrEnum, auto
 from numpyro.contrib.module import ParamShape
 
@@ -474,6 +473,16 @@ def make_predictive_fn(
 
 
 def make_pdf(sample: jnp.ndarray, bins: int, srange=(-1, 1)):
+    """Make the numberical PDF from given sample using histogram method
+
+    Args:
+        sample (jnp.ndarray): Sample to make PDF.
+        bins (int): The number of interval bin.
+        srange (tuple, optional): The range of the pdf. Defaults to (-1, 1).
+
+    Returns:
+        _type_: The approximated numerical PDF
+    """
     density, bin_edges = jnp.histogram(sample, bins=bins, range=srange, density=True)
     dx = jnp.diff(bin_edges)
     p = density * dx
@@ -481,15 +490,42 @@ def make_pdf(sample: jnp.ndarray, bins: int, srange=(-1, 1)):
 
 
 def safe_kl_divergence(p: jnp.ndarray, q: jnp.ndarray):
+    """Calculate the KL divergence where the infinity is converted to zero.
+
+    Args:
+        p (jnp.ndarray): The left PDF
+        q (jnp.ndarray): The right PDF
+
+    Returns:
+        jnp.ndarray: The KL divergence
+    """
     return jnp.sum(jnp.nan_to_num(jax.scipy.special.rel_entr(p, q), posinf=0.0))
 
 
 def kl_divergence(p: jnp.ndarray, q: jnp.ndarray):
+    """Calculate the KL divergence
+
+    Args:
+        p (jnp.ndarray): The left PDF
+        q (jnp.ndarray): The right PDF
+
+    Returns:
+        jnp.ndarray:  The KL divergence
+    """
     return jnp.sum(jax.scipy.special.rel_entr(p, q))
 
 
 def safe_jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
-    # Implement following: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.jensenshannon.html
+    """Calculate Jensen-Shannon Divergnece using KL divergence.
+    Implement following: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.jensenshannon.html
+
+    Args:
+        p (jnp.ndarray): The left PDF
+        q (jnp.ndarray): The right PDF
+
+    Returns:
+        _type_: _description_
+    """
     # Compute pointwise mean of p and q
     m = (p + q) / 2
     return (safe_kl_divergence(p, m) + safe_kl_divergence(q, m)) / 2
@@ -537,6 +573,15 @@ def jensenshannon_divergence_from_pdf(p: jnp.ndarray, q: jnp.ndarray):
 def jensenshannon_divergence_from_sample(
     sample_1: jnp.ndarray, sample_2: jnp.ndarray
 ) -> jnp.ndarray:
+    """Calculate the Jensen-Shannon Divergence from sample
+
+    Args:
+        sample_1 (jnp.ndarray): The left PDF
+        sample_2 (jnp.ndarray): The right PDF
+
+    Returns:
+        jnp.ndarray: The Jensen-Shannon Divergence of p and q
+    """
     merged_sample = jnp.concat([sample_1, sample_2])
     bins = int(2 * (sample_2.shape[0]) ** (1 / 3))
     srange = jnp.min(merged_sample), jnp.max(merged_sample)
@@ -548,10 +593,28 @@ def jensenshannon_divergence_from_sample(
 
 
 def batched_matmul(x, w, b):
+    """A specialized batched matrix multiplication of weight and input x, then add the bias.
+    This function is intended to be used in `dense_layer`
+
+    Args:
+        x (jnp.ndarray): The input x
+        w (jnp.ndarray): The weight to multiply to x
+        b (jnp.ndarray): The bias
+
+    Returns:
+        jnp.ndarray: Output of the operations.
+    """
     return jnp.einsum(x, (..., 0), w, (..., 0, 1), (..., 1)) + b
 
 
 def get_trace(fn, key=jax.random.key(0)):
+    """Convinent function to get a trace of the probabilistic model in numpyro.
+
+    Args:
+        fn (function): The probabilistic model in numpyro.
+        key (jnp.ndarray, optional): The random key. Defaults to jax.random.key(0).
+    """
+
     def inner(*args, **kwargs):
         return numpyro.handlers.trace(numpyro.handlers.seed(fn, key)).get_trace(
             *args, **kwargs
@@ -561,6 +624,15 @@ def get_trace(fn, key=jax.random.key(0)):
 
 
 def default_priors_fn(param_name: str):
+    """This is a default prior function for the `dense_layer`
+
+    Args:
+        param_name (str): The site name of the parameters, if end with `sigma` will return Log Normal distribution,
+                          otherwise, return Normal distribution
+
+    Returns:
+        _type_: _description_
+    """
     if param_name.endswith("sigma"):
         return dist.LogNormal(0, 1)
 
@@ -574,6 +646,19 @@ def dense_layer(
     out_features: int,
     priors_fn: typing.Callable[[str], dist.Distribution] = default_priors_fn,
 ):
+    """A custom probabilistic dense layer for neural network model.
+    This function intended to be used with `numpyro`
+
+    Args:
+        x (jnp.ndarray): The input x
+        name (str): Site name of the layer
+        in_features (int): The size of the feature.
+        out_features (int): The desired size of the output feature.
+        priors_fn (typing.Callable[[str], dist.Distribution], optional): The prior function to be used for initializing prior distribution. Defaults to default_priors_fn.
+
+    Returns:
+        _type_: Output of the layer given x.
+    """
     w_name = f"{name}.kernel"
     w = numpyro.sample(
         w_name,
@@ -588,6 +673,17 @@ def dense_layer(
 
 
 def init_default(params_name: str):
+    """The initialization function for deterministic dense layer
+
+    Args:
+        params_name (str): The site name
+
+    Raises:
+        ValueError: Unsupport site name
+
+    Returns:
+        _type_: The function to be used for parameters init given site name.
+    """
     if params_name.endswith("kernel"):
         return jnp.ones
     elif params_name.endswith("bias"):
@@ -604,6 +700,19 @@ def dense_deterministic_layer(
     batch_shape: tuple[int, ...] = (),
     init_fn=init_default,
 ):
+    """The deterministic dense layer, to be used with SVI optimizer.
+
+    Args:
+        x (_type_): The input feature
+        name (str): The site name
+        in_features (int): The size of the input features
+        out_features (int): The desired size of the output features.
+        batch_shape (tuple[int, ...], optional): The batch size of the x. Defaults to ().
+        init_fn (_type_, optional): Initilization function of the model parameters. Defaults to init_default.
+
+    Returns:
+        _type_: The output of the layer given x.
+    """
     # Sample weights - shape (in_features, out_features)
     weight_shape = batch_shape + (in_features, out_features)
     W_name = f"{name}.kernel"
@@ -621,6 +730,17 @@ def dense_deterministic_layer(
 
 
 def make_posteriors_fn(guide, params, num_samples=10000):
+    """Make the posterior distribution function that will
+    return the posterior of parameter of the given name, from guide and parameters.
+
+    Args:
+        guide (_type_): The guide function
+        params (_type_): The parameters of the guide
+        num_samples (int, optional): The sample size. Defaults to 10000.
+
+    Returns:
+        _type_: A function of parameter name that return the sample from the posterior distribution of the parameters.
+    """
     posterior_distribution = Predictive(
         model=guide, params=params, num_samples=num_samples
     )(jax.random.key(0))
@@ -636,6 +756,19 @@ def make_posteriors_fn(guide, params, num_samples=10000):
 def auto_diagonal_noraml_guide(
     model, *args, block_sample: bool = False, init_loc_fn=jnp.zeros
 ):
+    """Automatically generate guide from given model. Expected to be initialized with the example input of the model.
+    The given input should also including the observed site.
+    The blocking capability is intended to be used in the when the guide will be used with its corresponding model in anothe model.
+    This is the avoid site name duplication, while allows for model to use newly sample from the guide.
+
+    Args:
+        model (_type_): The probabilistic model.
+        block_sample (bool, optional): Flag to block the sample site. Defaults to False.
+        init_loc_fn (_type_, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
+
+    Returns:
+        _type_: _description_
+    """
     model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
         *args
     )
@@ -718,89 +851,8 @@ def parse_param_shape(x):
         return x
 
 
-@deprecated
-def load_pytree_from_json_old(path: str | pathlib.Path, array_keys: list[str] = []):
-    """Load pytree from json
-
-    Args:
-        path (str | pathlib.Path): Path to JSON file containing pytree
-        array_keys (list[str], optional): list of key to convert to jnp.numpy. Defaults to [].
-
-    Raises:
-        ValueError: Provided path is not point to .json file
-
-    Returns:
-        _type_: Pytree loaded from JSON
-    """
-
-    # Validate that file extension is .json
-    extension = str(path).split(".")[-1]
-
-    if extension != "json":
-        raise ValueError("File extension must be json")
-
-    if isinstance(path, str):
-        path = pathlib.Path(path)
-
-    with open(path, "r") as f:
-        data = json.load(f)
-
-    # def is_leaf(x):
-    #     return isinstance(x, list)
-
-    temp_data = {}
-    for key, value in data.items():
-        if key in array_keys:
-            temp_data[key] = jax.tree.map(
-                parse_param_shape, value, is_leaf=is_dict_paramshape
-            )
-
-            # Parse list to jnp.ndarray
-            temp_data[key] = jax.tree.map(
-                to_array, temp_data[key], is_leaf=is_leaf_array
-            )
-        else:
-            temp_data[key] = value
-
-    return temp_data
-
-
 class SVIResult(ModelData):
     pass
-
-
-# @dataclass
-# class SVIResult:
-#     params: chex.ArrayTree
-#     config: dict[str, typing.Any]
-
-#     def to_file(self, path: str | pathlib.Path):
-#         data = {
-#             "params": self.params,
-#             "config": self.config,
-#         }
-
-#         save_pytree_to_json(data, path)
-
-#     @classmethod
-#     def from_file(cls, path: str | pathlib.Path) -> "SVIResult":
-#         data = load_pytree_from_json(path)
-
-#         return cls(
-#             params=data["params"],
-#             config=data["config"],
-#         )
-
-#     def __eq__(self, value):
-#         if not isinstance(value, type(self)):
-#             raise ValueError("The compared value is not SVIResult object")
-
-#         try:
-#             chex.assert_trees_all_close(self.params, value.params)
-#         except AssertionError:
-#             return False
-
-#         return True if value.config == self.config else False
 
 
 def compose(functions):
@@ -811,8 +863,19 @@ def make_predictive_model_fn_v2(
     model,
     guide,
     params,
-    shots,
+    shots: int,
 ):
+    """Make a postirior predictive model function from model, guide, SVI parameters, and the number of shots.
+
+    Args:
+        model (_type_): Probabilistic model.
+        guide (_type_): Gudie corresponded to the model
+        params (_type_): SVI parameters of the guide
+        shots (int): The number of shots
+
+    Returns:
+        _type_: The posterior predictive model.
+    """
     predictive = Predictive(
         model, guide=guide, params=params, num_samples=shots, return_sites=["obs"]
     )
@@ -823,7 +886,15 @@ def make_predictive_model_fn_v2(
     return predictive_fn
 
 
-def make_predictive_SGM_model(model, model_params, shots: int):
+def make_predictive_SGM_model(model: nn.Module, model_params, shots: int):
+    """Make a predictive model from given SGM model, the model parameters, and number of shots.
+
+    Args:
+        model (nn.Module): Flax model
+        model_params (_type_): The model parameters.
+        shots (int): The number of shots.
+    """
+
     def predictive_model(
         key: jnp.ndarray, control_param: jnp.ndarray, unitaries: jnp.ndarray
     ):
@@ -847,7 +918,14 @@ def make_predictive_SGM_model(model, model_params, shots: int):
     return predictive_model
 
 
-def make_predictive_MCDG_model(model, model_params):
+def make_predictive_MCDGM_model(model: nn.Module, model_params):
+    """Make a predictive model from given Monte-Carlo Dropout Graybox model, and the model parameters.
+
+    Args:
+        model (nn.Module): Monte-Carlo Dropout Graybox model
+        model_params (_type_): The model parameters
+    """
+
     def predictive_model(
         key: jnp.ndarray, control_param: jnp.ndarray, unitaries: jnp.ndarray
     ):
