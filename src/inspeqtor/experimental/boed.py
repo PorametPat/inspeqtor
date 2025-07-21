@@ -382,6 +382,12 @@ def estimate_eig(
 
 
 def vectorized_for_eig(model):
+    """Vectorization function for the EIG function
+
+    Args:
+        model (_type_): Probabilistic model.
+    """
+
     def wrapper(
         design: jnp.ndarray,
         *args,

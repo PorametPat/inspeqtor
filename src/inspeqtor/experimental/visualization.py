@@ -70,7 +70,19 @@ def plot_loss_with_moving_average(
     window: int = 50,
     annotate_at: list[int] = [2000, 4000, 6000, 8000, 10000],
     **kwargs,
-):
+) -> Axes:
+    """Plot the moving average of the given argument y
+
+    Args:
+        x (jnp.ndarray | np.ndarray): The horizontal axis
+        y (jnp.ndarray | np.ndarray): The vertical axis
+        ax (Axes): Axes object
+        window (int, optional): The moving average window. Defaults to 50.
+        annotate_at (list[int], optional): The list of x positions to annotate the y value. Defaults to [2000, 4000, 6000, 8000, 10000].
+
+    Returns:
+        Axes: Axes object.
+    """
     moving_average = pd.Series(np.asarray(y)).rolling(window=window).mean()
 
     ax.plot(
@@ -96,6 +108,36 @@ def plot_loss_with_moving_average(
 
 
 def assert_list_of_axes(axes) -> list[Axes]:
+    """Assert the provide object that they are a list of Axes
+
+    Args:
+        axes (typing.Any): Expected to be numpy array of Axes
+
+    Returns:
+        list[Axes]: The list of Axes
+    """
+    assert isinstance(axes, np.ndarray)
+    axes = axes.flatten()
+
     for ax in axes:
         assert isinstance(ax, Axes)
-    return axes
+    return axes.tolist()
+
+
+def set_fontsize(ax: Axes, fontsize: float | int):
+    """Set all fontsize of the Axes object
+
+    Args:
+        ax (Axes): The Axes object which fontsize to be changed.
+        fontsize (float | int): The fontsize.
+    """
+    for item in (
+        [ax.title, ax.xaxis.label, ax.yaxis.label]
+        + ax.get_xticklabels()
+        + ax.get_yticklabels()
+    ):
+        item.set_fontsize(fontsize)
+
+    legend, handles = ax.get_legend_handles_labels()
+
+    ax.legend(legend, handles, fontsize=fontsize)
