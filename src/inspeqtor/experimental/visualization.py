@@ -141,3 +141,25 @@ def set_fontsize(ax: Axes, fontsize: float | int):
     legend, handles = ax.get_legend_handles_labels()
 
     ax.legend(legend, handles, fontsize=fontsize)
+
+
+def plot_control_envelope(
+    waveform: jnp.ndarray,
+    x_axis: jnp.ndarray,
+    ax: Axes,
+    font_size: int = 12,
+):
+    ax.bar(
+        x_axis, jnp.real(waveform), label="Real component", color="orange", alpha=0.5
+    )
+    ax.bar(x_axis, jnp.imag(waveform), label="Imag component", color="blue", alpha=0.5)
+
+    ax.set_xlabel("Time", fontsize=font_size)
+
+    # Text size
+    ax.tick_params(axis="both", labelsize=font_size)
+
+    ax.set_xlabel("Time (dt)", fontsize=font_size)
+    ax.set_ylabel("Amplitude", fontsize=font_size)
+
+    ax.legend(fontsize=font_size, loc="upper right")

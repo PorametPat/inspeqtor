@@ -152,6 +152,23 @@ def unitary_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.n
     )
 
 
+def unitary_model_prediction_to_expvals_v2(
+    output, unitaries: jnp.ndarray
+) -> jnp.ndarray:
+    UJ: jnp.ndarray = unitary(output)  # type: ignore
+    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
+
+    X_ = UJ_dagger @ X @ UJ
+    Y_ = UJ_dagger @ Y @ UJ
+    Z_ = UJ_dagger @ Z @ UJ
+
+    return get_predict_expectation_value(
+        {"X": X_, "Y": Y_, "Z": Z_},
+        unitaries,
+        default_expectation_values_order,
+    )
+
+
 def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarray:
     """Function to be used with Wo-based model for probabilistic model construction
     with `make_probabilistic_model` function.

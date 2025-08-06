@@ -139,7 +139,9 @@ jax.config.update("jax_enable_x64", True)
 
 def test_signal_func_v3():
     qubit_info = sq.predefined.get_mock_qubit_information()
-    control_sequence = sq.predefined.get_drag_control_sequence(qubit_info)
+    control_sequence = sq.predefined.get_drag_control_sequence(
+        qubit_info.drive_strength
+    )
     dt = 2 / 9
 
     key = jax.random.PRNGKey(0)
@@ -164,7 +166,9 @@ def test_signal_func_v3():
 
 def test_hamiltonian_fn():
     qubit_info = sq.predefined.get_mock_qubit_information()
-    control_sequence = sq.predefined.get_drag_control_sequence(qubit_info)
+    control_sequence = sq.predefined.get_drag_control_sequence(
+        qubit_info.drive_strength
+    )
     # control_sequence = sq.predefined.get_gaussian_control_sequence(qubit_info)
     dt = 2 / 9
 
@@ -454,7 +458,7 @@ def solver_with_trotterization():
         ),
     )
 
-    whitebox = sq.physics.make_trotterization_whitebox(
+    whitebox = sq.physics.make_trotterization_solver(
         hamiltonian, control_sequence, time_step, trotter_steps=1000
     )
 
@@ -490,7 +494,9 @@ def test_crosscheck(unitaries):
 @pytest.mark.skip(reason="4 / 320 mismatch somehow")
 def test_crosscheck_pennylane_difflax():
     qubit_info = sq.predefined.get_mock_qubit_information()
-    control_sequence = sq.predefined.get_drag_control_sequence(qubit_info)
+    control_sequence = sq.predefined.get_drag_control_sequence(
+        qubit_info.drive_strength
+    )
 
     key = jax.random.PRNGKey(0)
     params = control_sequence.sample_params(key)

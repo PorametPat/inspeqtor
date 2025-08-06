@@ -440,3 +440,23 @@ def construct_control_sequence_reader(
         return ControlSequence.from_dict(control_sequence_dict, pulses=parsed_pulses)
 
     return control_sequence_reader
+
+
+def get_envelope_transformer(control_sequence: ControlSequence):
+    """Generate get_envelope function with control parameter array as an input instead of list form
+
+    Args:
+        control_sequence (PulseSequence): Control seqence instance
+
+    Returns:
+        typing.Callable[[jnp.ndarray], typing.Any]: Transformed get envelope function
+    """
+    structure = control_sequence.get_parameter_names()
+
+    def array_to_list_of_params_fn(array: jnp.ndarray):
+        return array_to_list_of_params(array, structure)
+
+    def get_envelope(params: jnp.ndarray) -> typing.Callable[..., typing.Any]:
+        return control_sequence.get_envelope(array_to_list_of_params_fn(params))
+
+    return get_envelope

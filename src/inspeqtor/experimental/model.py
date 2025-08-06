@@ -743,6 +743,7 @@ def unitary(params: jnp.ndarray) -> jnp.ndarray:
     theta = params[..., 0]
     alpha = params[..., 1]
     beta = params[..., 2]
+    psi = params[..., 3]
 
     q_00 = jnp.exp(1j * alpha) * jnp.cos(theta)
     q_01 = jnp.exp(1j * beta) * jnp.sin(theta)
@@ -755,14 +756,16 @@ def unitary(params: jnp.ndarray) -> jnp.ndarray:
     Q = Q.at[..., 1, 0].set(q_10)
     Q = Q.at[..., 1, 1].set(q_11)
 
-    return Q
+    psi_ = jnp.expand_dims(jnp.exp(1j * psi / 2), [-2, -1])
+
+    return psi_ * Q
 
 
 class UnitaryModel(nn.Module):
     # feature_size: int
     hidden_sizes: list[int]
 
-    NUM_UNITARY_PARAMS: int = 3
+    NUM_UNITARY_PARAMS: int = 4
 
     @nn.compact
     def __call__(self, x: jnp.ndarray):
