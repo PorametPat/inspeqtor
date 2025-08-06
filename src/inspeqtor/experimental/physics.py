@@ -570,7 +570,7 @@ def unitaries_prod(
     return prod_unitary, prod_unitary
 
 
-def make_trotterization_whitebox(
+def make_trotterization_solver(
     hamiltonian: typing.Callable[..., jnp.ndarray],
     control_sequence: ControlSequence,
     dt: float = 2 / 9,

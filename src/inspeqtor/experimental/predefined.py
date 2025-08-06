@@ -15,24 +15,24 @@ from .data import (
 from .control import (
     BaseControl,
     ControlSequence,
-    array_to_list_of_params,
     list_of_params_to_array,
     construct_control_sequence_reader,
+    get_envelope_transformer,
 )
 from .typing import ParametersDictType, HamiltonianArgs
 from .physics import (
     solver,
     signal_func_v5,
-    make_trotterization_whitebox,
+    make_trotterization_solver,
 )
-from .constant import X, Y, Z, default_expectation_values_order, plus_projectors
+from .constant import X, Y, Z, default_expectation_values_order
 from .utils import (
     center_location,
     drag_envelope_v2,
     LoadedData,
     prepare_data,
     calculate_expectation_values,
-    calculate_shots_expectation_value,
+    shot_quantum_device,
 )
 import itertools
 
@@ -337,8 +337,13 @@ class DragPulseV2(BaseControl):
 
 
 def get_drag_pulse_v2_sequence(
-    qubit_info: QubitInformation,
+    qubit_info_drive_strength: float,
     max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
+    min_theta=0.0,
+    max_theta=2 * jnp.pi,
+    min_beta=-2.0,
+    max_beta=2.0,
+    dt=2 / 9,
 ):
     """Get predefined DRAG control sequence with single DRAG pulse.
 
@@ -350,19 +355,17 @@ def get_drag_pulse_v2_sequence(
         PulseSequence: Control sequence instance
     """
     total_length = 320
-    dt = 2 / 9
-
     control_sequence = ControlSequence(
         pulses=[
             DragPulseV2(
                 duration=total_length,
-                qubit_drive_strength=qubit_info.drive_strength,
+                qubit_drive_strength=qubit_info_drive_strength,
                 dt=dt,
                 max_amp=max_amp,
-                min_theta=0.0,
-                max_theta=2 * jnp.pi,
-                min_beta=-2.0,
-                max_beta=2.0,
+                min_theta=min_theta,
+                max_theta=max_theta,
+                min_beta=min_beta,
+                max_beta=max_beta,
             ),
         ],
         pulse_length_dt=total_length,
@@ -416,7 +419,7 @@ class DragPulse(BaseControl):
 
 
 def get_drag_control_sequence(
-    qubit_info: QubitInformation,
+    qubit_info_drive_strength: float,
     amp: float = 0.5,  # NOTE: Choice of amplitude is arbitrary
 ):
     total_length = 320
@@ -427,7 +430,7 @@ def get_drag_control_sequence(
             DragPulse(
                 duration=total_length,
                 beta=0,
-                qubit_drive_strength=qubit_info.drive_strength,
+                qubit_drive_strength=qubit_info_drive_strength,
                 dt=dt,
                 amp=amp,
                 min_theta=0.0,
@@ -642,7 +645,7 @@ def generate_experimental_data(
 
     if method == WhiteboxStrategy.TROTTER:
         noisy_simulator = jax.jit(
-            make_trotterization_whitebox(
+            make_trotterization_solver(
                 hamiltonian=hamiltonian,
                 control_sequence=control_sequence,
                 dt=dt,
@@ -684,7 +687,6 @@ def generate_experimental_data(
 
     # Calculate the expectation values depending on the strategy
     unitaries_f = jnp.asarray(unitaries)[:, -1, :, :]
-    # expectation_values = jnp.zeros((config.sample_size, 18))
 
     assert unitaries_f.shape == (
         sample_size,
@@ -701,23 +703,27 @@ def generate_experimental_data(
         expectation_values = calculate_expectation_values(unitaries_f)
 
     elif strategy == SimulationStrategy.SHOT:
-        expectation_values = jnp.zeros((config.sample_size, 18))
-        for idx, exp in enumerate(default_expectation_values_order):
-            key, sample_key = jax.random.split(key)
-            sample_keys = jax.random.split(sample_key, num=unitaries_f.shape[0])
+        # expectation_values = jnp.zeros((config.sample_size, 18))
+        # for idx, exp in enumerate(default_expectation_values_order):
+        #     key, sample_key = jax.random.split(key)
+        #     sample_keys = jax.random.split(sample_key, num=unitaries_f.shape[0])
 
-            expval = jax.vmap(
-                calculate_shots_expectation_value, in_axes=(0, None, 0, None, None)
-            )(
-                sample_keys,
-                exp.initial_density_matrix,
-                unitaries_f,
-                plus_projectors[exp.observable],
-                SHOTS,
-            )
+        #     expval = jax.vmap(
+        #         calculate_shots_expectation_value, in_axes=(0, None, 0, None, None)
+        #     )(
+        #         sample_keys,
+        #         exp.initial_density_matrix,
+        #         unitaries_f,
+        #         plus_projectors[exp.observable],
+        #         SHOTS,
+        #     )
+        #     expectation_values = expectation_values.at[..., idx].set(expval)
 
-            expectation_values = expectation_values.at[..., idx].set(expval)
-
+        key, sample_key = jax.random.split(key)
+        # The `shot_quantum_device` function will re-calculate the unitary
+        expectation_values = shot_quantum_device(
+            control_params, sample_key, noisy_simulator, SHOTS
+        )
     else:
         raise NotImplementedError
 
@@ -749,26 +755,6 @@ def generate_experimental_data(
         jnp.array(unitaries),
         noisy_simulator,
     )
-
-
-def get_envelope_transformer(control_sequence: ControlSequence):
-    """Generate get_envelope function with control parameter array as an input instead of list form
-
-    Args:
-        control_sequence (PulseSequence): Control seqence instance
-
-    Returns:
-        typing.Callable[[jnp.ndarray], typing.Any]: Transformed get envelope function
-    """
-    structure = control_sequence.get_parameter_names()
-
-    def array_to_list_of_params_fn(array: jnp.ndarray):
-        return array_to_list_of_params(array, structure)
-
-    def get_envelope(params: jnp.ndarray) -> typing.Callable[..., typing.Any]:
-        return control_sequence.get_envelope(array_to_list_of_params_fn(params))
-
-    return get_envelope
 
 
 def get_single_qubit_whitebox(
@@ -926,7 +912,7 @@ class HamiltonianSpec:
                 ),
             )
 
-            whitebox = make_trotterization_whitebox(
+            whitebox = make_trotterization_solver(
                 hamiltonian=hamiltonian,
                 control_sequence=control_sequence,
                 dt=dt,

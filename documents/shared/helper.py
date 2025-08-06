@@ -91,7 +91,7 @@ def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDat
         sq.predefined.rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
         signal=sq.physics.signal_func_v5(
-            get_envelope=sq.predefined.get_envelope_transformer(
+            get_envelope=sq.control.get_envelope_transformer(
                 control_sequence=control_sequence
             ),
             drive_frequency=qubit_info.frequency,
@@ -111,7 +111,7 @@ def get_data_model(trotterization_solver: bool = False) -> sq.utils.SyntheticDat
         dt=dt,
     )
 
-    trotter_solver = sq.physics.make_trotterization_whitebox(
+    trotter_solver = sq.physics.make_trotterization_solver(
         hamiltonian=total_hamiltonian,
         control_sequence=control_sequence,
         trotter_steps=1000,
