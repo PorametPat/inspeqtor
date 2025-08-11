@@ -3,15 +3,17 @@ import jax
 import jax.numpy as jnp
 import numpyro.distributions as dist  # type: ignore
 from inspeqtor.experimental.probabilistic import (
-    eigenvalue_to_binary,
     binary_to_eigenvalue,
-    expectation_value_to_eigenvalue,
     construct_normal_prior_from_samples,
     get_args_of_distribution,
     ProbabilisticModel,
     batched_matmul,
     get_trace,
     dense_layer,
+)
+from inspeqtor.experimental.utils import (
+    eigenvalue_to_binary,
+    expectation_value_to_eigenvalue,
 )
 import chex
 

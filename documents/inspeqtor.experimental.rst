@@ -68,10 +68,10 @@ inspeqtor.experimental.predefined module
    :show-inheritance:
    :undoc-members:
 
-inspeqtor.experimental.pulse module
+inspeqtor.experimental.control module
 -----------------------------------
 
-.. automodule:: inspeqtor.experimental.pulse
+.. automodule:: inspeqtor.experimental.control
    :members:
    :show-inheritance:
    :undoc-members:

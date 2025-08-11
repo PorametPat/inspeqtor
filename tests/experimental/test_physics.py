@@ -2,11 +2,13 @@ import pytest
 import jax
 import jax.numpy as jnp
 from functools import partial
-from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
-import qiskit.quantum_info as qi  # type: ignore
+
+# from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
+# import qiskit.quantum_info as qi  # type: ignore
 from forest.benchmarking import operator_tools as ot  # type: ignore
 import inspeqtor.experimental as sq
-from inspeqtor.external import qiskit as qk, benchmarking as bm
+from inspeqtor.external import benchmarking as bm
+from scipy.stats import unitary_group
 
 # import pennylane as qml  # type: ignore
 import numpy as np
@@ -366,16 +368,20 @@ def solve_with_auto_rotate():
 def solve_with_auto_hamiltonian_extractor():
     qubit_info, control_sequence, params, t_eval, time_step = setup_crosscheck_setting()
 
-    backend = FakeJakartaV2()
-    backend_properties = qk.IBMQDeviceProperties.from_backend(
-        backend=backend, qubit_indices=[0]
-    )
-    backend_properties.qubit_informations = [qubit_info]
+    # backend = FakeJakartaV2()
+    # backend_properties = qk.IBMQDeviceProperties.from_backend(
+    #     backend=backend, qubit_indices=[0]
+    # )
+    # backend_properties.qubit_informations = [qubit_info]
 
-    coupling_infos = qk.get_coupling_strengths(backend_properties)
+    # coupling_infos = qk.get_coupling_strengths(backend_properties)
+
+    qubit_informations = [sq.predefined.get_mock_qubit_information()]
+    coupling_infos = []
+    dt = 2 / 9
 
     total_hamiltonian = sq.physics.gen_hamiltonian_from(
-        qubit_informations=backend_properties.qubit_informations,
+        qubit_informations=qubit_informations,
         coupling_constants=coupling_infos,
         dims=2,
     )
@@ -386,10 +392,8 @@ def solve_with_auto_hamiltonian_extractor():
     signals = {
         drive_term: sq.physics.signal_func_v3(
             control_sequence.get_envelope,
-            drive_frequency=backend_properties.qubit_informations[
-                int(drive_term[-1])
-            ].frequency,
-            dt=backend_properties.dt,
+            drive_frequency=qubit_informations[int(drive_term[-1])].frequency,
+            dt=dt,
         )
         for drive_term in drive_terms
     }
@@ -566,16 +570,20 @@ def test_crosscheck_pennylane_difflax():
     # qml_unitary = qml_simulator(control_sequence.get_waveform(params))
 
     # NOTE: Crosscheck with the hamiltonian_fn flow
-    backend = FakeJakartaV2()
-    backend_properties = qk.IBMQDeviceProperties.from_backend(
-        backend=backend, qubit_indices=[0]
-    )
-    backend_properties.qubit_informations = [qubit_info]
+    # backend = FakeJakartaV2()
+    # backend_properties = qk.IBMQDeviceProperties.from_backend(
+    #     backend=backend, qubit_indices=[0]
+    # )
+    # backend_properties.qubit_informations = [qubit_info]
 
-    coupling_infos = qk.get_coupling_strengths(backend_properties)
+    qubit_informations = [sq.predefined.get_mock_qubit_information()]
+    coupling_infos = []
+    dt = 2 / 9
+
+    # coupling_infos = qk.get_coupling_strengths(backend_properties)
 
     total_hamiltonian = sq.physics.gen_hamiltonian_from(
-        qubit_informations=backend_properties.qubit_informations,
+        qubit_informations=qubit_informations,
         coupling_constants=coupling_infos,
         dims=2,
     )
@@ -586,10 +594,8 @@ def test_crosscheck_pennylane_difflax():
     signals = {
         drive_term: sq.physics.signal_func_v3(
             control_sequence.get_envelope,
-            drive_frequency=backend_properties.qubit_informations[
-                int(drive_term[-1])
-            ].frequency,
-            dt=backend_properties.dt,
+            drive_frequency=qubit_informations[int(drive_term[-1])].frequency,
+            dt=dt,
         )
         for drive_term in drive_terms
     }
@@ -797,7 +803,7 @@ def test_direct_AFG_estimation_coefficients():
 
 
 def test_direct_AFG_estimation():
-    target_unitary = jnp.array(qi.random_unitary(2).data)
+    target_unitary = jnp.array(unitary_group.rvs(2))
 
     expvals = []
     for exp in sq.constant.default_expectation_values_order:

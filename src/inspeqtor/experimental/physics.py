@@ -533,6 +533,15 @@ def direct_AFG_estimation_coefficients(target_unitary: jnp.ndarray) -> jnp.ndarr
     return jnp.real(jnp.array(coefficients))
 
 
+def direct_AGF_estimation_fn(target_unitary: jnp.ndarray):
+    coeff = direct_AFG_estimation_coefficients(target_unitary)
+
+    def inner_fn(expectation_values: jnp.ndarray):
+        return direct_AFG_estimation(coeff, expectation_values)
+
+    return inner_fn
+
+
 def calculate_exp(
     unitary: jnp.ndarray, operator: jnp.ndarray, density_matrix: jnp.ndarray
 ) -> jnp.ndarray:
