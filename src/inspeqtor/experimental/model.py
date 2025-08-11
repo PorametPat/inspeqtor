@@ -14,8 +14,13 @@ import pandas as pd
 import chex
 from numpyro.contrib.module import ParamShape
 
-from .data import ExpectationValue, save_pytree_to_json, load_pytree_from_json
-from .constant import default_expectation_values_order
+from .data import ExpectationValue, save_pytree_to_json, load_pytree_from_json, State
+from .constant import (
+    default_expectation_values_order,
+    minus_projectors,
+    plus_projectors,
+    get_default_expectation_values_order,
+)
 from .physics import (
     direct_AFG_estimation,
     direct_AFG_estimation_coefficients,
@@ -492,7 +497,7 @@ def calculate_metric(
 
 def loss_fn(
     params: VariableDict,
-    pulse_parameters: jnp.ndarray,
+    control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
     expectation_values: jnp.ndarray,
     model: nn.Module,
@@ -504,13 +509,13 @@ def loss_fn(
 
     Args:
         params (VariableDict): Model parameters
-        pulse_parameters (jnp.ndarray): Control parameters
+        control_parameters (jnp.ndarray): Control parameters
         unitaries (jnp.ndarray): Ideal unitary
         expectation_values (jnp.ndarray): Experimental expectation value
         model (nn.Module): Model instance
         loss_metric (LossMetric): The choice of loss to be optimized
         model_kwargs (dict, optional): Keyword arguments for the model. Defaults to {}.
-        calculate_metrics_fn:
+        calculate_metrics_fn: ...
 
     Returns:
         tuple[jnp.ndarray, dict[str, jnp.ndarray]]: loss, and all metrices
@@ -519,7 +524,7 @@ def loss_fn(
     metrics = calculate_metrics_fn(
         model=model,
         model_params=params,
-        pulse_parameters=pulse_parameters,
+        control_parameters=control_parameters,
         unitaries=unitaries,
         expectation_values=expectation_values,
         model_kwargs=model_kwargs,
@@ -820,6 +825,104 @@ def calculate_metrics_v2(
         {"X": X, "Y": Y, "Z": Z},
         U,
         default_expectation_values_order,
+    )
+
+    # Calculate the metrics
+    metrics = calculate_metric(
+        unitaries=unitaries,
+        expectation_values=expectation_values,
+        predicted_expectation_values=predicted_expvals,
+    )
+
+    return metrics
+
+
+def get_spam(params: VariableDict):
+    pair_map = {"+": "-", "-": "+", "0": "1", "1": "0", "r": "l", "l": "r"}
+    observables = {"X": X, "Y": Y, "Z": Z}
+    for pauli, matrix in observables.items():
+        p_10 = params["AM"][pauli]["prob_10"]
+        p_01 = params["AM"][pauli]["prob_01"]
+
+        observables[pauli] = (
+            matrix
+            + (-2 * p_10 * plus_projectors[pauli])
+            + (2 * p_01 * minus_projectors[pauli])
+        )
+
+    expvals = []
+    order_expvals = get_default_expectation_values_order()
+    for _expval in order_expvals:
+        expval = ExpectationValue(
+            initial_state=_expval.initial_state, observable=_expval.observable
+        )
+        # SP State Preparation error
+        SP_correct_prob = params["SP"][_expval.initial_state]
+        SP_incorrect_prob = 1 - SP_correct_prob
+        expval.initial_density_matrix = SP_correct_prob * State.from_label(
+            _expval.initial_state, dm=True
+        ) + SP_incorrect_prob * State.from_label(
+            pair_map[_expval.initial_state], dm=True
+        )
+        # AM, And Measurement error
+        expval.observable_matrix = observables[_expval.observable]
+
+        expvals.append(expval)
+
+    return expvals, observables
+
+
+def calculate_metrics_v3(
+    # The model to be used for prediction
+    model: UnitaryModel,
+    model_params: VariableDict,
+    # Input data to the model
+    pulse_parameters: jnp.ndarray,
+    unitaries: jnp.ndarray,
+    # Experimental data
+    expectation_values: jnp.ndarray,
+    # model keyword arguments
+    model_kwargs: dict = {},
+    # expectation_value_order: list[ExpectationValue] = default_expectation_values_order,
+    # observables: dict[str, jnp.ndarray] = {"X": X, "Y": Y, "Z": Z},
+    ignore_spam: bool = False,
+):
+    """Calcuate for unitary-based Blackbox model
+
+    Args:
+        model (sq.model.nn.Module): The model to be used for prediction
+        model_params (sq.model.VariableDict): The model parameters
+        pulse_parameters (jnp.ndarray): The pulse parameters
+        unitaries (jnp.ndarray): Ideal unitaries
+        expectation_values (jnp.ndarray): Experimental expectation values
+        model_kwargs (dict): Model keyword arguments
+
+    Returns:
+        _type_: _description_
+    """
+
+    # Predict Unitary parameters
+    unitary_params = model.apply(model_params, pulse_parameters, **model_kwargs)
+
+    UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
+    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
+
+    if not ignore_spam:
+        expectation_value_order, observables = get_spam(model_params["spam"])
+    else:
+        expectation_value_order, observables = (
+            default_expectation_values_order,
+            {"X": X, "Y": Y, "Z": Z},
+        )
+
+    X_ = UJ_dagger @ observables["X"] @ UJ
+    Y_ = UJ_dagger @ observables["Y"] @ UJ
+    Z_ = UJ_dagger @ observables["Z"] @ UJ
+
+    predicted_expvals = get_predict_expectation_value(
+        {"X": X_, "Y": Y_, "Z": Z_},
+        unitaries,
+        expectation_value_order,
     )
 
     # Calculate the metrics

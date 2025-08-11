@@ -48,7 +48,11 @@ To make the virtual environment discoverable in jupyter notebook, install the `i
 ```bash
     uv run pytest tests/ -v 
 ```
-Flag `-v` is for verbose mode.
+Flag `-v` is for verbose mode. The current module that is expected to be in used is `experimental` submodule. So the test command should be
+```bash
+uv run pytest tests/experimental/. -vv --durations=0
+```
+where the flag is for complehensive reporting.
 
 - We use `ruff` for linting and formatting. To run the linter, run the following command:
 

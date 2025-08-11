@@ -11,6 +11,7 @@ from .data import (
     ExperimentConfiguration,
     ExperimentData,
     make_row,
+    ExpectationValue,
 )
 from .control import (
     BaseControl,
@@ -590,7 +591,6 @@ class WhiteboxStrategy(StrEnum):
     TROTTER = auto()
 
 
-#
 def generate_experimental_data(
     key: jnp.ndarray,
     hamiltonian: typing.Callable[..., jnp.ndarray],
@@ -606,6 +606,9 @@ def generate_experimental_data(
     max_steps: int = int(2**16),
     method: WhiteboxStrategy = WhiteboxStrategy.ODE,
     trotter_steps: int = 1000,
+    expectation_value_receipt: list[
+        ExpectationValue
+    ] = default_expectation_values_order,
 ) -> tuple[
     ExperimentData,
     ControlSequence,
@@ -722,7 +725,11 @@ def generate_experimental_data(
         key, sample_key = jax.random.split(key)
         # The `shot_quantum_device` function will re-calculate the unitary
         expectation_values = shot_quantum_device(
-            control_params, sample_key, noisy_simulator, SHOTS
+            control_params,
+            sample_key,
+            noisy_simulator,
+            SHOTS,
+            expectation_value_receipt,
         )
     else:
         raise NotImplementedError
@@ -734,7 +741,7 @@ def generate_experimental_data(
 
     rows = []
     for sample_idx in range(config.sample_size):
-        for exp_idx, exp in enumerate(default_expectation_values_order):
+        for exp_idx, exp in enumerate(expectation_value_receipt):
             row = make_row(
                 expectation_value=float(expectation_values[sample_idx, exp_idx]),
                 initial_state=exp.initial_state,

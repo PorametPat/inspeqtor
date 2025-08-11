@@ -3,7 +3,7 @@ import jax
 from functools import partial
 from qiskit_ibm_runtime import SamplerV2  # type: ignore
 import inspeqtor.experimental as sq
-from inspeqtor.external import qiskit as qk
+from inspeqtor.legacy.external import qiskit as qk
 import pytest
 
 

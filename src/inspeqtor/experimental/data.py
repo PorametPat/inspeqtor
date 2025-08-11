@@ -301,7 +301,7 @@ class ExperimentConfiguration:
     instance: str
     sample_size: int
     date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    additional_info: dict[str, str] = field(default_factory=dict)
+    additional_info: dict[str, str | int | float] = field(default_factory=dict)
 
     def to_dict(self):
         return {

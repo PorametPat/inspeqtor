@@ -18,11 +18,6 @@ from .utils import dataloader, create_step
 from .model import loss_fn, LossMetric, save_model, load_model
 from ray.tune.search.sample import Domain
 
-# from collections import namedtuple
-# DataBundled = namedtuple(
-#     "DataBundled", ["control_params", "unitaries", "observables", "aux"]
-# )
-
 
 @dataclass
 class DataBundled:

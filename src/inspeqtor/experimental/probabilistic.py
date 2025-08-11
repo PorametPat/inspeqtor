@@ -17,94 +17,15 @@ import pathlib
 from enum import StrEnum, auto
 from numpyro.contrib.module import ParamShape
 
-from .constant import default_expectation_values_order, X, Y, Z
+from .constant import (
+    default_expectation_values_order,
+    X,
+    Y,
+    Z,
+)
 from .model import ModelData, get_predict_expectation_value, unitary
 from .data import save_pytree_to_json, load_pytree_from_json
-
-
-def expectation_value_to_prob_plus(expectation_value: jnp.ndarray) -> jnp.ndarray:
-    """
-    Calculate the probability of -1 and 1 for the given expectation value
-    E[O] = -1 * P[O = -1] + 1 * P[O = 1], where P[O = -1] + P[O = 1] = 1
-    Thus, E[O] = -1 * (1 - P[O = 1]) + 1 * P[O = 1]
-    E[O] = 2 * P[O = 1] - 1 -> P[O = 1] = (E[O] + 1) / 2
-    Args:
-        expectation_value (jnp.ndarray): Expectation value of quantum observable
-
-    Returns:
-        jnp.ndarray: Probability of measuring plus eigenvector
-    """
-
-    return (expectation_value + 1) / 2
-
-
-def expectation_value_to_prob_minus(expectation_value: jnp.ndarray) -> jnp.ndarray:
-    """
-    Calculate the probability of -1 and 1 for the given expectation value
-    E[O] = -1 * P[O = -1] + 1 * P[O = 1], where P[O = -1] + P[O = 1] = 1
-    Thus, E[O] = -1 * P[O = -1] + 1 * (1 - P[O = -1])
-    E[O] = 1 - 2 * P[O = -1] -> P[O = -1] = (1 - E[O]) / 2
-    Args:
-        expectation_value (jnp.ndarray): Expectation value of quantum observable
-
-    Returns:
-        jnp.ndarray: Probability of measuring minus eigenvector
-    """
-
-    return (1 - expectation_value) / 2
-
-
-def expectation_value_to_eigenvalue(
-    expectation_value: jnp.ndarray, SHOTS: int
-) -> jnp.ndarray:
-    """Convert expectation value to eigenvalue
-
-    Args:
-        expectation_value (jnp.ndarray): Expectation value of quantum observable
-        SHOTS (int): The number of shots used to produce expectation value
-
-    Returns:
-        jnp.ndarray: Array of eigenvalues
-    """
-    return jnp.where(
-        jnp.broadcast_to(jnp.arange(SHOTS), expectation_value.shape + (SHOTS,))
-        < jnp.around(
-            expectation_value_to_prob_plus(
-                jnp.reshape(expectation_value, expectation_value.shape + (1,))
-            )
-            * SHOTS
-        ).astype(jnp.int32),
-        1,
-        -1,
-    ).astype(jnp.int32)
-
-
-def eigenvalue_to_binary(eigenvalue: jnp.ndarray) -> jnp.ndarray:
-    """Convert -1 to 1, and 0 to 1
-    This implementation should be differentiable
-
-    Args:
-        eigenvalue (jnp.ndarray): Eigenvalue to convert to bit value
-
-    Returns:
-        jnp.ndarray: Binary array
-    """
-
-    return (-1 * eigenvalue + 1) / 2
-
-
-def binary_to_eigenvalue(binary: jnp.ndarray) -> jnp.ndarray:
-    """Convert 1 to -1, and 0 to 1
-    This implementation should be differentiable
-
-    Args:
-        binary (jnp.ndarray): Bit value to convert to eigenvalue
-
-    Returns:
-        jnp.ndarray: Eigenvalue array
-    """
-
-    return -1 * (binary * 2 - 1)
+from .utils import expectation_value_to_prob_minus, binary_to_eigenvalue, get_spam
 
 
 def make_update_fn(
@@ -169,6 +90,62 @@ def unitary_model_prediction_to_expvals_v2(
     )
 
 
+def unitary_model_prediction_to_expvals_v3(
+    output, unitaries: jnp.ndarray
+) -> jnp.ndarray:
+    """To model the SPAM noise with probabilistic model and UJ model
+
+    Expected the output structure as follows
+    ```python
+    spam_params = {
+        "SP": {
+            "+": jnp.array([0.9]),
+            "-": jnp.array([0.9]),
+            "r": jnp.array([0.9]),
+            "l": jnp.array([0.9]),
+            "0": jnp.array([0.9]),
+            "1": jnp.array([0.9]),
+        },
+        "AM": {
+            "X": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
+            "Y": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
+            "Z": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
+        },
+    }
+
+    output = {
+        "model_params": ...,
+        "spam_params": spam_params
+    }
+    ```
+
+        Args:
+            output (_type_): _description_
+            unitaries (jnp.ndarray): _description_
+
+        Returns:
+            jnp.ndarray: _description_
+    """
+
+    model_output = output["model_params"]
+    spam_output = output["spam_params"]
+
+    UJ: jnp.ndarray = unitary(model_output)  # type: ignore
+    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
+
+    expectation_value_order, observables = get_spam(spam_output)
+
+    X_ = UJ_dagger @ observables["X"] @ UJ
+    Y_ = UJ_dagger @ observables["Y"] @ UJ
+    Z_ = UJ_dagger @ observables["Z"] @ UJ
+
+    return get_predict_expectation_value(
+        {"X": X_, "Y": Y_, "Z": Z_},
+        unitaries,
+        expectation_value_order,
+    )
+
+
 def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarray:
     """Function to be used with Wo-based model for probabilistic model construction
     with `make_probabilistic_model` function.
@@ -221,6 +198,54 @@ def make_flax_probabilistic_graybox_model(
 
         # Predict from control parameters
         output = model(control_parameters)
+
+        # With unitary and Wo, calculate expectation values
+        expvals = model_prediction_to_expvals_fn(output, unitaries)
+
+        return expvals
+
+    return graybox_probabilistic_model
+
+
+def make_flax_probabilistic_graybox_model_with_spam(
+    name: str,  # graybox
+    base_model: nn.Module,
+    spam_model: typing.Callable,
+    model_prediction_to_expvals_fn: typing.Callable[..., jnp.ndarray],
+    prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
+    enable_bnn: bool = True,
+):
+    module = partial(random_flax_module, prior=prior) if enable_bnn else flax_module
+
+    def graybox_probabilistic_model(
+        control_parameters: jnp.ndarray,
+        unitaries: jnp.ndarray,
+    ):
+        """Graybox model
+        Args:
+            control_parameters (jnp.ndarray): control parameters
+            unitaries (jnp.ndarray): The unitary according to the control parameters
+
+        Returns:
+            jnp.ndarray: Expectation values
+        """
+
+        samples_shape = control_parameters.shape[:-2]
+        unitaries = jnp.broadcast_to(unitaries, samples_shape + unitaries.shape[-3:])
+
+        # Initialize BMLP model
+        model = module(
+            name,
+            base_model,
+            input_shape=control_parameters.shape,
+        )
+
+        # Predict from control parameters
+        model_output = model(control_parameters)
+
+        spam_params = spam_model()
+
+        output = {"model_params": model_output, "spam_params": spam_params}
 
         # With unitary and Wo, calculate expectation values
         expvals = model_prediction_to_expvals_fn(output, unitaries)
@@ -846,6 +871,101 @@ def auto_diagonal_noraml_guide(
     return guide
 
 
+def init_normal_dist_fn(name: str):
+    if name.startswith("SPAM/"):
+        return partial(dist.TruncatedNormal, low=0.0, high=1.0)
+
+    return dist.Normal
+
+
+def init_params_fn(name: str, shape: tuple[int, ...]):
+    if name.endswith("_loc"):
+        constraint = (
+            dist.constraints.unit_interval
+            if name.startswith("SPAM/")
+            else dist.constraints.real
+        )
+        return numpyro.param(name, 0.5 * jnp.ones(shape), constraint=constraint)
+    elif name.endswith("_scale"):
+        return numpyro.param(
+            name, 0.1 * jnp.ones(shape), constraint=dist.constraints.softplus_positive
+        )
+    else:
+        raise ValueError(f"name: {name} is not supported")
+
+
+def auto_diagonal_noraml_guide_v2(
+    model,
+    *args,
+    init_dist_fn=init_normal_dist_fn,
+    init_params_fn=init_params_fn,
+    block_sample: bool = False,
+):
+    """Automatically generate guide from given model. Expected to be initialized with the example input of the model.
+    The given input should also including the observed site.
+    The blocking capability is intended to be used in the when the guide will be used with its corresponding model in anothe model.
+    This is the avoid site name duplication, while allows for model to use newly sample from the guide.
+
+    Args:
+        model (_type_): The probabilistic model.
+        block_sample (bool, optional): Flag to block the sample site. Defaults to False.
+        init_loc_fn (_type_, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
+
+    Returns:
+        _type_: _description_
+    """
+    # get the trace of the model
+    model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
+        *args
+    )
+    # Then get only the sample site with observed equal to false
+    sample_sites = [v for k, v in model_trace.items() if v["type"] == "sample"]
+    non_observed_sites = [v for v in sample_sites if not v["is_observed"]]
+    params_sites = [
+        {"name": v["name"], "shape": v["value"].shape} for v in non_observed_sites
+    ]
+
+    def sample_fn(
+        params_loc: dict[str, typing.Any], params_scale: dict[str, typing.Any]
+    ):
+        samples = {}
+        # Sample from Normal distribution
+        for (k_loc, v_loc), (k_scale, v_scale) in zip(
+            params_loc.items(), params_scale.items(), strict=True
+        ):
+            s = numpyro.sample(
+                k_loc,
+                init_dist_fn(k_loc)(v_loc, v_scale).to_event(),  # type: ignore
+            )
+            samples[k_loc] = s
+
+        return samples
+
+    def guide(
+        *args,
+        **kwargs,
+    ):
+        params_loc = {
+            param["name"]: init_params_fn(f"{param['name']}_loc", param["shape"])
+            for param in params_sites
+        }
+
+        params_scale = {
+            param["name"]: init_params_fn(f"{param['name']}_scale", param["shape"])
+            for param in params_sites
+        }
+
+        if block_sample:
+            with handlers.block():
+                samples = sample_fn(params_loc, params_scale)
+        else:
+            samples = sample_fn(params_loc, params_scale)
+
+        return samples
+
+    return guide
+
+
 def is_leaf_array(x):
     return isinstance(x, list)
 
@@ -903,7 +1023,9 @@ def make_predictive_model_fn_v2(
     return predictive_fn
 
 
-def make_predictive_SGM_model(model: nn.Module, model_params, shots: int):
+def make_predictive_SGM_model(
+    model: nn.Module, model_params, output_to_expectation_values_fn, shots: int
+):
     """Make a predictive model from given SGM model, the model parameters, and number of shots.
 
     Args:
@@ -915,16 +1037,9 @@ def make_predictive_SGM_model(model: nn.Module, model_params, shots: int):
     def predictive_model(
         key: jnp.ndarray, control_param: jnp.ndarray, unitaries: jnp.ndarray
     ):
-        wo_params = model.apply(
-            model_params,
-            control_param,
-        )
+        output = model.apply(model_params, control_param)
+        predicted_expvals = output_to_expectation_values_fn(output, unitaries)
 
-        predicted_expvals = get_predict_expectation_value(
-            wo_params,
-            unitaries,
-            default_expectation_values_order,
-        )
         return binary_to_eigenvalue(
             jax.vmap(jax.random.bernoulli, in_axes=(0, None))(
                 jax.random.split(key, shots),

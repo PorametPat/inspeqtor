@@ -5,9 +5,16 @@ import optax  # type: ignore
 import jaxtyping
 from dataclasses import dataclass
 from .control import ControlSequence
-from .data import ExperimentData, QubitInformation
-from .model import mse
-from .constant import Z, default_expectation_values_order, plus_projectors
+from .data import ExpectationValue, ExperimentData, QubitInformation, State
+from .model import mse, VariableDict
+from .constant import (
+    X,
+    Y,
+    Z,
+    default_expectation_values_order,
+    plus_projectors,
+    minus_projectors,
+)
 from .decorator import warn_not_tested_function
 from .typing import HamiltonianArgs
 from .physics import calculate_exp
@@ -318,6 +325,91 @@ def calculate_expectation_values(
     return ideal_expectation_values
 
 
+def expectation_value_to_prob_plus(expectation_value: jnp.ndarray) -> jnp.ndarray:
+    """
+    Calculate the probability of -1 and 1 for the given expectation value
+    E[O] = -1 * P[O = -1] + 1 * P[O = 1], where P[O = -1] + P[O = 1] = 1
+    Thus, E[O] = -1 * (1 - P[O = 1]) + 1 * P[O = 1]
+    E[O] = 2 * P[O = 1] - 1 -> P[O = 1] = (E[O] + 1) / 2
+    Args:
+        expectation_value (jnp.ndarray): Expectation value of quantum observable
+
+    Returns:
+        jnp.ndarray: Probability of measuring plus eigenvector
+    """
+
+    return (expectation_value + 1) / 2
+
+
+def expectation_value_to_prob_minus(expectation_value: jnp.ndarray) -> jnp.ndarray:
+    """
+    Calculate the probability of -1 and 1 for the given expectation value
+    E[O] = -1 * P[O = -1] + 1 * P[O = 1], where P[O = -1] + P[O = 1] = 1
+    Thus, E[O] = -1 * P[O = -1] + 1 * (1 - P[O = -1])
+    E[O] = 1 - 2 * P[O = -1] -> P[O = -1] = (1 - E[O]) / 2
+    Args:
+        expectation_value (jnp.ndarray): Expectation value of quantum observable
+
+    Returns:
+        jnp.ndarray: Probability of measuring minus eigenvector
+    """
+
+    return (1 - expectation_value) / 2
+
+
+def expectation_value_to_eigenvalue(
+    expectation_value: jnp.ndarray, SHOTS: int
+) -> jnp.ndarray:
+    """Convert expectation value to eigenvalue
+
+    Args:
+        expectation_value (jnp.ndarray): Expectation value of quantum observable
+        SHOTS (int): The number of shots used to produce expectation value
+
+    Returns:
+        jnp.ndarray: Array of eigenvalues
+    """
+    return jnp.where(
+        jnp.broadcast_to(jnp.arange(SHOTS), expectation_value.shape + (SHOTS,))
+        < jnp.around(
+            expectation_value_to_prob_plus(
+                jnp.reshape(expectation_value, expectation_value.shape + (1,))
+            )
+            * SHOTS
+        ).astype(jnp.int32),
+        1,
+        -1,
+    ).astype(jnp.int32)
+
+
+def eigenvalue_to_binary(eigenvalue: jnp.ndarray) -> jnp.ndarray:
+    """Convert -1 to 1, and 0 to 1
+    This implementation should be differentiable
+
+    Args:
+        eigenvalue (jnp.ndarray): Eigenvalue to convert to bit value
+
+    Returns:
+        jnp.ndarray: Binary array
+    """
+
+    return (-1 * eigenvalue + 1) / 2
+
+
+def binary_to_eigenvalue(binary: jnp.ndarray) -> jnp.ndarray:
+    """Convert 1 to -1, and 0 to 1
+    This implementation should be differentiable
+
+    Args:
+        binary (jnp.ndarray): Bit value to convert to eigenvalue
+
+    Returns:
+        jnp.ndarray: Eigenvalue array
+    """
+
+    return -1 * (binary * 2 - 1)
+
+
 def get_dataset_metrics(
     loaded_data: LoadedData,
     NUM_EPOCH: int = 1000,
@@ -398,7 +490,7 @@ def calculate_shots_expectation_value(
     key: jnp.ndarray,
     initial_state: jnp.ndarray,
     unitary: jnp.ndarray,
-    plus_projector: jnp.ndarray,
+    operator: jnp.ndarray,
     shots: int,
 ) -> jnp.ndarray:
     """Calculate finite-shots estimate of expectation value
@@ -413,7 +505,8 @@ def calculate_shots_expectation_value(
     Returns:
         jnp.ndarray: Finite-shot estimate expectation value
     """
-    prob = jnp.trace(unitary @ initial_state @ unitary.conj().T @ plus_projector).real
+    expval = jnp.trace(unitary @ initial_state @ unitary.conj().T @ operator).real
+    prob = expectation_value_to_prob_plus(expval)
 
     return jax.random.choice(
         key, jnp.array([1, -1]), shape=(shots,), p=jnp.array([prob, 1 - prob])
@@ -425,6 +518,9 @@ def shot_quantum_device(
     key: jnp.ndarray,
     solver: typing.Callable[[jnp.ndarray], jnp.ndarray],
     SHOTS: int,
+    expectation_value_receipt: list[
+        ExpectationValue
+    ] = default_expectation_values_order,
 ) -> jnp.ndarray:
     """This is the shot estimate expectation value quantum device
 
@@ -441,7 +537,7 @@ def shot_quantum_device(
     expectation_values = jnp.zeros((control_parameters.shape[0], 18))
     unitaries = jax.vmap(solver)(control_parameters)[:, -1, :, :]
 
-    for idx, exp in enumerate(default_expectation_values_order):
+    for idx, exp in enumerate(expectation_value_receipt):
         key, sample_key = jax.random.split(key)
         sample_keys = jax.random.split(sample_key, num=unitaries.shape[0])
 
@@ -452,10 +548,68 @@ def shot_quantum_device(
             sample_keys,
             exp.initial_density_matrix,
             unitaries,
-            plus_projectors[exp.observable],
+            exp.observable_matrix,
             SHOTS,
         )
 
         expectation_values = expectation_values.at[..., idx].set(expectation_value)
 
     return expectation_values
+
+
+def get_default_expectation_values_order():
+    return [
+        ExpectationValue(observable="X", initial_state="+"),
+        ExpectationValue(observable="X", initial_state="-"),
+        ExpectationValue(observable="X", initial_state="r"),
+        ExpectationValue(observable="X", initial_state="l"),
+        ExpectationValue(observable="X", initial_state="0"),
+        ExpectationValue(observable="X", initial_state="1"),
+        ExpectationValue(observable="Y", initial_state="+"),
+        ExpectationValue(observable="Y", initial_state="-"),
+        ExpectationValue(observable="Y", initial_state="r"),
+        ExpectationValue(observable="Y", initial_state="l"),
+        ExpectationValue(observable="Y", initial_state="0"),
+        ExpectationValue(observable="Y", initial_state="1"),
+        ExpectationValue(observable="Z", initial_state="+"),
+        ExpectationValue(observable="Z", initial_state="-"),
+        ExpectationValue(observable="Z", initial_state="r"),
+        ExpectationValue(observable="Z", initial_state="l"),
+        ExpectationValue(observable="Z", initial_state="0"),
+        ExpectationValue(observable="Z", initial_state="1"),
+    ]
+
+
+def get_spam(params: VariableDict):
+    pair_map = {"+": "-", "-": "+", "0": "1", "1": "0", "r": "l", "l": "r"}
+    observables = {"X": X, "Y": Y, "Z": Z}
+    for pauli, matrix in observables.items():
+        p_10 = params["AM"][pauli]["prob_10"]
+        p_01 = params["AM"][pauli]["prob_01"]
+
+        observables[pauli] = (
+            matrix
+            + (-2 * p_10 * plus_projectors[pauli])
+            + (2 * p_01 * minus_projectors[pauli])
+        )
+
+    expvals = []
+    order_expvals = get_default_expectation_values_order()
+    for _expval in order_expvals:
+        expval = ExpectationValue(
+            initial_state=_expval.initial_state, observable=_expval.observable
+        )
+        # SP State Preparation error
+        SP_correct_prob = params["SP"][_expval.initial_state]
+        SP_incorrect_prob = 1 - SP_correct_prob
+        expval.initial_density_matrix = SP_correct_prob * State.from_label(
+            _expval.initial_state, dm=True
+        ) + SP_incorrect_prob * State.from_label(
+            pair_map[_expval.initial_state], dm=True
+        )
+        # AM, And Measurement error
+        expval.observable_matrix = observables[_expval.observable]
+
+        expvals.append(expval)
+
+    return expvals, observables
