@@ -410,7 +410,7 @@ def calculate_metrics(
     model: nn.Module,
     model_params: VariableDict,
     # Input data to the model
-    pulse_parameters: jnp.ndarray,
+    control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
     # Experimental data
     expectation_values: jnp.ndarray,
@@ -425,14 +425,14 @@ def calculate_metrics(
     Args:
         model (sq.model.nn.Module): The model to be used for prediction
         model_params (sq.model.VariableDict): The model parameters
-        pulse_parameters (jnp.ndarray): The pulse parameters
+        control_parameters (jnp.ndarray): The pulse parameters
         unitaries (jnp.ndarray): Ideal unitaries
         expectation_values (jnp.ndarray): Experimental expectation values
         model_kwargs (dict): Model keyword arguments
     """
 
     # Calculate Wo_params
-    Wo_params = model.apply(model_params, pulse_parameters, **model_kwargs)
+    Wo_params = model.apply(model_params, control_parameters, **model_kwargs)
 
     # Calculate the predicted expectation values using model
     predicted_expvals = get_predict_expectation_value(
@@ -795,7 +795,7 @@ def calculate_metrics_v2(
     model: UnitaryModel,
     model_params: VariableDict,
     # Input data to the model
-    pulse_parameters: jnp.ndarray,
+    control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
     # Experimental data
     expectation_values: jnp.ndarray,
@@ -807,7 +807,7 @@ def calculate_metrics_v2(
     Args:
         model (sq.model.nn.Module): The model to be used for prediction
         model_params (sq.model.VariableDict): The model parameters
-        pulse_parameters (jnp.ndarray): The pulse parameters
+        control_parameters (jnp.ndarray): The pulse parameters
         unitaries (jnp.ndarray): Ideal unitaries
         expectation_values (jnp.ndarray): Experimental expectation values
         model_kwargs (dict): Model keyword arguments
@@ -817,7 +817,7 @@ def calculate_metrics_v2(
     """
 
     # Predict Unitary parameters
-    unitary_params = model.apply(model_params, pulse_parameters, **model_kwargs)
+    unitary_params = model.apply(model_params, control_parameters, **model_kwargs)
 
     U = unitary(unitary_params)  # type: ignore
 
