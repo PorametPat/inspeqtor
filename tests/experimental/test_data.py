@@ -174,7 +174,8 @@ def test_get_parameters_dict_list_2():
         parameters_name, df_params.iloc[0]
     )
 
-    assert parameters_dict_list == pulse_params
+    # assert parameters_dict_list == pulse_params
+    chex.assert_trees_all_close(parameters_dict_list, pulse_params)
 
 
 def test_ExperimentData_1(tmp_path):
