@@ -54,6 +54,11 @@ uv run pytest tests/experimental/. -vv --durations=0
 ```
 where the flag is for complehensive reporting.
 
+To test with the specific version of python, use the following,
+```bash
+uv run --python 3.12 --with '.[test]' pytest tests/experimental/.
+```
+
 - We use `ruff` for linting and formatting. To run the linter, run the following command:
 
 ```bash
