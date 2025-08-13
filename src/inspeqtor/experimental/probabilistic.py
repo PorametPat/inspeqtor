@@ -795,7 +795,7 @@ def make_posteriors_fn(guide, params, num_samples=10000):
     return posteriors_fn
 
 
-def auto_diagonal_noraml_guide(
+def auto_diagonal_normal_guide(
     model, *args, block_sample: bool = False, init_loc_fn=jnp.zeros
 ):
     """Automatically generate guide from given model. Expected to be initialized with the example input of the model.

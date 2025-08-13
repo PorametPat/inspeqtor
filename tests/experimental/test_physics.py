@@ -5,13 +5,13 @@ from functools import partial
 
 # from qiskit_ibm_runtime.fake_provider import FakeJakartaV2  # type: ignore
 # import qiskit.quantum_info as qi  # type: ignore
-from forest.benchmarking import operator_tools as ot  # type: ignore
+# from forest.benchmarking import operator_tools as ot  # type: ignore
 import inspeqtor.experimental as sq
-from inspeqtor.external import benchmarking as bm
+
+# from inspeqtor.external import benchmarking as bm
 from scipy.stats import unitary_group
 
 # import pennylane as qml  # type: ignore
-import numpy as np
 import chex
 
 jax.config.update("jax_enable_x64", True)
@@ -681,36 +681,36 @@ def wrong_to_superop(U: jnp.ndarray) -> jnp.ndarray:
     return jnp.kron(U, U.conj())
 
 
-@pytest.mark.parametrize(
-    "gate",
-    [
-        jnp.eye(2),
-        sq.constant.X,
-        sq.constant.Y,
-        sq.constant.Z,
-        # jax.scipy.linalg.sqrtm(sq.constant.X),
-        sq.constant.SX,
-    ],
-)
-def test_process_tomography(gate: jnp.ndarray):
-    init_0 = jnp.array(sq.data.State.from_label("0", dm=True))
-    init_1 = jnp.array(sq.data.State.from_label("1", dm=True))
-    init_p = jnp.array(sq.data.State.from_label("+", dm=True))
-    init_m = jnp.array(sq.data.State.from_label("r", dm=True))
+# @pytest.mark.parametrize(
+#     "gate",
+#     [
+#         jnp.eye(2),
+#         sq.constant.X,
+#         sq.constant.Y,
+#         sq.constant.Z,
+#         # jax.scipy.linalg.sqrtm(sq.constant.X),
+#         sq.constant.SX,
+#     ],
+# )
+# def test_process_tomography(gate: jnp.ndarray):
+#     init_0 = jnp.array(sq.data.State.from_label("0", dm=True))
+#     init_1 = jnp.array(sq.data.State.from_label("1", dm=True))
+#     init_p = jnp.array(sq.data.State.from_label("+", dm=True))
+#     init_m = jnp.array(sq.data.State.from_label("r", dm=True))
 
-    rho_0 = gate @ init_0 @ gate.conj().T
-    rho_1 = gate @ init_1 @ gate.conj().T
-    rho_p = gate @ init_p @ gate.conj().T
-    rho_m = gate @ init_m @ gate.conj().T
+#     rho_0 = gate @ init_0 @ gate.conj().T
+#     rho_1 = gate @ init_1 @ gate.conj().T
+#     rho_p = gate @ init_p @ gate.conj().T
+#     rho_m = gate @ init_m @ gate.conj().T
 
-    # Normally, those rho would be retrived from state tomography.
-    assert jnp.allclose(
-        sq.physics.avg_gate_fidelity_from_superop(
-            bm.process_tomography(rho_0, rho_1, rho_p, rho_m),
-            sq.physics.to_superop(gate),
-        ),
-        jnp.array(1.0),
-    )
+#     # Normally, those rho would be retrived from state tomography.
+#     assert jnp.allclose(
+#         sq.physics.avg_gate_fidelity_from_superop(
+#             bm.process_tomography(rho_0, rho_1, rho_p, rho_m),
+#             sq.physics.to_superop(gate),
+#         ),
+#         jnp.array(1.0),
+#     )
 
 
 def test_SX():
@@ -729,47 +729,48 @@ def theoretical_fidelity_of_amplitude_dampling_channel_with_itself(gamma):
     return (2 * process_fidelity + 1) / (2 + 1)
 
 
-@pytest.mark.parametrize(
-    "gate_with_fidelity",
-    [
-        ([jnp.eye(2)], jnp.array(1.0)),
-        ([sq.constant.X], jnp.array(1.0)),
-        ([sq.constant.Y], jnp.array(1.0)),
-        ([sq.constant.Z], jnp.array(1.0)),
-        ([jax.scipy.linalg.sqrtm(sq.constant.X)], jnp.array(1.0)),
-        ([sq.constant.SX], jnp.array(1.0)),
-        (
-            [
-                jnp.array([[1, 0], [0, jnp.sqrt(1 - 0.2)]]),
-                jnp.array([[0, jnp.sqrt(0.2)], [0, 0]]),
-            ],
-            theoretical_fidelity_of_amplitude_dampling_channel_with_itself(0.2),
-        ),
-    ],
-)
-def test_forest_process_tomography(gate_with_fidelity: list[jnp.ndarray]):
-    gate = gate_with_fidelity[0]
-    expected_fidelity = gate_with_fidelity[1]
+# @pytest.mark.skip("Remove forest-benchmarking dependency")
+# @pytest.mark.parametrize(
+#     "gate_with_fidelity",
+#     [
+#         ([jnp.eye(2)], jnp.array(1.0)),
+#         ([sq.constant.X], jnp.array(1.0)),
+#         ([sq.constant.Y], jnp.array(1.0)),
+#         ([sq.constant.Z], jnp.array(1.0)),
+#         ([jax.scipy.linalg.sqrtm(sq.constant.X)], jnp.array(1.0)),
+#         ([sq.constant.SX], jnp.array(1.0)),
+#         (
+#             [
+#                 jnp.array([[1, 0], [0, jnp.sqrt(1 - 0.2)]]),
+#                 jnp.array([[0, jnp.sqrt(0.2)], [0, 0]]),
+#             ],
+#             theoretical_fidelity_of_amplitude_dampling_channel_with_itself(0.2),
+#         ),
+#     ],
+# )
+# def test_forest_process_tomography(gate_with_fidelity: list[jnp.ndarray]):
+#     gate = gate_with_fidelity[0]
+#     expected_fidelity = gate_with_fidelity[1]
 
-    expvals = []
-    for exp in sq.constant.default_expectation_values_order:
-        rho_i = jnp.array(sq.data.State.from_label(exp.initial_state, dm=True))
-        rho_f = ot.apply_kraus_ops_2_state(gate, rho_i)  # pyright: ignore
+#     expvals = []
+#     for exp in sq.constant.default_expectation_values_order:
+#         rho_i = jnp.array(sq.data.State.from_label(exp.initial_state, dm=True))
+#         rho_f = ot.apply_kraus_ops_2_state(gate, rho_i)  # pyright: ignore
 
-        exp.expectation_value = float(
-            jnp.trace(jnp.array(rho_f @ exp.observable_matrix)).real
-        )
-        expvals.append(exp)
+#         exp.expectation_value = float(
+#             jnp.trace(jnp.array(rho_f @ exp.observable_matrix)).real
+#         )
+#         expvals.append(exp)
 
-    est_superoperator = ot.choi2superop(bm.forest_process_tomography(expvals))
+#     est_superoperator = ot.choi2superop(bm.forest_process_tomography(expvals))
 
-    assert jnp.allclose(
-        sq.physics.avg_gate_fidelity_from_superop(
-            est_superoperator,  # pyright: ignore
-            ot.kraus2superop(np.array(gate)),  # pyright: ignore
-        ),
-        expected_fidelity,
-    )
+#     assert jnp.allclose(
+#         sq.physics.avg_gate_fidelity_from_superop(
+#             est_superoperator,  # pyright: ignore
+#             ot.kraus2superop(np.array(gate)),  # pyright: ignore
+#         ),
+#         expected_fidelity,
+#     )
 
 
 def test_direct_AFG_estimation_coefficients():
