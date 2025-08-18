@@ -11,7 +11,6 @@ import chex
 import jaxtyping
 
 from .utils import dataloader
-from .model import LossMetric, load_model
 
 
 @jax.tree_util.register_dataclass
