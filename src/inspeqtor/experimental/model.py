@@ -173,6 +173,52 @@ class BasicBlackBoxV2(nn.Module):
         return Wos_params
 
 
+class BasicBlackBoxV3(nn.Module):
+    hidden_sizes_1: typing.Sequence[int] = (20, 10)
+    hidden_sizes_2: typing.Sequence[int] = (20, 10)
+    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
+
+    NUM_UNITARY_PARAMS: int = 3
+    NUM_DIAGONAL_PARAMS: int = 2
+
+    @nn.compact
+    def __call__(self, x: jnp.ndarray):
+        # Apply a dense layer for each hidden size
+        for hidden_size in self.hidden_sizes_1:
+            x = nn.Dense(features=hidden_size)(x)
+            x = nn.relu(x)
+
+        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
+        for op in self.pauli_operators:
+            # Sub hidden layer
+            # Copy the input
+            _x = jnp.copy(x)
+            for hidden_size in self.hidden_sizes_2:
+                _x = nn.Dense(features=hidden_size)(_x)
+                _x = nn.relu(_x)
+
+            Wos_params[op] = dict()
+            # For the unitary part, we use a dense layer with 3 features
+            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
+                _x
+            )
+            # Apply sigmoid to this layer
+            unitary_params = 2 * jnp.pi * nn.hard_sigmoid(unitary_params)
+            # For the diagonal part, we use a dense layer with 1 feature
+            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
+                _x
+            )
+            # Apply the activation function
+            diag_params = (2 * nn.hard_sigmoid(diag_params)) - 1
+
+            Wos_params[op] = {
+                "U": unitary_params,
+                "D": diag_params,
+            }
+
+        return Wos_params
+
+
 def make_basic_blackbox_model(
     unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
     * jnp.pi
@@ -239,52 +285,6 @@ def make_basic_blackbox_model(
             return Wos
 
     return BlackBox
-
-
-class BasicBlackBoxV3(nn.Module):
-    hidden_sizes_1: typing.Sequence[int] = (20, 10)
-    hidden_sizes_2: typing.Sequence[int] = (20, 10)
-    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
-
-    NUM_UNITARY_PARAMS: int = 3
-    NUM_DIAGONAL_PARAMS: int = 2
-
-    @nn.compact
-    def __call__(self, x: jnp.ndarray):
-        # Apply a dense layer for each hidden size
-        for hidden_size in self.hidden_sizes_1:
-            x = nn.Dense(features=hidden_size)(x)
-            x = nn.relu(x)
-
-        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
-        for op in self.pauli_operators:
-            # Sub hidden layer
-            # Copy the input
-            _x = jnp.copy(x)
-            for hidden_size in self.hidden_sizes_2:
-                _x = nn.Dense(features=hidden_size)(_x)
-                _x = nn.relu(_x)
-
-            Wos_params[op] = dict()
-            # For the unitary part, we use a dense layer with 3 features
-            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
-                _x
-            )
-            # Apply sigmoid to this layer
-            unitary_params = 2 * jnp.pi * nn.hard_sigmoid(unitary_params)
-            # For the diagonal part, we use a dense layer with 1 feature
-            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
-                _x
-            )
-            # Apply the activation function
-            diag_params = (2 * nn.hard_sigmoid(diag_params)) - 1
-
-            Wos_params[op] = {
-                "U": unitary_params,
-                "D": diag_params,
-            }
-
-        return Wos_params
 
 
 def mse(x1: jnp.ndarray, x2: jnp.ndarray):
@@ -364,14 +364,14 @@ def calculate_Pauli_AGF(
 
 
 def get_predict_expectation_value(
-    Wos: Wos,
+    observable: dict[str, jnp.ndarray],
     unitaries: jnp.ndarray,
     evaluate_expectation_values: list[ExpectationValue],
 ) -> jnp.ndarray:
     """Calculate expectation values for given evaluate_expectation_values
 
     Args:
-        Wos (Wos): Wos operator
+        observable (operators): observable operator
         unitaries (jnp.ndarray): Unitary operators
         evaluate_expectation_values (list[ExpectationValue]): Order of expectation value to be calculated
 
@@ -382,14 +382,14 @@ def get_predict_expectation_value(
     #     tuple(unitaries.shape[:-2]) + (len(evaluate_expectation_values),)
     # )
     predict_expectation_values = jnp.zeros(
-        tuple(Wos["X"].shape[:-2]) + (len(evaluate_expectation_values),)  # type: ignore
+        tuple(observable["X"].shape[:-2]) + (len(evaluate_expectation_values),)  # type: ignore
     )
 
     # Calculate expectation values for all cases
     for idx, exp_case in enumerate(evaluate_expectation_values):
         batch_expectaion_values = calculate_exp(
             unitaries,
-            Wos[exp_case.observable],  # type: ignore
+            observable[exp_case.observable],  # type: ignore
             exp_case.initial_density_matrix,
         )
         predict_expectation_values = predict_expectation_values.at[..., idx].set(
@@ -432,11 +432,11 @@ def calculate_metrics(
     """
 
     # Calculate Wo_params
-    Wo_params = model.apply(model_params, control_parameters, **model_kwargs)
+    Wo = model.apply(model_params, control_parameters, **model_kwargs)
 
     # Calculate the predicted expectation values using model
     predicted_expvals = get_predict_expectation_value(
-        Wo_params,
+        Wo, # type: ignore
         unitaries,
         default_expectation_values_order,
     )
@@ -449,7 +449,7 @@ def calculate_metrics(
     )
 
     AGF_paulis = jax.vmap(calculate_Pauli_AGF, in_axes=(0))(
-        Wo_params,
+        Wo,
     )
 
     return {

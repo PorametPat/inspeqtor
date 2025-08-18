@@ -1,8 +1,6 @@
 import jax
 import jax.numpy as jnp
 import typing
-import optax  # type: ignore
-import jaxtyping
 from dataclasses import dataclass
 from .control import ControlSequence
 from .data import ExpectationValue, ExperimentData, QubitInformation, State
@@ -14,6 +12,7 @@ from .constant import (
     default_expectation_values_order,
     plus_projectors,
     minus_projectors,
+    get_default_expectation_values_order
 )
 from .decorator import warn_not_tested_function
 from .typing import HamiltonianArgs
@@ -235,60 +234,6 @@ def dataloader(
             batch_idx += 1
 
         epoch_idx += 1
-
-
-def create_step(
-    optimizer: optax.GradientTransformation,
-    loss_fn: (
-        typing.Callable[..., jnp.ndarray]
-        | typing.Callable[..., typing.Tuple[jnp.ndarray, typing.Any]]
-    ),
-    has_aux: bool = False,
-):
-    """The create_step function creates a training step function and a test step function.
-
-    loss_fn should have the following signature:
-    ```py
-    def loss_fn(params: jaxtyping.PyTree, *args) -> jnp.ndarray:
-        ...
-        return loss_value
-    ```
-    where `params` is the parameters to be optimized, and `args` are the inputs for the loss function.
-
-    Args:
-        optimizer (optax.GradientTransformation): `optax` optimizer.
-        loss_fn (typing.Callable[[jaxtyping.PyTree, ...], jnp.ndarray]): Loss function, which takes in the model parameters, inputs, and targets, and returns the loss value.
-        has_aux (bool, optional): Whether the loss function return aux data or not. Defaults to False.
-
-    Returns:
-        __type__: train_step, test_step
-    """
-
-    # * Generalized training step
-    @jax.jit
-    def train_step(
-        params: jaxtyping.PyTree,
-        optimizer_state: optax.OptState,
-        *args,
-        **kwargs,
-    ):
-        loss_value, grads = jax.value_and_grad(loss_fn, has_aux=has_aux)(
-            params, *args, **kwargs
-        )
-        updates, opt_state = optimizer.update(grads, optimizer_state, params)
-        params = optax.apply_updates(params, updates)
-
-        return params, opt_state, loss_value
-
-    @jax.jit
-    def test_step(
-        params: jaxtyping.PyTree,
-        *args,
-        **kwargs,
-    ):
-        return loss_fn(params, *args, **kwargs)
-
-    return train_step, test_step
 
 
 def variance_of_observable(expval: jnp.ndarray, shots: int = 1):
@@ -556,28 +501,6 @@ def shot_quantum_device(
 
     return expectation_values
 
-
-def get_default_expectation_values_order():
-    return [
-        ExpectationValue(observable="X", initial_state="+"),
-        ExpectationValue(observable="X", initial_state="-"),
-        ExpectationValue(observable="X", initial_state="r"),
-        ExpectationValue(observable="X", initial_state="l"),
-        ExpectationValue(observable="X", initial_state="0"),
-        ExpectationValue(observable="X", initial_state="1"),
-        ExpectationValue(observable="Y", initial_state="+"),
-        ExpectationValue(observable="Y", initial_state="-"),
-        ExpectationValue(observable="Y", initial_state="r"),
-        ExpectationValue(observable="Y", initial_state="l"),
-        ExpectationValue(observable="Y", initial_state="0"),
-        ExpectationValue(observable="Y", initial_state="1"),
-        ExpectationValue(observable="Z", initial_state="+"),
-        ExpectationValue(observable="Z", initial_state="-"),
-        ExpectationValue(observable="Z", initial_state="r"),
-        ExpectationValue(observable="Z", initial_state="l"),
-        ExpectationValue(observable="Z", initial_state="0"),
-        ExpectationValue(observable="Z", initial_state="1"),
-    ]
 
 
 def get_spam(params: VariableDict):
