@@ -12,7 +12,7 @@ from .constant import (
     default_expectation_values_order,
     plus_projectors,
     minus_projectors,
-    get_default_expectation_values_order
+    get_default_expectation_values_order,
 )
 from .decorator import warn_not_tested_function
 from .typing import HamiltonianArgs
@@ -500,7 +500,6 @@ def shot_quantum_device(
         expectation_values = expectation_values.at[..., idx].set(expectation_value)
 
     return expectation_values
-
 
 
 def get_spam(params: VariableDict):

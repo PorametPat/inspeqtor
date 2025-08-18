@@ -436,7 +436,7 @@ def calculate_metrics(
 
     # Calculate the predicted expectation values using model
     predicted_expvals = get_predict_expectation_value(
-        Wo, # type: ignore
+        Wo,  # type: ignore
         unitaries,
         default_expectation_values_order,
     )

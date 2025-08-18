@@ -1068,7 +1068,7 @@ def make_predictive_MCDGM_model(model: nn.Module, model_params):
         )
 
         predicted_expvals = get_predict_expectation_value(
-            wo_params, # type: ignore
+            wo_params,  # type: ignore
             unitaries,
             default_expectation_values_order,
         )

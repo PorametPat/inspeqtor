@@ -938,5 +938,3 @@ def save_pytree_to_json(pytree, path: str | Path):
 
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
-
-
