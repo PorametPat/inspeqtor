@@ -158,7 +158,7 @@ def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarra
         jnp.ndarray: Expectation values array
     """
     return get_predict_expectation_value(
-        Wos=output,
+        observable=output,
         unitaries=unitaries,
         evaluate_expectation_values=default_expectation_values_order,
     )
@@ -1068,7 +1068,7 @@ def make_predictive_MCDGM_model(model: nn.Module, model_params):
         )
 
         predicted_expvals = get_predict_expectation_value(
-            wo_params,
+            wo_params, # type: ignore
             unitaries,
             default_expectation_values_order,
         )

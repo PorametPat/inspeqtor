@@ -706,22 +706,6 @@ def generate_experimental_data(
         expectation_values = calculate_expectation_values(unitaries_f)
 
     elif strategy == SimulationStrategy.SHOT:
-        # expectation_values = jnp.zeros((config.sample_size, 18))
-        # for idx, exp in enumerate(default_expectation_values_order):
-        #     key, sample_key = jax.random.split(key)
-        #     sample_keys = jax.random.split(sample_key, num=unitaries_f.shape[0])
-
-        #     expval = jax.vmap(
-        #         calculate_shots_expectation_value, in_axes=(0, None, 0, None, None)
-        #     )(
-        #         sample_keys,
-        #         exp.initial_density_matrix,
-        #         unitaries_f,
-        #         plus_projectors[exp.observable],
-        #         SHOTS,
-        #     )
-        #     expectation_values = expectation_values.at[..., idx].set(expval)
-
         key, sample_key = jax.random.split(key)
         # The `shot_quantum_device` function will re-calculate the unitary
         expectation_values = shot_quantum_device(
