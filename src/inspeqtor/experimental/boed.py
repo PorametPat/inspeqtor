@@ -7,6 +7,7 @@ from alive_progress import alive_it  # type: ignore
 import typing
 import jaxtyping
 import chex
+from .decorator import warn_not_tested_function
 
 
 def safe_shape(a: typing.Any) -> tuple[int, ...] | str:
@@ -200,6 +201,128 @@ def marginal_loss(
         # return agg_loss, AuxEntry(terms=None, eig=None)
         # return agg_loss, {"terms": terms, "eig": loss}
         return agg_loss, AuxEntry(terms=None, eig=loss)
+
+    return loss_fn
+
+
+@warn_not_tested_function
+def vnmc_eig_loss(
+    model: typing.Callable,
+    marginal_guide: typing.Callable,
+    design: jnp.ndarray,
+    *args,
+    observation_labels: list[str],
+    target_labels: list[str],
+    num_particles: tuple[int, int],
+    evaluation: bool = False,
+) -> typing.Callable[[chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]:
+    """The VNMC loss implemented following
+    https://docs.pyro.ai/en/dev/_modules/pyro/contrib/oed/eig.html#vnmc_eig
+
+    Args:
+        model (typing.Callable): The probabilistic model
+        marginal_guide (typing.Callable): The custom guide
+        design (jnp.ndarray): Possible designs of the experiment
+        observation_labels (list[str]): The list of string of observations
+        target_labels (list[str]): The target latent parameters to be optimized for
+        num_particles (int): The number of independent trials
+        evaluation (bool, optional): True for actual evalution of the EIG. Defaults to False.
+
+    Returns:
+        typing.Callable[ [chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry] ]: Loss function that return tuple of (1) Total loss, (2.1) Each terms without the average, (2.2) The EIG
+    """
+
+    # Marginal loss
+    def loss_fn(param, key: jnp.ndarray) -> tuple[jnp.ndarray, AuxEntry]:
+        N, M = num_particles
+
+        expanded_design = lexpand(design, N)
+
+        # Sample from p(y, theta | d)
+        key, subkey = jax.random.split(key)
+        trace = handlers.trace(handlers.seed(model, subkey)).get_trace(
+            expanded_design,
+            *args,
+        )
+        y_dict = {
+            observation_label: trace[observation_label]["value"]
+            for observation_label in observation_labels
+        }
+
+        # Sample M times from q(theta | y, d) for each y
+        key, subkey = jax.random.split(key)
+        reexpanded_design = lexpand(expanded_design, M)
+        conditioned_marginal_guide = handlers.condition(marginal_guide, data=y_dict)
+        cond_trace = handlers.trace(
+            handlers.substitute(
+                handlers.seed(conditioned_marginal_guide, subkey), data=param
+            )
+        ).get_trace(
+            reexpanded_design,
+            *args,
+            observation_labels=observation_labels,
+            target_labels=target_labels,
+        )
+
+        theta_y_dict = {
+            target_label: cond_trace[target_label]["value"]
+            for target_label in target_labels
+        }
+        theta_y_dict.update(y_dict)
+
+        # Re-run that through the model to compute the joint
+        key, subkey = jax.random.split(key)
+        conditioned_model = handlers.condition(model, data=theta_y_dict)
+        conditioned_model_trace = handlers.trace(
+            handlers.seed(conditioned_model, subkey)
+        ).get_trace(
+            reexpanded_design,
+            *args,
+        )
+
+        # Compute the log prob of observing the data
+        terms = -1 * jnp.array(
+            [
+                cond_trace[target_label]["fn"].log_prob(
+                    cond_trace[target_label]["value"]
+                )
+                for target_label in target_labels
+            ]
+        ).sum(axis=0)
+
+        terms += jnp.array(
+            [
+                conditioned_model_trace[target_label]["fn"].log_prob(
+                    conditioned_model_trace[target_label]["value"]
+                )
+                for target_label in target_labels
+            ]
+        ).sum(axis=0)
+
+        terms += jnp.array(
+            [
+                conditioned_model_trace[observation_label]["fn"].log_prob(
+                    conditioned_model_trace[observation_label]["value"]
+                )
+                for observation_label in observation_labels
+            ]
+        ).sum(axis=0)
+
+        terms = -jax.scipy.special.logsumexp(terms, axis=0) + jnp.log(M)
+
+        if evaluation:
+            terms += jnp.array(
+                [
+                    trace[observation_label]["fn"].log_prob(
+                        trace[observation_label]["value"]
+                    )
+                    for observation_label in observation_labels
+                ]
+            ).sum(axis=0)
+
+        agg_loss, loss = _safe_mean_terms_v2(terms)
+        # return agg_loss, {"terms": terms, "eig": loss}
+        return agg_loss, AuxEntry(terms=terms, eig=loss)
 
     return loss_fn
 

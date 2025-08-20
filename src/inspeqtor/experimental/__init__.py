@@ -7,6 +7,7 @@ from . import (
     physics as physics,
     predefined as predefined,
     model as model,
+    models as models,
     optimize as optimize,
     decorator as decorator,
     boed as boed,
