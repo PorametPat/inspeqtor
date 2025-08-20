@@ -10,6 +10,4 @@ from ..model import (
     ModelData as ModelData,
 )
 
-from ..optimize import (
-    create_step as create_step
-)
+from ..optimize import create_step as create_step
