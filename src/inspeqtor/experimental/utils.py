@@ -459,8 +459,8 @@ def calculate_shots_expectation_value(
 
 
 def shot_quantum_device(
-    control_parameters: jnp.ndarray,
     key: jnp.ndarray,
+    control_parameters: jnp.ndarray,
     solver: typing.Callable[[jnp.ndarray], jnp.ndarray],
     SHOTS: int,
     expectation_value_receipt: list[
