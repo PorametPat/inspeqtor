@@ -15,18 +15,18 @@ import chex
 from numpyro.contrib.module import ParamShape
 
 from .data import ExpectationValue, save_pytree_to_json, load_pytree_from_json, State
-from .constant import (
-    default_expectation_values_order,
-    minus_projectors,
-    plus_projectors,
-    get_default_expectation_values_order,
-)
+
 from .physics import (
     direct_AFG_estimation,
     direct_AFG_estimation_coefficients,
     to_superop,
     avg_gate_fidelity_from_superop,
     calculate_exp,
+)
+from .constant import (
+    minus_projectors,
+    plus_projectors,
+    get_default_expectation_values_order,
     X,
     Y,
     Z,
@@ -187,54 +187,6 @@ def calculate_metric(
         LossMetric.AEF: AEF,
         LossMetric.WAEE: WAEE,
     }
-
-
-def loss_fn(
-    params: VariableDict,
-    control_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    expectation_values: jnp.ndarray,
-    model: nn.Module,
-    predictive_fn: typing.Callable,
-    loss_metric: LossMetric,
-    calculate_metric_fn: typing.Callable = calculate_metric,
-    **model_kwargs,
-) -> tuple[jnp.ndarray, dict[str, jnp.ndarray]]:
-    """This function implement a unified interface for nn.Module.
-
-    Args:
-        params (VariableDict): Model parameters to be optimized
-        control_parameters (jnp.ndarray): Control parameters parametrized Hamiltonian
-        unitaries (jnp.ndarray): The Ideal unitary operators corresponding to the control parameters
-        expectation_values (jnp.ndarray): Experimental expectation values to calculate the loss value
-        model (nn.Module): Flax linen Blackbox part of the graybox model.
-        predictive_fn (typing.Callable): Function for calculating expectation value from the model
-        loss_metric (LossMetric): The choice of loss value to be minimized.
-        calculate_metric_fn (typing.Callable): Function for metrics calculation from prediction and experimental value. Defaults to calculate_metric
-
-    Returns:
-        tuple[jnp.ndarray, dict[str, jnp.ndarray]]: The loss value and other metrics.
-    """
-    # Calculate the metrics
-    predicted_expectation_value = predictive_fn(
-        model=model,
-        model_params=params,
-        control_parameters=control_parameters,
-        unitaries=unitaries,
-        **model_kwargs,
-    )
-
-    metrics = calculate_metric_fn(
-        unitaries, expectation_values, predicted_expectation_value
-    )
-
-    # Take mean of all the metrics
-    metrics = jax.tree.map(jnp.mean, metrics)
-
-    # ! Grab the metric in the `metrics`
-    loss = metrics[loss_metric]
-
-    return (loss, metrics)
 
 
 @deprecated(reason="use ModelData instead")
@@ -477,108 +429,6 @@ def Wo_2_level_v3(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
     return jnp.matmul(Q, jnp.matmul(Diag, Q_dagger))
 
 
-def make_basic_blackbox_model(
-    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
-    * jnp.pi
-    * nn.hard_sigmoid(x),
-    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
-        2 * nn.hard_sigmoid(x)
-    )
-    - 1,
-) -> type[nn.Module]:
-    """Function to create Blackbox constructor with custom activation functions for unitary and diagonal output
-
-    Args:
-        unitary_activation_fn (_type_, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
-        diagonal_activation_fn (_type_, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
-
-    Returns:
-        type[nn.Module]: Constructor of the Blackbox model
-    """
-
-    class BlackBox(nn.Module):
-        hidden_sizes_1: typing.Sequence[int] = (20, 10)
-        hidden_sizes_2: typing.Sequence[int] = (20, 10)
-        pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
-
-        NUM_UNITARY_PARAMS: int = 3
-        NUM_DIAGONAL_PARAMS: int = 2
-
-        @nn.compact
-        def __call__(self, x: jnp.ndarray) -> dict[str, jnp.ndarray]:
-            # Apply a dense layer for each hidden size
-            for hidden_size in self.hidden_sizes_1:
-                x = nn.Dense(features=hidden_size)(x)
-                x = nn.relu(x)
-
-            # Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
-            Wos: dict[str, jnp.ndarray] = dict()
-            for op in self.pauli_operators:
-                # Sub hidden layer
-                # Copy the input
-                _x = jnp.copy(x)
-                for hidden_size in self.hidden_sizes_2:
-                    _x = nn.Dense(features=hidden_size)(_x)
-                    _x = nn.relu(_x)
-
-                # Wos_params[op] = dict()
-                # For the unitary part, we use a dense layer with 3 features
-                unitary_params = nn.Dense(
-                    features=self.NUM_UNITARY_PARAMS, name=f"U_{op}"
-                )(_x)
-                # Apply sigmoid to this layer
-                unitary_params = unitary_activation_fn(unitary_params)
-                # For the diagonal part, we use a dense layer with 1 feature
-                diag_params = nn.Dense(
-                    features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}"
-                )(_x)
-                # Apply the activation function
-                diag_params = diagonal_activation_fn(diag_params)
-
-                Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
-
-            return Wos
-
-    return BlackBox
-
-
-def wo_predictive_fn(
-    # The model to be used for prediction
-    model: nn.Module,
-    model_params: VariableDict,
-    # Input data to the model
-    control_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    # model keyword arguments
-    **model_kwargs,
-):
-    """To Calculate the metrics of the model
-    1. MSE Loss between the predicted expectation values and the experimental expectation values
-    2. Average Gate Fidelity between the Pauli matrices to the Wo_model matrices
-    3. AGF Loss between the prediction from model and the experimental expectation values
-
-    Args:
-        model (sq.model.nn.Module): The model to be used for prediction
-        model_params (sq.model.VariableDict): The model parameters
-        control_parameters (jnp.ndarray): The pulse parameters
-        unitaries (jnp.ndarray): Ideal unitaries
-        expectation_values (jnp.ndarray): Experimental expectation values
-        model_kwargs (dict): Model keyword arguments
-    """
-
-    # Calculate Wo_params
-    Wo = model.apply(model_params, control_parameters, **model_kwargs)
-
-    # Calculate the predicted expectation values using model
-    predicted_expvals = get_predict_expectation_value(
-        Wo,  # type: ignore
-        unitaries,
-        default_expectation_values_order,
-    )
-
-    return predicted_expvals
-
-
 def unitary(params: jnp.ndarray) -> jnp.ndarray:
     """Create unitary matrix from parameters
 
@@ -609,66 +459,6 @@ def unitary(params: jnp.ndarray) -> jnp.ndarray:
     psi_ = jnp.expand_dims(jnp.exp(1j * psi / 2), [-2, -1])
 
     return psi_ * Q
-
-
-class UnitaryModel(nn.Module):
-    # feature_size: int
-    hidden_sizes: list[int]
-
-    NUM_UNITARY_PARAMS: int = 4
-
-    @nn.compact
-    def __call__(self, x: jnp.ndarray):
-        # Apply a dense layer for each hidden size
-
-        for hidden_size in self.hidden_sizes:
-            x = nn.Dense(features=hidden_size)(x)
-            x = nn.relu(x)
-
-        # For the unitary part, we use a dense layer with 3 features
-        x = nn.Dense(features=self.NUM_UNITARY_PARAMS)(x)
-        # Apply sigmoid to this layer
-        x = 2 * jnp.pi * nn.hard_sigmoid(x)
-
-        return x
-
-
-def noisy_unitary_predictive_fn(
-    # The model to be used for prediction
-    model: UnitaryModel,
-    model_params: VariableDict,
-    # Input data to the model
-    control_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    # model keyword arguments
-    **model_kwargs,
-):
-    """Caculate for unitary-based Blackbox model
-
-    Args:
-        model (sq.model.nn.Module): The model to be used for prediction
-        model_params (sq.model.VariableDict): The model parameters
-        control_parameters (jnp.ndarray): The pulse parameters
-        unitaries (jnp.ndarray): Ideal unitaries
-        expectation_values (jnp.ndarray): Experimental expectation values
-        model_kwargs (dict): Model keyword arguments
-
-    Returns:
-        _type_: _description_
-    """
-
-    # Predict Unitary parameters
-    unitary_params = model.apply(model_params, control_parameters, **model_kwargs)
-
-    U = unitary(unitary_params)  # type: ignore
-
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X, "Y": Y, "Z": Z},
-        U,
-        default_expectation_values_order,
-    )
-
-    return predicted_expvals
 
 
 def get_spam(params: VariableDict):
@@ -704,187 +494,6 @@ def get_spam(params: VariableDict):
         expvals.append(expval)
 
     return expvals, observables
-
-
-def toggling_unitary_predictive_fn(
-    # The model to be used for prediction
-    model: UnitaryModel,
-    model_params: VariableDict,
-    # Input data to the model
-    control_parameters: jnp.ndarray,
-    unitaries: jnp.ndarray,
-    # model keyword arguments
-    ignore_spam: bool = False,
-    **model_kwargs,
-    # expectation_value_order: list[ExpectationValue] = default_expectation_values_order,
-    # observables: dict[str, jnp.ndarray] = {"X": X, "Y": Y, "Z": Z},
-):
-    """Calcuate for unitary-based Blackbox model
-
-    Args:
-        model (sq.model.nn.Module): The model to be used for prediction
-        model_params (sq.model.VariableDict): The model parameters
-        control_parameters (jnp.ndarray): The pulse parameters
-        unitaries (jnp.ndarray): Ideal unitaries
-        expectation_values (jnp.ndarray): Experimental expectation values
-        model_kwargs (dict): Model keyword arguments
-
-    Returns:
-        _type_: _description_
-    """
-
-    # Predict Unitary parameters
-    unitary_params = model.apply(model_params, control_parameters, **model_kwargs)
-
-    UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
-    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
-
-    if not ignore_spam:
-        expectation_value_order, observables = get_spam(model_params["spam"])
-    else:
-        expectation_value_order, observables = (
-            default_expectation_values_order,
-            {"X": X, "Y": Y, "Z": Z},
-        )
-
-    X_ = UJ_dagger @ observables["X"] @ UJ
-    Y_ = UJ_dagger @ observables["Y"] @ UJ
-    Z_ = UJ_dagger @ observables["Z"] @ UJ
-
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X_, "Y": Y_, "Z": Z_},
-        unitaries,
-        expectation_value_order,
-    )
-
-    return predicted_expvals
-
-
-def construct_unitary_model_from_config(
-    config: dict[str, int],
-) -> tuple[nn.Module, dict[str, int | list[int]]]:
-    """Construct Unitary-based model from the config
-
-    Args:
-        config (dict[str, int]): Config of the model
-
-    Returns:
-        tuple[nn.Module, dict[str, int | list[int]]]: Unitary-based model
-    """
-
-    model_config: dict[str, int | list[int]] = {
-        "hidden_sizes": [config["hidden_size_1"], config["hidden_size_2"]],
-    }
-
-    return (
-        UnitaryModel(
-            hidden_sizes=[config["hidden_size_1"], config["hidden_size_2"]],
-        ),
-        model_config,
-    )
-
-
-def construct_wo_model_from_config(
-    config: dict[str, int], model_constructor: type[nn.Module]
-):
-    """Construct Wo-based model from config
-
-    Args:
-        config (dict[str, int]): Config of the model
-        model_constructor (type[nn.Module]): Model constructor of the Wo-based model
-
-    Returns:
-        tuple[nn.Module, dict[str, int | list[int]]]: Wo-based model
-    """
-    HIDDEN_LAYER_1_1 = config["hidden_layer_1_1"]
-    HIDDEN_LAYER_1_2 = config["hidden_layer_1_2"]
-    HIDDEN_LAYER_2_1 = config["hidden_layer_2_1"]
-    HIDDEN_LAYER_2_2 = config["hidden_layer_2_2"]
-
-    HIDDEN_LAYER_1 = [i for i in [HIDDEN_LAYER_1_1, HIDDEN_LAYER_1_2] if i != 0]
-    HIDDEN_LAYER_2 = [i for i in [HIDDEN_LAYER_2_1, HIDDEN_LAYER_2_2] if i != 0]
-
-    model_config = {
-        "hidden_sizes_1": HIDDEN_LAYER_1,
-        "hidden_sizes_2": HIDDEN_LAYER_2,
-    }
-
-    model = model_constructor(**model_config)
-    return model, model_config
-
-
-def make_dropout_blackbox_model(
-    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
-    * jnp.pi
-    * nn.hard_sigmoid(x),
-    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
-        2 * nn.hard_sigmoid(x)
-    )
-    - 1,
-) -> type[nn.Module]:
-    """Function to create Blackbox constructor with custom activation functions for unitary and diagonal output
-
-    Args:
-        unitary_activation_fn (_type_, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
-        diagonal_activation_fn (_type_, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
-
-    Returns:
-        type[nn.Module]: Constructor of the Blackbox model
-    """
-
-    class BlackBox(nn.Module):
-        dropout_rate: float = 0.2
-        hidden_sizes_1: typing.Sequence[int] = (20, 10)
-        hidden_sizes_2: typing.Sequence[int] = (20, 10)
-        pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
-
-        NUM_UNITARY_PARAMS: int = 3
-        NUM_DIAGONAL_PARAMS: int = 2
-
-        _unitary_activation_fn: typing.Callable = unitary_activation_fn
-        _diagonal_activation_fn: typing.Callable = diagonal_activation_fn
-
-        @nn.compact
-        def __call__(
-            self, x: jnp.ndarray, stochastic: bool = True
-        ) -> dict[str, jnp.ndarray]:
-            # Apply a dense layer for each hidden size
-            for hidden_size in self.hidden_sizes_1:
-                x = nn.Dense(features=hidden_size)(x)
-                x = nn.relu(x)
-                x = nn.Dropout(rate=self.dropout_rate, deterministic=not stochastic)(x)
-
-            # Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
-            Wos: dict[str, jnp.ndarray] = dict()
-            for op in self.pauli_operators:
-                # Sub hidden layer
-                # Copy the input
-                _x = jnp.copy(x)
-                for hidden_size in self.hidden_sizes_2:
-                    _x = nn.Dense(features=hidden_size)(_x)
-                    _x = nn.relu(_x)
-                    _x = nn.Dropout(
-                        rate=self.dropout_rate, deterministic=not stochastic
-                    )(_x)
-
-                # For the unitary part, we use a dense layer with 3 features
-                unitary_params = nn.Dense(
-                    features=self.NUM_UNITARY_PARAMS, name=f"U_{op}"
-                )(_x)
-                # Apply sigmoid to this layer
-                unitary_params = self._unitary_activation_fn(unitary_params)
-                # For the diagonal part, we use a dense layer with 1 feature
-                diag_params = nn.Dense(
-                    features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}"
-                )(_x)
-                # Apply the activation function
-                diag_params = self._diagonal_activation_fn(diag_params)
-
-                Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
-
-            return Wos
-
-    return BlackBox
 
 
 def model_parse_fn(key, value):

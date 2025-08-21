@@ -97,9 +97,7 @@ spam_params = {
 
 
 class UnitaryModel(Blackbox):
-    def __init__(
-        self, hidden_sizes: list[int], with_spam: bool = False, *, rngs: nnx.Rngs
-    ) -> None:
+    def __init__(self, hidden_sizes: list[int], *, rngs: nnx.Rngs) -> None:
         self.hidden_sizes = hidden_sizes
         self.NUM_UNITARY_PARAMS = 4
 
@@ -115,31 +113,6 @@ class UnitaryModel(Blackbox):
             out_features=self.NUM_UNITARY_PARAMS,
             rngs=rngs,
         )
-        if with_spam:
-            self.spam_params = {
-                "SP": {
-                    "+": nnx.Param(jnp.array([0.9])),
-                    "-": nnx.Param(jnp.array([0.9])),
-                    "r": nnx.Param(jnp.array([0.9])),
-                    "l": nnx.Param(jnp.array([0.9])),
-                    "0": nnx.Param(jnp.array([0.9])),
-                    "1": nnx.Param(jnp.array([0.9])),
-                },
-                "AM": {
-                    "X": {
-                        "prob_10": nnx.Param(jnp.array([0.1])),
-                        "prob_01": nnx.Param(jnp.array([0.1])),
-                    },
-                    "Y": {
-                        "prob_10": nnx.Param(jnp.array([0.1])),
-                        "prob_01": nnx.Param(jnp.array([0.1])),
-                    },
-                    "Z": {
-                        "prob_10": nnx.Param(jnp.array([0.1])),
-                        "prob_01": nnx.Param(jnp.array([0.1])),
-                    },
-                },
-            }
 
     def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
         # Apply the hidden layers with ReLU activation
@@ -151,6 +124,38 @@ class UnitaryModel(Blackbox):
         x = 2 * jnp.pi * nnx.hard_sigmoid(x)
 
         return x
+
+
+class UnitarySPAMModel(Blackbox):
+    def __init__(self, unitary_model: UnitaryModel, *, rngs: nnx.Rngs) -> None:
+        self.unitary_model = unitary_model
+        self.spam_params = {
+            "SP": {
+                "+": nnx.Param(jnp.array([0.9])),
+                "-": nnx.Param(jnp.array([0.9])),
+                "r": nnx.Param(jnp.array([0.9])),
+                "l": nnx.Param(jnp.array([0.9])),
+                "0": nnx.Param(jnp.array([0.9])),
+                "1": nnx.Param(jnp.array([0.9])),
+            },
+            "AM": {
+                "X": {
+                    "prob_10": nnx.Param(jnp.array([0.1])),
+                    "prob_01": nnx.Param(jnp.array([0.1])),
+                },
+                "Y": {
+                    "prob_10": nnx.Param(jnp.array([0.1])),
+                    "prob_01": nnx.Param(jnp.array([0.1])),
+                },
+                "Z": {
+                    "prob_10": nnx.Param(jnp.array([0.1])),
+                    "prob_01": nnx.Param(jnp.array([0.1])),
+                },
+            },
+        }
+
+    def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
+        return self.unitary_model(x)
 
 
 def noisy_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
@@ -166,19 +171,15 @@ def noisy_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
     return predicted_expvals
 
 
-def toggling_unitary_predictive_fn(
-    model: UnitaryModel, data: DataBundled, ignore_spam=True
-):
+def toggling_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
     unitary_params = model(data.control_params)
     UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
     UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
-    if not ignore_spam:
-        expectation_value_order, observables = get_spam(model.spam_params)
-    else:
-        expectation_value_order, observables = (
-            default_expectation_values_order,
-            {"X": X, "Y": Y, "Z": Z},
-        )
+
+    expectation_value_order, observables = (
+        default_expectation_values_order,
+        {"X": X, "Y": Y, "Z": Z},
+    )
 
     X_ = UJ_dagger @ observables["X"] @ UJ
     Y_ = UJ_dagger @ observables["Y"] @ UJ
@@ -193,14 +194,40 @@ def toggling_unitary_predictive_fn(
     return predicted_expvals
 
 
-def make_loss_fn(predictive_fn, calculate_metric_fn=calculate_metric):
+def toggling_unitary_with_spam_predictive_fn(
+    model: UnitarySPAMModel, data: DataBundled
+):
+    unitary_params = model(data.control_params)
+    UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
+    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
+
+    expectation_value_order, observables = get_spam(model.spam_params)
+
+    X_ = UJ_dagger @ observables["X"] @ UJ
+    Y_ = UJ_dagger @ observables["Y"] @ UJ
+    Z_ = UJ_dagger @ observables["Z"] @ UJ
+
+    predicted_expvals = get_predict_expectation_value(
+        {"X": X_, "Y": Y_, "Z": Z_},
+        data.unitaries,
+        expectation_value_order,
+    )
+
+    return predicted_expvals
+
+
+def make_loss_fn(
+    predictive_fn,
+    calculate_metric_fn=calculate_metric,
+    loss_metric: LossMetric = LossMetric.MSEE,
+):
     def loss_fn(model: Blackbox, data: DataBundled):
         expval = predictive_fn(model, data)
 
         metrics = calculate_metric_fn(data.unitaries, data.observables, expval)
         # Take mean of all the metrics
         metrics = jax.tree.map(jnp.mean, metrics)
-        loss = metrics[LossMetric.MSEE]
+        loss = metrics[loss_metric]
 
         return loss, metrics
 

@@ -25,6 +25,7 @@ from .physics import (
     solver,
     signal_func_v5,
     make_trotterization_solver,
+    auto_rotating_frame_hamiltonian,
 )
 from .constant import X, Y, Z, default_expectation_values_order
 from .utils import (
@@ -34,6 +35,7 @@ from .utils import (
     prepare_data,
     calculate_expectation_values,
     shot_quantum_device,
+    SyntheticDataModel,
 )
 import itertools
 
@@ -709,8 +711,8 @@ def generate_experimental_data(
         key, sample_key = jax.random.split(key)
         # The `shot_quantum_device` function will re-calculate the unitary
         expectation_values = shot_quantum_device(
-            control_params,
             sample_key,
+            control_params,
             noisy_simulator,
             SHOTS,
             expectation_value_receipt,
@@ -969,3 +971,84 @@ def save_data_to_path(
     control_sequence.to_file(path)
 
     return None
+
+
+def get_predefined_data_model_m1(detune: float = 0.0001):
+    dt = 2 / 9
+    real_qubit_info = QubitInformation(
+        unit="GHz",
+        qubit_idx=0,
+        anharmonicity=-0.2,
+        frequency=5.0,
+        drive_strength=0.1,
+    )
+    # The drive frequenct is detune by .01%
+
+    characterized_qubit_info = QubitInformation(
+        unit="GHz",
+        qubit_idx=0,
+        anharmonicity=-0.2,
+        frequency=5.0 * (1 + detune),
+        drive_strength=0.1,
+    )
+
+    control_seq = get_drag_pulse_v2_sequence(
+        qubit_info_drive_strength=characterized_qubit_info.drive_strength,
+        min_beta=-5.0,
+        max_beta=5.0,
+        dt=dt,
+    )
+
+    signal_fn = signal_func_v5(
+        get_envelope=get_envelope_transformer(control_seq),
+        drive_frequency=characterized_qubit_info.frequency,
+        dt=dt,
+    )
+    hamiltonian = partial(
+        transmon_hamiltonian, qubit_info=real_qubit_info, signal=signal_fn
+    )
+    frame = (jnp.pi * characterized_qubit_info.frequency) * Z
+    hamiltonian = auto_rotating_frame_hamiltonian(hamiltonian, frame=frame)
+
+    TROTTER_STEPS = 10_000
+
+    solver = make_trotterization_solver(
+        hamiltonian=hamiltonian,
+        control_sequence=control_seq,
+        dt=dt,
+        trotter_steps=TROTTER_STEPS,
+    )
+
+    ideal_hamiltonian = partial(
+        transmon_hamiltonian,
+        qubit_info=characterized_qubit_info,
+        signal=signal_fn,  # Already used the characterized_qubit
+    )
+    ideal_hamiltonian = auto_rotating_frame_hamiltonian(ideal_hamiltonian, frame=frame)
+
+    whitebox = make_trotterization_solver(
+        hamiltonian=ideal_hamiltonian,
+        control_sequence=control_seq,
+        dt=dt,
+        trotter_steps=TROTTER_STEPS,
+    )
+
+    return SyntheticDataModel(
+        control_sequence=control_seq,
+        qubit_information=characterized_qubit_info,
+        dt=dt,
+        ideal_hamiltonian=ideal_hamiltonian,
+        total_hamiltonian=hamiltonian,
+        solver=solver,
+        quantum_device=None,
+        whitebox=whitebox,
+    )
+
+
+def drag_feature_map(x: jnp.ndarray) -> jnp.ndarray:
+    # For angle, we normalize by 2 pi
+    x = x.at[..., 0].set(x[..., 0] / (2 * jnp.pi))
+    # For beta, we have to shift and normalize later
+    x = x.at[..., 1].set((x[..., 1] + 5) / 10)
+
+    return polynomial_feature_map(x, degree=4)
