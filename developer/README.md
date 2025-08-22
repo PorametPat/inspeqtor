@@ -100,6 +100,14 @@ You can test the docstring using the following command
 uv run -m doctest src/inspeqtor/experimental/utils.py
 ```
 
+## For mkdocs based documentation auto generation:
+We follow this [tutorial](https://realpython.com/python-project-documentation-with-mkdocs/#step-4-prepare-your-documentation-with-mkdocs) for the setup. We use [shadcn](https://asiffer.github.io/mkdocs-shadcn/get_started/) theme and [pymdown-extensions](https://facelessuser.github.io/pymdown-extensions/) for the extensions. 
+
+You can local host the document using
+```bash
+mkdocs serve
+```
+
 
 ## For using sphinx auto genereate documentation:
 
