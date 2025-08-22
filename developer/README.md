@@ -95,6 +95,12 @@ To perform profiling, we use `tuna`
     uvx tuna import.log
 ```
 
+You can test the docstring using the following command
+```bash
+uv run -m doctest src/inspeqtor/experimental/utils.py
+```
+
+
 ## For using sphinx auto genereate documentation:
 
 Setting things up
