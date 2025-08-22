@@ -152,15 +152,13 @@ def prepare_data(
 def random_split(key: jnp.ndarray, test_size: int, *data_arrays: jnp.ndarray):
     """The random_split function splits the data into training and testing sets.
 
-    Example
-    ```py
-    key = jax.random.key(0)
-    x = jnp.arange(10)
-    y = jnp.arange(10)
-    x_train, y_train, x_test, y_test = random_split(key, 2, x, y)
-    assert x_train.shape[0] == 8 and y_train.shape[0] == 8
-    assert x_test.shape[0] == 2 and y_test.shape[0] == 2
-    ```
+    Examples:
+        >>> key = jax.random.key(0)
+        >>> x = jnp.arange(10)
+        >>> y = jnp.arange(10)
+        >>> x_train, y_train, x_test, y_test = random_split(key, 2, x, y)
+        >>> assert x_train.shape[0] == 8 and y_train.shape[0] == 8
+        >>> assert x_test.shape[0] == 2 and y_test.shape[0] == 2
 
     Args:
         key (jnp.ndarray): Random key.
@@ -394,7 +392,6 @@ def recursive_vmap(func, in_axes):
         >>> def func(x):
         ...     assert x.ndim == 1
         ...     return x ** 2
-
         >>> x = jnp.arange(10)
         >>> x_test = jnp.broadcast_to(x, (2, 3, 4,) + x.shape)
         >>> x_test.shape, recursive_vmap(func, (0,) * (x_test.ndim - 1))(x_test).shape
