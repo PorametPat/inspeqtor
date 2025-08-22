@@ -1,7 +1,7 @@
 from . import (
     control as control,
+    ctyping as ctyping,
     data as data,
-    typing as typing,
     utils as utils,
     constant as constant,
     physics as physics,

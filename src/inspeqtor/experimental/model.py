@@ -32,7 +32,7 @@ from .constant import (
     Z,
 )
 from .control import ControlSequence
-from .typing import Wos
+from .ctyping import Wos
 
 jax.config.update("jax_enable_x64", True)
 

@@ -20,12 +20,13 @@ from .control import (
     construct_control_sequence_reader,
     get_envelope_transformer,
 )
-from .typing import ParametersDictType, HamiltonianArgs
+from .ctyping import ParametersDictType
 from .physics import (
     solver,
     signal_func_v5,
     make_trotterization_solver,
     auto_rotating_frame_hamiltonian,
+    HamiltonianArgs
 )
 from .constant import X, Y, Z, default_expectation_values_order
 from .utils import (

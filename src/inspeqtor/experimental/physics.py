@@ -5,7 +5,7 @@ import typing
 from dataclasses import dataclass
 from enum import Enum
 import diffrax  # type: ignore
-from .typing import ParametersDictType
+from .ctyping import ParametersDictType
 from .data import QubitInformation
 from .constant import X, Y, Z
 from .control import ControlSequence
