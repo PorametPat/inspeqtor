@@ -7,7 +7,7 @@ import json
 from abc import ABC, abstractmethod
 import pathlib
 
-from .typing import ParametersDictType
+from .ctyping import ParametersDictType
 
 
 def sample_params(

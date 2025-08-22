@@ -2,10 +2,10 @@ import jax
 import jax.numpy as jnp
 import typing
 from dataclasses import dataclass
-from .control import ControlSequence
-from .data import ExpectationValue, ExperimentData, QubitInformation, State
-from .model import mse, VariableDict
-from .constant import (
+from inspeqtor.experimental.control import ControlSequence
+from inspeqtor.experimental.data import ExpectationValue, ExperimentData, QubitInformation, State
+from inspeqtor.experimental.model import mse, VariableDict
+from inspeqtor.experimental.constant import (
     X,
     Y,
     Z,
@@ -14,9 +14,8 @@ from .constant import (
     minus_projectors,
     get_default_expectation_values_order,
 )
-from .decorator import warn_not_tested_function
-from .typing import HamiltonianArgs
-from .physics import calculate_exp
+from inspeqtor.experimental.decorator import warn_not_tested_function
+from inspeqtor.experimental.physics import calculate_exp, HamiltonianArgs
 import logging
 
 
@@ -389,25 +388,24 @@ def get_dataset_metrics(
 
 
 def recursive_vmap(func, in_axes):
-    """
-    Recursively apply jax.vmap over multiple dimensions.
-    ```python
-    def func(x):
-        assert x.ndim == 1
-        return x ** 2
+    """Perform recursive vmap on the given axis
 
-    x = jnp.arange(10)
-    x_test = jnp.broadcast_to(x, (2, 3, 4,) + x.shape)
-    x_test.shape, recursive_vmap(func, (0,) * (x_test.ndim - 1))(x_test).shape
-    >>> ((2, 3, 4, 10), (2, 3, 4, 10))
-    ```
+    Examples:
+        >>> def func(x):
+        ...     assert x.ndim == 1
+        ...     return x ** 2
 
-    Parameters:
-    - func: The function to be vectorized.
-    - in_axes: A tuple of integers specifying which axes to map over.
+        >>> x = jnp.arange(10)
+        >>> x_test = jnp.broadcast_to(x, (2, 3, 4,) + x.shape)
+        >>> x_test.shape, recursive_vmap(func, (0,) * (x_test.ndim - 1))(x_test).shape
+        ((2, 3, 4, 10), (2, 3, 4, 10))
+
+    Args:
+        func (_type_): The function for vmap
+        in_axes (_type_): The axes for vmap
 
     Returns:
-    - A new function that applies `func` vectorized over the specified axes.
+        _type_: _description_
     """
     if not in_axes:
         # Base case: no more axes to vectorize over

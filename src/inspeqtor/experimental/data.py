@@ -10,7 +10,7 @@ import pandas as pd
 import logging
 from numpyro.contrib.module import ParamShape
 
-from .typing import ParametersDictType
+from .ctyping import ParametersDictType
 
 
 def add_hilbert_level(op: jnp.ndarray, x: jnp.ndarray) -> jnp.ndarray:
