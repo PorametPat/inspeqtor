@@ -59,7 +59,7 @@ def unitary_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.n
     with `make_probabilistic_model` function.
 
     Args:
-        output (_type_): The output from Unitary-based model
+        output (typing.Any): The output from Unitary-based model
         unitaries (jnp.ndarray): Ideal unitary, ignore in this function.
 
     Returns:
@@ -119,12 +119,12 @@ def unitary_model_prediction_to_expvals_v3(
     }
     ```
 
-        Args:
-            output (_type_): _description_
-            unitaries (jnp.ndarray): _description_
+    Args:
+        output (typing.Any): _description_
+        unitaries (jnp.ndarray): _description_
 
-        Returns:
-            jnp.ndarray: _description_
+    Returns:
+        jnp.ndarray: _description_
     """
 
     model_output = output["model_params"]
@@ -151,7 +151,7 @@ def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarra
     with `make_probabilistic_model` function.
 
     Args:
-        output (_type_): The output from Wo-based model
+        output (typing.Any): The output from Wo-based model
         unitaries (jnp.ndarray): Ideal unitary, ignore in this function.
 
     Returns:
@@ -351,7 +351,7 @@ def get_args_of_distribution(x):
         x (typing.Any): Maybe Distribution
 
     Returns:
-        _type_: Argument of Distribution if Distribution is provided.
+        typing.Any: Argument of Distribution if Distribution is provided.
     """
     if isinstance(x, dist.Distribution):
         return x.get_args()
@@ -363,10 +363,10 @@ def construct_normal_priors(posterior):
     """Construct a dict of Normal Distributions with posterior
 
     Args:
-        posterior (_type_): Dict of Normal distribution arguments
+        posterior (typing.Any): Dict of Normal distribution arguments
 
     Returns:
-        _type_: dict of Normal distributions
+        typing.Any: dict of Normal distributions
     """
     posterior_distributions = {}
     assert isinstance(posterior, dict)
@@ -480,7 +480,7 @@ def make_predictive_fn(
     """Construct predictive model from the probabilsitic model.
 
     Args:
-        posterior_model (_type_): probabilsitic model
+        posterior_model (typing.Any): probabilsitic model
         learning_model (LearningModel): _description_
     """
 
@@ -523,7 +523,7 @@ def make_pdf(sample: jnp.ndarray, bins: int, srange=(-1, 1)):
         srange (tuple, optional): The range of the pdf. Defaults to (-1, 1).
 
     Returns:
-        _type_: The approximated numerical PDF
+        typing.Any: The approximated numerical PDF
     """
     density, bin_edges = jnp.histogram(sample, bins=bins, range=srange, density=True)
     dx = jnp.diff(bin_edges)
@@ -566,7 +566,7 @@ def safe_jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
         q (jnp.ndarray): The right PDF
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
     # Compute pointwise mean of p and q
     m = (p + q) / 2
@@ -673,7 +673,7 @@ def default_priors_fn(param_name: str):
                           otherwise, return Normal distribution
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
     if param_name.endswith("sigma"):
         return dist.LogNormal(0, 1)
@@ -699,7 +699,7 @@ def dense_layer(
         priors_fn (typing.Callable[[str], dist.Distribution], optional): The prior function to be used for initializing prior distribution. Defaults to default_priors_fn.
 
     Returns:
-        _type_: Output of the layer given x.
+        typing.Any: Output of the layer given x.
     """
     w_name = f"{name}.kernel"
     w = numpyro.sample(
@@ -724,7 +724,7 @@ def init_default(params_name: str):
         ValueError: Unsupport site name
 
     Returns:
-        _type_: The function to be used for parameters init given site name.
+        typing.Any: The function to be used for parameters init given site name.
     """
     if params_name.endswith("kernel"):
         return jnp.ones
@@ -745,15 +745,15 @@ def dense_deterministic_layer(
     """The deterministic dense layer, to be used with SVI optimizer.
 
     Args:
-        x (_type_): The input feature
+        x (typing.Any): The input feature
         name (str): The site name
         in_features (int): The size of the input features
         out_features (int): The desired size of the output features.
         batch_shape (tuple[int, ...], optional): The batch size of the x. Defaults to ().
-        init_fn (_type_, optional): Initilization function of the model parameters. Defaults to init_default.
+        init_fn (typing.Any, optional): Initilization function of the model parameters. Defaults to init_default.
 
     Returns:
-        _type_: The output of the layer given x.
+        typing.Any: The output of the layer given x.
     """
     # Sample weights - shape (in_features, out_features)
     weight_shape = batch_shape + (in_features, out_features)
@@ -776,12 +776,12 @@ def make_posteriors_fn(guide, params, num_samples=10000):
     return the posterior of parameter of the given name, from guide and parameters.
 
     Args:
-        guide (_type_): The guide function
-        params (_type_): The parameters of the guide
+        guide (typing.Any): The guide function
+        params (typing.Any): The parameters of the guide
         num_samples (int, optional): The sample size. Defaults to 10000.
 
     Returns:
-        _type_: A function of parameter name that return the sample from the posterior distribution of the parameters.
+        typing.Any: A function of parameter name that return the sample from the posterior distribution of the parameters.
     """
     posterior_distribution = Predictive(
         model=guide, params=params, num_samples=num_samples
@@ -804,12 +804,12 @@ def auto_diagonal_normal_guide(
     This is the avoid site name duplication, while allows for model to use newly sample from the guide.
 
     Args:
-        model (_type_): The probabilistic model.
+        model (typing.Any): The probabilistic model.
         block_sample (bool, optional): Flag to block the sample site. Defaults to False.
-        init_loc_fn (_type_, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
+        init_loc_fn (typing.Any, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
     model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
         *args
@@ -907,12 +907,12 @@ def auto_diagonal_noraml_guide_v2(
     This is the avoid site name duplication, while allows for model to use newly sample from the guide.
 
     Args:
-        model (_type_): The probabilistic model.
+        model (typing.Any): The probabilistic model.
         block_sample (bool, optional): Flag to block the sample site. Defaults to False.
-        init_loc_fn (_type_, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
+        init_loc_fn (typing.Any, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
     # get the trace of the model
     model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
@@ -1005,13 +1005,13 @@ def make_predictive_model_fn_v2(
     """Make a postirior predictive model function from model, guide, SVI parameters, and the number of shots.
 
     Args:
-        model (_type_): Probabilistic model.
-        guide (_type_): Gudie corresponded to the model
-        params (_type_): SVI parameters of the guide
+        model (typing.Any): Probabilistic model.
+        guide (typing.Any): Gudie corresponded to the model
+        params (typing.Any): SVI parameters of the guide
         shots (int): The number of shots
 
     Returns:
-        _type_: The posterior predictive model.
+        typing.Any: The posterior predictive model.
     """
     predictive = Predictive(
         model, guide=guide, params=params, num_samples=shots, return_sites=["obs"]
@@ -1030,7 +1030,7 @@ def make_predictive_SGM_model(
 
     Args:
         model (nn.Module): Flax model
-        model_params (_type_): The model parameters.
+        model_params (typing.Any): The model parameters.
         shots (int): The number of shots.
     """
 
@@ -1055,7 +1055,7 @@ def make_predictive_MCDGM_model(model: nn.Module, model_params):
 
     Args:
         model (nn.Module): Monte-Carlo Dropout Graybox model
-        model_params (_type_): The model parameters
+        model_params (typing.Any): The model parameters
     """
 
     def predictive_model(
@@ -1074,5 +1074,33 @@ def make_predictive_MCDGM_model(model: nn.Module, model_params):
         )
 
         return predicted_expvals
+
+    return predictive_model
+
+
+def make_predictive_resampling_model(
+    predictive_fn: typing.Callable[[jnp.ndarray, jnp.ndarray], jnp.ndarray], shots: int
+) -> typing.Callable[[jnp.ndarray, jnp.ndarray, jnp.ndarray], jnp.ndarray]:
+    """Make a binary predictive model from given SGM model, the model parameters, and number of shots.
+
+    Args:
+        predictive_fn (typing.Callable[[jnp.ndarray, jnp.ndarray], jnp.ndarray]): The predictive_fn embeded with the SGM model.
+        shots (int): The number of shots.
+
+    Returns:
+        typing.Callable[[jnp.ndarray, jnp.ndarray, jnp.ndarray], jnp.ndarray]: Binary predictive model.
+    """
+
+    def predictive_model(
+        key: jnp.ndarray, control_parameters: jnp.ndarray, unitaries: jnp.ndarray
+    ):
+        predicted_expvals = predictive_fn(control_parameters, unitaries)
+
+        return binary_to_eigenvalue(
+            jax.vmap(jax.random.bernoulli, in_axes=(0, None))(
+                jax.random.split(key, shots),
+                expectation_value_to_prob_minus(predicted_expvals),
+            ).astype(jnp.int_)
+        ).mean(axis=0)
 
     return predictive_model

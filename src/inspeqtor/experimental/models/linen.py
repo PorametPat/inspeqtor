@@ -38,8 +38,8 @@ def make_basic_blackbox_model(
     """Function to create Blackbox constructor with custom activation functions for unitary and diagonal output
 
     Args:
-        unitary_activation_fn (_type_, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
-        diagonal_activation_fn (_type_, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
+        unitary_activation_fn (typing.Any, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
+        diagonal_activation_fn (typing.Any, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
 
     Returns:
         type[nn.Module]: Constructor of the Blackbox model
@@ -92,12 +92,12 @@ def make_basic_blackbox_model(
 
 
 def wo_predictive_fn(
-    # The model to be used for prediction
-    model: nn.Module,
-    model_params: VariableDict,
     # Input data to the model
     control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
+    # The model to be used for prediction
+    model: nn.Module,
+    model_params: VariableDict,
     # model keyword arguments
     **model_kwargs,
 ):
@@ -151,12 +151,12 @@ class UnitaryModel(nn.Module):
 
 
 def noisy_unitary_predictive_fn(
-    # The model to be used for prediction
-    model: UnitaryModel,
-    model_params: VariableDict,
     # Input data to the model
     control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
+    # The model to be used for prediction
+    model: UnitaryModel,
+    model_params: VariableDict,
     # model keyword arguments
     **model_kwargs,
 ):
@@ -171,7 +171,7 @@ def noisy_unitary_predictive_fn(
         model_kwargs (dict): Model keyword arguments
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
 
     # Predict Unitary parameters
@@ -189,17 +189,15 @@ def noisy_unitary_predictive_fn(
 
 
 def toggling_unitary_predictive_fn(
-    # The model to be used for prediction
-    model: UnitaryModel,
-    model_params: VariableDict,
     # Input data to the model
     control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
+    # The model to be used for prediction
+    model: UnitaryModel,
+    model_params: VariableDict,
     # model keyword arguments
     ignore_spam: bool = False,
     **model_kwargs,
-    # expectation_value_order: list[ExpectationValue] = default_expectation_values_order,
-    # observables: dict[str, jnp.ndarray] = {"X": X, "Y": Y, "Z": Z},
 ):
     """Calcuate for unitary-based Blackbox model
 
@@ -212,7 +210,7 @@ def toggling_unitary_predictive_fn(
         model_kwargs (dict): Model keyword arguments
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
 
     # Predict Unitary parameters
@@ -307,8 +305,8 @@ def make_dropout_blackbox_model(
     """Function to create Blackbox constructor with custom activation functions for unitary and diagonal output
 
     Args:
-        unitary_activation_fn (_type_, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
-        diagonal_activation_fn (_type_, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
+        unitary_activation_fn (typing.Any, optional): Activation function for unitary parameters. Defaults to lambdax:2*jnp.pi*nn.hard_sigmoid(x).
+        diagonal_activation_fn (typing.Any, optional): Activation function for diagonal parameters. Defaults to lambdax:(2 * nn.hard_sigmoid(x))-1.
 
     Returns:
         type[nn.Module]: Constructor of the Blackbox model
@@ -499,7 +497,7 @@ def create_step(
         has_aux (bool, optional): Whether the loss function return aux data or not. Defaults to False.
 
     Returns:
-        __type__: train_step, test_step
+        _typing.Any_: train_step, test_step
     """
 
     # * Generalized training step
@@ -551,19 +549,20 @@ def train_model(
 ):
     """Train the BlackBox model
 
-    >>> # The number of epochs break down
-    ... NUM_EPOCH = 150
-    ... # Total number of iterations as 90% of data is used for training
-    ... # 10% of the data is used for testing
-    ... total_iterations = 9 * NUM_EPOCH
-    ... # The step for optimizer if set to 8 * NUM_EPOCH (should be less than total_iterations)
-    ... step_for_optimizer = 8 * NUM_EPOCH
-    ... optimizer = get_default_optimizer(step_for_optimizer)
-    ... # The warmup steps for the optimizer
-    ... warmup_steps = 0.1 * step_for_optimizer
-    ... # The cool down steps for the optimizer
-    ... cool_down_steps = total_iterations - step_for_optimizer
-    ... total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
+    Examples:
+        >>> # The number of epochs break down
+        ... NUM_EPOCH = 150
+        ... # Total number of iterations as 90% of data is used for training
+        ... # 10% of the data is used for testing
+        ... total_iterations = 9 * NUM_EPOCH
+        ... # The step for optimizer if set to 8 * NUM_EPOCH (should be less than total_iterations)
+        ... step_for_optimizer = 8 * NUM_EPOCH
+        ... optimizer = get_default_optimizer(step_for_optimizer)
+        ... # The warmup steps for the optimizer
+        ... warmup_steps = 0.1 * step_for_optimizer
+        ... # The cool down steps for the optimizer
+        ... cool_down_steps = total_iterations - step_for_optimizer
+        ... total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
 
     Args:
         key (jnp.ndarray): Random key

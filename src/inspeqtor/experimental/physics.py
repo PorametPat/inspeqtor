@@ -497,8 +497,9 @@ def direct_AFG_estimation(
     """Calculate single qubit average gate fidelity from expectation value
     This function should be used with `direct_AFG_estimation_coefficients`
 
-    >>> coefficients = direct_AFG_estimation_coefficients(unitary)
-    ... agf = direct_AFG_estimation(coefficients, expectation_value)
+    Examples:
+        >>> coefficients = direct_AFG_estimation_coefficients(unitary)
+        ... agf = direct_AFG_estimation(coefficients, expectation_value)
 
     Args:
         coefficients (jnp.ndarray): The coefficients return from `direct_AFG_estimation_coefficients`

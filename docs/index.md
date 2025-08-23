@@ -1,17 +1,22 @@
-# Welcome to MkDocs
+<div style="text-align: center;">
+<img src="assets/inspeqtor_logo.svg" alt="Alt Text" style="width:15%; height:auto;">
+<p style="font-weight: bold; font-family: monospace;">
+inspeqtor 
+</p>
+</div>
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
 
-## Commands
+# Greeting 🖖
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+We aim to be a Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. We would like to squeeze every drop of information from the data.
 
-## Project layout
+To install `inspeqtor`, you can do so via,
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+=== "uv"
+    ``` bash
+    uv add inspeqtor
+    ```
+=== "pip"
+    ``` bash
+    pip install inspeqtor
+    ```

@@ -501,11 +501,11 @@ def model_parse_fn(key, value):
     The function will skip parsing config and will return as it is load from file.
 
     Args:
-        key (_type_): _description_
-        value (_type_): _description_
+        key (typing.Any): _description_
+        value (typing.Any): _description_
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
     if key == "config":
         return True, value
@@ -521,7 +521,7 @@ def model_parse_fn(key, value):
 
 @dataclass
 class ModelData:
-    params: chex.ArrayTree
+    params: typing.Any
     config: dict[str, typing.Any]
 
     def to_file(self, path: str | pathlib.Path):

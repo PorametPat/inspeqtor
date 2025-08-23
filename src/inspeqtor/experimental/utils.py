@@ -3,7 +3,12 @@ import jax.numpy as jnp
 import typing
 from dataclasses import dataclass
 from inspeqtor.experimental.control import ControlSequence
-from inspeqtor.experimental.data import ExpectationValue, ExperimentData, QubitInformation, State
+from inspeqtor.experimental.data import (
+    ExpectationValue,
+    ExperimentData,
+    QubitInformation,
+    State,
+)
 from inspeqtor.experimental.model import mse, VariableDict
 from inspeqtor.experimental.constant import (
     X,
@@ -198,7 +203,7 @@ def dataloader(
         None: stop the generator.
 
     Yields:
-        _type_: (step, batch_idx, is_last_batch, epoch_idx), (array_batch, ...)
+        typing.Any: (step, batch_idx, is_last_batch, epoch_idx), (array_batch, ...)
     """
     # * General dataloader
     # Check that all arrays have the same size in the first dimension
@@ -284,18 +289,31 @@ def expectation_value_to_prob_plus(expectation_value: jnp.ndarray) -> jnp.ndarra
 
 
 def expectation_value_to_prob_minus(expectation_value: jnp.ndarray) -> jnp.ndarray:
-    """
-    Calculate the probability of -1 and 1 for the given expectation value
-    E[O] = -1 * P[O = -1] + 1 * P[O = 1], where P[O = -1] + P[O = 1] = 1
-    Thus, E[O] = -1 * P[O = -1] + 1 * (1 - P[O = -1])
-    E[O] = 1 - 2 * P[O = -1] -> P[O = -1] = (1 - E[O]) / 2
+    """Convert quantum observable expectation value to probability of measuring -1.
+
+    For a binary quantum observable $\\hat{O}$ with eigenvalues $b = \\{-1, 1\\}$, this function
+    calculates the probability of measuring the eigenvalue -1 given its expectation value.
+
+    Derivation:
+    $$
+        \\langle \\hat{O} \\rangle = -1 \\cdot \\Pr(b=-1) + 1 \\cdot \\Pr(b = 1)
+    $$
+        With the constraint $\\Pr(b = -1) + \\Pr(b = 1) = 1$:
+
+    $$
+        \\langle \\hat{O} \\rangle = -1 \\cdot \\Pr(b=-1) + 1 \\cdot (1 - \\Pr(b=-1)) \\
+        \\langle \\hat{O} \\rangle = -\\Pr(b=-1) + 1 - \\Pr(b=-1) \\
+        \\langle \\hat{O} \\rangle = 1 - 2\\Pr(b=-1) \\
+        \\Pr(b=-1) = \\frac{1 - \\langle \\hat{O} \\rangle}{2}
+    $$
+
     Args:
-        expectation_value (jnp.ndarray): Expectation value of quantum observable
+        expectation_value (jnp.ndarray): Expectation value of the quantum observable,
+            must be in range [-1, 1].
 
     Returns:
-        jnp.ndarray: Probability of measuring minus eigenvector
+        jnp.ndarray: Probability of measuring the -1 eigenvalue.
     """
-
     return (1 - expectation_value) / 2
 
 
@@ -398,11 +416,11 @@ def recursive_vmap(func, in_axes):
         ((2, 3, 4, 10), (2, 3, 4, 10))
 
     Args:
-        func (_type_): The function for vmap
-        in_axes (_type_): The axes for vmap
+        func (typing.Any): The function for vmap
+        in_axes (typing.Any): The axes for vmap
 
     Returns:
-        _type_: _description_
+        typing.Any: _description_
     """
     if not in_axes:
         # Base case: no more axes to vectorize over
