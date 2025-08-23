@@ -82,3 +82,4 @@ nav:
           - predefined: api/predefined.md
           - probabilistic: api/probabilistic.md
           - visualization: api/visualization.md
+    - Developer Guide: dev.md

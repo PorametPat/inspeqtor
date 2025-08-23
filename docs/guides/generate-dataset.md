@@ -1,11 +1,11 @@
-# How-to guides
+# Dataset Creating
 
 ## Prepare experiments
 
 We break the experiment preparation phase into the following steps.
 
-+ Gathering "prior" information about the quantum device.
-+ Defining the control action.
+- Gathering "prior" information about the quantum device.
+- Defining the control action.
 
 ### Quantum device specification
 
