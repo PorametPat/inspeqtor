@@ -49,7 +49,7 @@ exp_data, control_seq, _, _ = sq.predefined.generate_experimental_data(
 # --8<-- [end:gen-syn-dataset]
 
 # --8<-- [start:save-dataset]
-from pathlib import Path # noqa: E402
+from pathlib import Path  # noqa: E402
 
 path = Path("./test_data_v1")
 # Create the path with parents if not existed already

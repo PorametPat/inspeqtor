@@ -548,3 +548,19 @@ def get_spam(params: VariableDict):
         expvals.append(expval)
 
     return expvals, observables
+
+
+def parse_expectation_values(
+    expectation_values: jnp.ndarray,
+    expectation_value_receipt: list[
+        ExpectationValue
+    ] = default_expectation_values_order,
+) -> list[ExpectationValue]:
+    return [
+        ExpectationValue(
+            initial_state=exp.initial_state,
+            observable=exp.observable,
+            expectation_value=expval.item(),
+        )
+        for exp, expval in zip(expectation_value_receipt, expectation_values)
+    ]

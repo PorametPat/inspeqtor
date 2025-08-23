@@ -20,7 +20,6 @@ dependencies = [
     "graphviz>=0.20.3",
     "funsor>=0.4.5",
     "deprecated>=1.2.18",
-
 ]
 
 [build-system]
@@ -29,10 +28,8 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "aquarel>=0.0.7",
     "arviz>=0.20.0",
     "chex>=0.1.87",
-    "furo>=2024.8.6",
     "inspeqtor",
     "ipykernel>=6.29.5",
     "ipywidgets>=8.1.5",
@@ -41,7 +38,6 @@ dev = [
     "pyright>=1.1.404",
     "pytest>=8.3.3",
     "seaborn>=0.13.2",
-    "sphinx>=8.2.3",
     "treescope>=0.1.6",
     "typer>=0.15.2",
     "pymdown-extensions>=10.16.1",
@@ -49,6 +45,7 @@ dev = [
     "mkdocstrings[python]>=0.30.0",
     "mkdocs-shadcn>=0.9.0",
     "mkdocs-material>=9.6.18",
+    "mkdocs-jupyter>=0.25.1",
 ]
 
 [tool.pyright]
@@ -59,3 +56,10 @@ venv = ".venv"
 
 [tool.uv.sources]
 inspeqtor = { workspace = true }
+
+[tool.pip-licences]
+from = "classifier"
+ignore-packages = [
+  "scipy"
+]
+fail-on = "MIT;"

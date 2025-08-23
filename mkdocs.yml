@@ -43,6 +43,7 @@ repo_url: https://github.com/PorametPat/inspeqtor
 plugins:
     - search
     - mkdocstrings
+    - mkdocs-jupyter
 
 markdown_extensions:
     - admonition
@@ -63,7 +64,9 @@ extra_javascript:
 
 nav:
     - Getting start: index.md
-    - tutorials.md
+    - Tutorials: 
+          - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
+          - Control Action: tutorials/tutorial_0002_control.ipynb
     - explanation.md
     - How-To Guides:
           - Generate dataset: guides/generate-dataset.md
