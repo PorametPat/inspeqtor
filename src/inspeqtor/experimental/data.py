@@ -875,7 +875,7 @@ def load_pytree_from_json(path: str | Path, parse_fn=default_parse_fn):
         ValueError: Provided path is not point to .json file
 
     Returns:
-        _type_: Pytree loaded from JSON
+        typing.Any: Pytree loaded from JSON
     """
 
     # Validate that file extension is .json
@@ -919,7 +919,7 @@ def save_pytree_to_json(pytree, path: str | Path):
     """Save given pytree to json file, the path must end with extension of .json
 
     Args:
-        pytree (_type_): The pytree to save
+        pytree (typing.Any): The pytree to save
         path (str | Path): File path to save
 
     """

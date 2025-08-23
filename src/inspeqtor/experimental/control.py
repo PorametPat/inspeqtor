@@ -380,7 +380,7 @@ def get_param_array_converter(control_sequence: ControlSequence):
         control_sequence (PulseSequence): The pulse sequence object.
 
     Returns:
-        _type_: A tuple containing two functions. The first function converts an array to a list of parameter dictionaries, and the second function converts a list of parameter dictionaries to an array.
+        typing.Any: A tuple containing two functions. The first function converts an array to a list of parameter dictionaries, and the second function converts a list of parameter dictionaries to an array.
     """
     structure = control_sequence.get_parameter_names()
 

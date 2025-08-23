@@ -104,12 +104,7 @@ def _safe_mean_terms_v2(terms: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
 
 
 class AuxEntry(typing.NamedTuple):
-    """The auxillary entry returned by loss function
-
-    Args:
-        terms (jnp.ndarray): _description_
-        eig (jnp.ndarray): Expected information gain
-    """
+    """The auxillary entry returned by loss function"""
 
     terms: jnp.ndarray | None
     eig: jnp.ndarray
@@ -332,7 +327,6 @@ def init_params_from_guide(
     *args,
     key: jnp.ndarray,
     design: jnp.ndarray,
-    # num_particles: int,
 ) -> chex.ArrayTree:
     """Initlalize parameters of marginal guide.
 
@@ -340,7 +334,6 @@ def init_params_from_guide(
         marginal_guide (typing.Callable): Marginal guide to be used with marginal eig
         key (jnp.ndarray): Random Key
         design (jnp.ndarray): Example of the designs of the experiment
-        num_particles (int): Number of independent trials
 
     Returns:
         chex.ArrayTree: Random parameters for marginal guide to be optimized.
@@ -508,7 +501,7 @@ def vectorized_for_eig(model):
     """Vectorization function for the EIG function
 
     Args:
-        model (_type_): Probabilistic model.
+        model (typing.Any): Probabilistic model.
     """
 
     def wrapper(

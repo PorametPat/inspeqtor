@@ -15,6 +15,8 @@ from ..constant import default_expectation_values_order, X, Y, Z
 
 
 class Blackbox(nnx.Module):
+    """The abstract class for interfacing the Blackbox model of the Graybox"""
+
     def __init__(self, *, rngs: nnx.Rngs) -> None:
         super().__init__()
 
@@ -23,9 +25,17 @@ class Blackbox(nnx.Module):
 
 
 class WoModel(Blackbox):
+    """$\\hat{W}_{O}$ based blackbox model."""
+
     def __init__(
         self, shared_layers: list[int], pauli_layers: list[int], *, rngs: nnx.Rngs
     ):
+        """
+        Args:
+            shared_layers (list[int]): Each integer in the list is a size of the width of each hidden layer in the shared layers.
+            pauli_layers (list[int]): Each integer in the list is a size of the width of each hidden layer in the Pauli layers.
+            rngs (nnx.Rngs): Random number generator of `nnx`.
+        """
         self.shared_layers = [
             nnx.Linear(in_features=in_features, out_features=out_features, rngs=rngs)
             for in_features, out_features in zip(shared_layers[:-1], shared_layers[1:])
@@ -72,32 +82,37 @@ class WoModel(Blackbox):
         return observables
 
 
-def wo_predictive_fn(model: WoModel, data: DataBundled):
-    output = model(data.control_params)
+def wo_predictive_fn(
+    # Input data to the model
+    control_parameters: jnp.ndarray,
+    unitaries: jnp.ndarray,
+    model: WoModel,
+) -> jnp.ndarray:
+    """Adapter function for $\\hat{W}_{O}$ based model to be used with `make_loss_fn`.
+
+    Args:
+        model (WoModel): $\\hat{W}_{O}$ based model
+        data (DataBundled): A bundled of data for the predictive model training.
+
+    Returns:
+        jnp.ndarray: Predicted expectation values.
+    """
+    output = model(control_parameters)
     return get_predict_expectation_value(
-        output, data.unitaries, default_expectation_values_order
+        output, unitaries, default_expectation_values_order
     )
 
 
-spam_params = {
-    "SP": {
-        "+": jnp.array([0.9]),
-        "-": jnp.array([0.9]),
-        "r": jnp.array([0.9]),
-        "l": jnp.array([0.9]),
-        "0": jnp.array([0.9]),
-        "1": jnp.array([0.9]),
-    },
-    "AM": {
-        "X": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
-        "Y": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
-        "Z": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
-    },
-}
-
-
 class UnitaryModel(Blackbox):
+    """Unitary-based model, predicting parameters parametrized unitary operator in range $[0, 2\\pi]$."""
+
     def __init__(self, hidden_sizes: list[int], *, rngs: nnx.Rngs) -> None:
+        """
+
+        Args:
+            hidden_sizes (list[int]): Each integer in the list is a size of the width of each hidden layer in the shared layers
+            rngs (nnx.Rngs): Random number generator of `nnx`.
+        """
         self.hidden_sizes = hidden_sizes
         self.NUM_UNITARY_PARAMS = 4
 
@@ -127,7 +142,15 @@ class UnitaryModel(Blackbox):
 
 
 class UnitarySPAMModel(Blackbox):
+    """Composite class of unitary-based model and the SPAM model."""
+
     def __init__(self, unitary_model: UnitaryModel, *, rngs: nnx.Rngs) -> None:
+        """
+
+        Args:
+            unitary_model (UnitaryModel): Unitary-based model that have already initialized.
+            rngs (nnx.Rngs): Random number generator of `nnx`.
+        """
         self.unitary_model = unitary_model
         self.spam_params = {
             "SP": {
@@ -158,8 +181,22 @@ class UnitarySPAMModel(Blackbox):
         return self.unitary_model(x)
 
 
-def noisy_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
-    unitary_params = model(data.control_params)
+def noisy_unitary_predictive_fn(
+    # Input data to the model
+    control_parameters: jnp.ndarray,
+    unitaries: jnp.ndarray,
+    model: UnitaryModel,
+) -> jnp.ndarray:
+    """Adapter function for unitary-based model to be used with `make_loss_fn`
+
+    Args:
+        model (UnitaryModel): Unitary-based model.
+        data (DataBundled): A bundled of data for the predictive model training.
+
+    Returns:
+        jnp.ndarray: Predicted expectation values.
+    """
+    unitary_params = model(control_parameters)
     U = unitary(unitary_params)
 
     predicted_expvals = get_predict_expectation_value(
@@ -171,8 +208,22 @@ def noisy_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
     return predicted_expvals
 
 
-def toggling_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
-    unitary_params = model(data.control_params)
+def toggling_unitary_predictive_fn(
+    # Input data to the model
+    control_parameters: jnp.ndarray,
+    unitaries: jnp.ndarray,
+    model: UnitaryModel,
+) -> jnp.ndarray:
+    """Adapter function for rotating toggling frame unitary based model to be used with `make_loss_fn`
+
+    Args:
+        model (UnitaryModel): Unitary-based model.
+        data (DataBundled): A bundled of data for the predictive model training.
+
+    Returns:
+        jnp.ndarray: Predicted expectation values.
+    """
+    unitary_params = model(control_parameters)
     UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
     UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
 
@@ -187,7 +238,7 @@ def toggling_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
 
     predicted_expvals = get_predict_expectation_value(
         {"X": X_, "Y": Y_, "Z": Z_},
-        data.unitaries,
+        unitaries,
         expectation_value_order,
     )
 
@@ -195,9 +246,22 @@ def toggling_unitary_predictive_fn(model: UnitaryModel, data: DataBundled):
 
 
 def toggling_unitary_with_spam_predictive_fn(
-    model: UnitarySPAMModel, data: DataBundled
-):
-    unitary_params = model(data.control_params)
+    # Input data to the model
+    control_parameters: jnp.ndarray,
+    unitaries: jnp.ndarray,
+    model: UnitarySPAMModel,
+) -> jnp.ndarray:
+    """Adapter function for a composite rotating toggling
+    frame unitary based model to be used with `make_loss_fn`
+
+    Args:
+        model (UnitaryModel): Unitary-based SPAM model.
+        data (DataBundled): A bundled of data for the predictive model training.
+
+    Returns:
+        jnp.ndarray: Predicted expectation values.
+    """
+    unitary_params = model(control_parameters)
     UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
     UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
 
@@ -209,7 +273,7 @@ def toggling_unitary_with_spam_predictive_fn(
 
     predicted_expvals = get_predict_expectation_value(
         {"X": X_, "Y": Y_, "Z": Z_},
-        data.unitaries,
+        unitaries,
         expectation_value_order,
     )
 
@@ -221,8 +285,16 @@ def make_loss_fn(
     calculate_metric_fn=calculate_metric,
     loss_metric: LossMetric = LossMetric.MSEE,
 ):
+    """A function for preparing loss function to be used for model training.
+
+    Args:
+        predictive_fn (typing.Any): Adaptor function specifically for each model.
+        calculate_metric_fn (typing.Any, optional): Function for calculating metrics. Defaults to calculate_metric.
+        loss_metric (LossMetric, optional): The chosen loss function to be optimized. Defaults to LossMetric.MSEE.
+    """
+
     def loss_fn(model: Blackbox, data: DataBundled):
-        expval = predictive_fn(model, data)
+        expval = predictive_fn(model, data.control_params, data.unitaries)
 
         metrics = calculate_metric_fn(data.unitaries, data.observables, expval)
         # Take mean of all the metrics
@@ -237,6 +309,16 @@ def make_loss_fn(
 def create_step(
     loss_fn: typing.Callable[[Blackbox, DataBundled], tuple[jnp.ndarray, typing.Any]],
 ):
+    """A function to create the traning and evaluating step for model.
+    The train step will update the model parameters and optimizer parameters inplace.
+
+    Args:
+        loss_fn (typing.Callable[[Blackbox, DataBundled], tuple[jnp.ndarray, typing.Any]]): Loss function returned from `make_loss_fn`
+
+    Returns:
+        typing.Any: The tuple of training and eval step functions.
+    """
+
     @nnx.jit
     def train_step(
         model: Blackbox,
@@ -268,6 +350,27 @@ T = typing.TypeVar("T", bound=Blackbox)
 
 
 def reconstruct_model(model_params, config, Model: type[T]) -> T:
+    """Reconstruct the model from the model parameters, config, and model initializer.
+
+    Examples:
+        >>> _, state = nnx.split(blackbox)
+        >>> model_params = nnx.to_pure_dict(state)
+        >>> config = {
+        ...    "shared_layers": [8],
+        ...    "pauli_layers": [8]
+        ... }
+        >>> model_data = sq.model.ModelData(params=model_params, config=config)
+        # save and load to and from disk!
+        >>> blackbox = sq.models.nnx.reconstruct_model(model_data.params, model_data.config, sq.models.nnx.WoModel)
+
+    Args:
+        model_params (typing.Any): The pytree containing model parameters.
+        config (typing.Any): The model configuration for model initialization.
+        Model (type[T]): The model initializer.
+
+    Returns:
+        T: _description_
+    """
     abstract_model = nnx.eval_shape(lambda: Model(**config, rngs=nnx.Rngs(0)))
     graphdef, abstract_state = nnx.split(abstract_model)
     nnx.replace_by_pure_dict(abstract_state, model_params)

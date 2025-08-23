@@ -1,33 +1,84 @@
 # mkdocs.yml
 site_name: "inspeqtor"
+
+watch:
+    - src/inspeqtor/experimental
+
 theme:
-  name: shadcn
-  show_title: true # show the title in the top bar
-  show_stargazers: true # show the stargazers in the top bar
-  pygments_style: # default styles
-    light: monokai
-    dark: github-dark
-  # icon: heroicons:rocket-launch # use the shadcn svg if not defined
-  topbar_sections: false # NEW!
-  katex_options: # optional
-    macros: # example of macros
-      "\\RR": "\\mathbb{R}"
-      "\\dx": "\\mathrm{d}x"
-  show_datetime: false
+    name: material
+    logo: assets/inspeqtor_logo.svg
+    favicon: assets/inspeqtor_logo.svg
+    palette:
+        # Palette toggle for automatic mode
+        - media: "(prefers-color-scheme)"
+          toggle:
+              icon: material/brightness-auto
+              name: Switch to light mode
+        # Palette toggle for light mode
+        - media: "(prefers-color-scheme: light)"
+          scheme: default
+          toggle:
+              icon: material/weather-sunny
+              name: Switch to dark mode
+          primary: white
+          accent: pink
+
+        # Palette toggle for dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          toggle:
+              icon: material/weather-night
+              name: Switch to light mode
+          primary: black
+          accent: pink
+    features:
+        - content.code.copy
+        - content.tabs.link
+
+extra_css:
+    - stylesheets/extra.css
+
+repo_url: https://github.com/PorametPat/inspeqtor
 
 plugins:
-  - search
-  - mkdocstrings
+    - search
+    - mkdocstrings
 
 markdown_extensions:
-  admonition:
-  codehilite:
+    - admonition
+    - pymdownx.snippets:
+          base_path:
+              - docs
+    - pymdownx.highlight:
+          use_pygments: true
+    - pymdownx.superfences
+    - pymdownx.arithmatex:
+          generic: true
+    - pymdownx.tabbed:
+          alternate_style: true
+
+extra_javascript:
+    - javascripts/mathjax.js
+    - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
-  - index.md
-  - tutorials.md
-  - How-To Guides: how-to-guides.md
-  - API Reference:
-    - api-reference.md
-    - api/utils.md
-  - explanation.md
+    - Getting start: index.md
+    - tutorials.md
+    - explanation.md
+    - How-To Guides:
+          - Generate dataset: guides/generate-dataset.md
+
+    - API Reference:
+          - Guide: api-reference.md
+          - utils: api/utils.md
+          - models:
+                - linen: api/linen.md
+                - nnx: api/nnx.md
+          - data: api/data.md
+          - constant: api/constant.md
+          - control: api/control.md
+          - optimize: api/optimize.md
+          - physics: api/physics.md
+          - predefined: api/predefined.md
+          - probabilistic: api/probabilistic.md
+          - visualization: api/visualization.md

@@ -108,6 +108,11 @@ You can local host the document using
 mkdocs serve
 ```
 
+You can deploy to github page using
+```bash
+mkdocs gh-deploy
+```
+
 
 ## For using sphinx auto genereate documentation:
 

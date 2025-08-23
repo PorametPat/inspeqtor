@@ -26,7 +26,7 @@ from .physics import (
     signal_func_v5,
     make_trotterization_solver,
     auto_rotating_frame_hamiltonian,
-    HamiltonianArgs
+    HamiltonianArgs,
 )
 from .constant import X, Y, Z, default_expectation_values_order
 from .utils import (
@@ -589,9 +589,13 @@ class SimulationStrategy(Enum):
     NOISY = "noisy"
 
 
+# start-example
 class WhiteboxStrategy(StrEnum):
     ODE = auto()
     TROTTER = auto()
+
+
+# end-example
 
 
 def generate_experimental_data(
@@ -891,7 +895,7 @@ class HamiltonianSpec:
             ValueError: Unsupport Solver method
 
         Returns:
-            _type_: The unitary solver
+            typing.Any: The unitary solver
         """
         if self.method == WhiteboxStrategy.TROTTER:
             hamiltonian = partial(
@@ -935,7 +939,7 @@ def load_data_from_path(
     Args:
         path (str | pathlib.Path): The path to the folder that contain experimental data.
         hamiltonian_spec (HamiltonianSpec): The specification of the Hamiltonian
-        pulse_reader (_type_, optional): _description_. Defaults to default_pulse_reader.
+        pulse_reader (typing.Any, optional): _description_. Defaults to default_pulse_reader.
 
     Returns:
         LoadedData: The object contatin necessary information for device characterization.
