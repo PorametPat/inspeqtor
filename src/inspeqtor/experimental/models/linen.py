@@ -91,6 +91,57 @@ def make_basic_blackbox_model(
     return BlackBox
 
 
+class WoModel(nn.Module):
+    hidden_sizes_1: typing.Sequence[int] = (20, 10)
+    hidden_sizes_2: typing.Sequence[int] = (20, 10)
+    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
+
+    NUM_UNITARY_PARAMS: int = 3
+    NUM_DIAGONAL_PARAMS: int = 2
+
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
+        lambda x: 2 * jnp.pi * nn.hard_sigmoid(x)
+    )
+    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
+        lambda x: (2 * nn.hard_sigmoid(x)) - 1
+    )
+
+    @nn.compact
+    def __call__(self, x: jnp.ndarray) -> dict[str, jnp.ndarray]:
+        # Apply a dense layer for each hidden size
+        for hidden_size in self.hidden_sizes_1:
+            x = nn.Dense(features=hidden_size)(x)
+            x = nn.relu(x)
+
+        # Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
+        Wos: dict[str, jnp.ndarray] = dict()
+        for op in self.pauli_operators:
+            # Sub hidden layer
+            # Copy the input
+            _x = jnp.copy(x)
+            for hidden_size in self.hidden_sizes_2:
+                _x = nn.Dense(features=hidden_size)(_x)
+                _x = nn.relu(_x)
+
+            # Wos_params[op] = dict()
+            # For the unitary part, we use a dense layer with 3 features
+            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
+                _x
+            )
+            # Apply sigmoid to this layer
+            unitary_params = self.unitary_activation_fn(unitary_params)
+            # For the diagonal part, we use a dense layer with 1 feature
+            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
+                _x
+            )
+            # Apply the activation function
+            diag_params = self.diagonal_activation_fn(diag_params)
+
+            Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+
+        return Wos
+
+
 def wo_predictive_fn(
     # Input data to the model
     control_parameters: jnp.ndarray,

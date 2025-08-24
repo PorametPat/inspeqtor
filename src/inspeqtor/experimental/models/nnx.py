@@ -2,6 +2,9 @@ import jax
 import jax.numpy as jnp
 from flax import nnx
 import typing
+import optax
+
+from inspeqtor.experimental.decorator import warn_not_tested_function
 from ..model import (
     Wo_2_level_v3,
     get_predict_expectation_value,
@@ -10,8 +13,9 @@ from ..model import (
     unitary,
     get_spam,
 )
-from ..optimize import DataBundled
+from ..optimize import DataBundled, HistoryEntryV3
 from ..constant import default_expectation_values_order, X, Y, Z
+from ..utils import dataloader
 
 
 class Blackbox(nnx.Module):
@@ -294,7 +298,7 @@ def make_loss_fn(
     """
 
     def loss_fn(model: Blackbox, data: DataBundled):
-        expval = predictive_fn(model, data.control_params, data.unitaries)
+        expval = predictive_fn(data.control_params, data.unitaries, model)
 
         metrics = calculate_metric_fn(data.unitaries, data.observables, expval)
         # Take mean of all the metrics
@@ -376,3 +380,124 @@ def reconstruct_model(model_params, config, Model: type[T]) -> T:
     nnx.replace_by_pure_dict(abstract_state, model_params)
 
     return nnx.merge(graphdef, abstract_state)
+
+
+@warn_not_tested_function
+def train_model(
+    # Random key
+    key: jnp.ndarray,
+    # Data
+    train_data: DataBundled,
+    val_data: DataBundled,
+    test_data: DataBundled,
+    # Model to be used for training
+    model: Blackbox,
+    optimizer: optax.GradientTransformation,
+    # Loss function to be used
+    loss_fn: typing.Callable,
+    # Callbacks to be used
+    callbacks: list[typing.Callable] = [],
+    # Number of epochs
+    NUM_EPOCH: int = 1_000,
+    _optimizer: nnx.Optimizer | None = None,
+):
+    """Train the BlackBox model
+
+    Examples:
+        >>> # The number of epochs break down
+        ... NUM_EPOCH = 150
+        ... # Total number of iterations as 90% of data is used for training
+        ... # 10% of the data is used for testing
+        ... total_iterations = 9 * NUM_EPOCH
+        ... # The step for optimizer if set to 8 * NUM_EPOCH (should be less than total_iterations)
+        ... step_for_optimizer = 8 * NUM_EPOCH
+        ... optimizer = get_default_optimizer(step_for_optimizer)
+        ... # The warmup steps for the optimizer
+        ... warmup_steps = 0.1 * step_for_optimizer
+        ... # The cool down steps for the optimizer
+        ... cool_down_steps = total_iterations - step_for_optimizer
+        ... total_iterations, step_for_optimizer, warmup_steps, cool_down_steps
+
+    Args:
+        key (jnp.ndarray): Random key
+        model (nn.Module): The model to be used for training
+        optimizer (optax.GradientTransformation): The optimizer to be used for training
+        loss_fn (typing.Callable): The loss function to be used for training
+        callbacks (list[typing.Callable], optional): list of callback functions. Defaults to [].
+        NUM_EPOCH (int, optional): The number of epochs. Defaults to 1_000.
+
+    Returns:
+        tuple: The model parameters, optimizer state, and the histories
+    """
+
+    key, loader_key = jax.random.split(key)
+
+    BATCH_SIZE = val_data.control_params.shape[0]
+
+    histories: list[HistoryEntryV3] = []
+
+    if _optimizer is None:
+        _optimizer = nnx.Optimizer(
+            model,
+            optimizer,
+            wrt=nnx.Param,
+        )
+
+    metrics = nnx.MultiMetric(
+        loss=nnx.metrics.Average("loss"),
+    )
+
+    train_step, eval_step = create_step(loss_fn=loss_fn)
+
+    for (step, batch_idx, is_last_batch, epoch_idx), (
+        batch_p,
+        batch_u,
+        batch_ex,
+    ) in dataloader(
+        (
+            train_data.control_params,
+            train_data.unitaries,
+            train_data.observables,
+        ),
+        batch_size=BATCH_SIZE,
+        num_epochs=NUM_EPOCH,
+        key=loader_key,
+    ):
+        train_step(
+            model,
+            _optimizer,
+            metrics,
+            DataBundled(
+                control_params=batch_p, unitaries=batch_u, observables=batch_ex
+            ),
+        )
+
+        histories.append(
+            HistoryEntryV3(
+                step=step, loss=metrics.compute()["loss"], loop="train", aux={}
+            )
+        )
+        metrics.reset()  # Reset the metrics for the train set.
+
+        if is_last_batch:
+            # Validation
+            eval_step(model, metrics, val_data)
+            histories.append(
+                HistoryEntryV3(
+                    step=step, loss=metrics.compute()["loss"], loop="val", aux={}
+                )
+            )
+            metrics.reset()  # Reset the metrics for the val set.
+            # Testing
+            eval_step(model, metrics, test_data)
+            histories.append(
+                HistoryEntryV3(
+                    step=step, loss=metrics.compute()["loss"], loop="test", aux={}
+                )
+            )
+            metrics.reset()  # Reset the metrics for the test set.
+
+            for callback in callbacks:
+                callback(model, _optimizer, histories)
+
+    return model, _optimizer, histories

@@ -15,12 +15,12 @@
 	"[yaml]": {
 		"editor.defaultFormatter": "redhat.vscode-yaml"
 	},
-	"yaml.schemas": {
-		"https://squidfunk.github.io/mkdocs-material/schema.json": [
-			"mkdocs.yml"
-		],
-		"https://www.schemastore.org/mkdocs-1.6.json": "file:///Users/porametpathumsoot/University/PhD/Projects/espresso/inspeqtor/mkdocs.yml"
-	},
+	// "yaml.schemas": {
+	// 	"https://squidfunk.github.io/mkdocs-material/schema.json": [
+	// 		"mkdocs.yml"
+	// 	],
+	// 	"https://www.schemastore.org/mkdocs-1.6.json": "file:///Users/porametpathumsoot/University/PhD/Projects/espresso/inspeqtor/mkdocs.yml"
+	// },
 	"yaml.customTags": [
 		"!ENV scalar",
 		"!ENV sequence",

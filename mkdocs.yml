@@ -42,8 +42,24 @@ repo_url: https://github.com/PorametPat/inspeqtor
 
 plugins:
     - search
-    - mkdocstrings
-    - mkdocs-jupyter
+    - mkdocstrings:
+        handlers:
+            python:
+                options:
+                    members_order: source
+                    show_bases: false
+                    show_root_heading: true
+                    show_signature_annotations: true
+                    show_symbol_type_heading: true
+                    show_symbol_type_toc: true
+                    parameter_headings: false
+                    show_signature: true
+                    separate_signature: true
+                    signature_crossrefs: true
+    - mkdocs-jupyter:
+          remove_tag_config:
+              remove_input_tags:
+                  - hide_code
 
 markdown_extensions:
     - admonition
@@ -57,6 +73,11 @@ markdown_extensions:
           generic: true
     - pymdownx.tabbed:
           alternate_style: true
+    - pymdownx.superfences:
+          custom_fences:
+              - name: mermaid
+                class: mermaid
+                format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra_javascript:
     - javascripts/mathjax.js
@@ -64,7 +85,8 @@ extra_javascript:
 
 nav:
     - Getting start: index.md
-    - Tutorials: 
+    - Tutorials:
+          - Overviews: tutorials/overviews.md
           - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
           - Control Action: tutorials/tutorial_0002_control.ipynb
     - explanation.md

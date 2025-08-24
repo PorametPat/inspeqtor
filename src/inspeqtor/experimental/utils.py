@@ -406,6 +406,17 @@ def get_dataset_metrics(
 def recursive_vmap(func, in_axes):
     """Perform recursive vmap on the given axis
 
+    Note:
+        ```python
+        def func(x):
+            assert x.ndim == 1
+            return x ** 2
+        x = jnp.arange(10)
+        x_test = jnp.broadcast_to(x, (2, 3, 4,) + x.shape)
+        x_test.shape, recursive_vmap(func, (0,) * (x_test.ndim - 1))(x_test).shape
+        ((2, 3, 4, 10), (2, 3, 4, 10))
+        ```
+
     Examples:
         >>> def func(x):
         ...     assert x.ndim == 1
