@@ -398,20 +398,20 @@ def get_param_array_converter(control_sequence: ControlSequence):
 
 
 def construct_control_sequence_reader(
-    pulses: list[type[BaseControl]] = [],
+    controls: list[type[BaseControl]] = [],
 ) -> typing.Callable[[typing.Union[str, pathlib.Path]], ControlSequence]:
     """Construct the control sequence reader
 
     Args:
-        pulses (list[type[BasePulse]], optional): List of control constructor. Defaults to [].
+        controls (list[type[BasePulse]], optional): List of control constructor. Defaults to [].
 
     Returns:
-        typing.Callable[[typing.Union[str, pathlib.Path]], PulseSequence]: Control sequence reader that will automatically contruct control sequence from path.
+        typing.Callable[[typing.Union[str, pathlib.Path]], controlsequence]: Control sequence reader that will automatically contruct control sequence from path.
     """
-    default_pulses: list[type[BaseControl]] = []
+    default_controls: list[type[BaseControl]] = []
 
-    # Merge the default pulses with the provided pulses
-    pulses_list = default_pulses + pulses
+    # Merge the default controls with the provided controls
+    controls_list = default_controls + controls
 
     def control_sequence_reader(
         path: typing.Union[str, pathlib.Path],
@@ -433,9 +433,9 @@ def construct_control_sequence_reader(
         parsed_pulses = []
 
         for pulse_dict in control_sequence_dict["pulses"]:
-            for pulse_class in pulses_list:
-                if pulse_dict["_name"] == pulse_class.__name__:
-                    parsed_pulses.append(pulse_class)
+            for control_class in controls_list:
+                if pulse_dict["_name"] == control_class.__name__:
+                    parsed_pulses.append(control_class)
 
         return ControlSequence.from_dict(control_sequence_dict, pulses=parsed_pulses)
 

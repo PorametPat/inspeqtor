@@ -32,7 +32,7 @@ def test_control_sequence_reader(tmp_path):
     control_sequence.to_file(tmp_path)
 
     reader = sq.control.construct_control_sequence_reader(
-        pulses=[sq.predefined.MultiDragPulseV3]
+        controls=[sq.predefined.MultiDragPulseV3]
     )
 
     reconstruct_control_sequence = reader(tmp_path)

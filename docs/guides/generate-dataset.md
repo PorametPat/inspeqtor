@@ -1,5 +1,8 @@
 # Dataset Creating
 
+!!! note "TODO"
+    This guide should show a quick way to generate the dataset to work with using `sq.predefined.generate_experimental_data`.
+
 ## Prepare experiments
 
 We break the experiment preparation phase into the following steps.
@@ -9,7 +12,7 @@ We break the experiment preparation phase into the following steps.
 
 ### Quantum device specification
 
-In `inspeqtor`, we focus on characterizing quantum device. In the finest level, user most likely want to perform control calibration on individual qubit which is part of the full system. Thus, we provide a dedicated `dataclass` responsible for holding "prior" information about the qubit. The information is often necessary for constructing the subsystem Hamiltonian which is used for open-loop optimization. Below is the code snippet to initialize `QubitInformation` object.
+In `inspeqtor`, we focus on characterizing quantum device. In the finest level, user most likely want to perform control calibration on individual qubit which is part of the full system. Thus, we provide a dedicated `dataclass` responsible for holding "prior" information about the qubit. The information is often necessary for constructing the subsystem Hamiltonian which is used for open-loop optimization. Below is the code snippet to initialize [`QubitInformation`](../api/data.md#src.inspeqtor.experimental.data.QubitInformation) object.
 
 ```python
 --8<-- "guides/gen_data.py:qubit-info"

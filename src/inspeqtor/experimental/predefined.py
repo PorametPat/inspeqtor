@@ -568,7 +568,7 @@ def get_mock_prefined_exp_v1(
         qubits=[qubit_info],
         expectation_values_order=default_expectation_values_order,
         parameter_names=control_sequence.get_parameter_names(),
-        backend_name="fake_ibm_test",
+        backend_name="fake_inspeqtor_test",
         shots=shots,
         EXPERIMENT_IDENTIFIER="test",
         EXPERIMENT_TAGS=["test"],
@@ -826,15 +826,15 @@ def get_single_qubit_rotating_frame_whitebox(
     return whitebox
 
 
-default_pulse_reader = construct_control_sequence_reader(
-    pulses=[
-        DragPulse,
-        MultiDragPulseV3,
-        GaussianPulse,
-        DragPulseV2,
-        TwoAxisGaussianPulse,
-    ]
-)
+predefined_controls = [
+    DragPulse,
+    MultiDragPulseV3,
+    GaussianPulse,
+    DragPulseV2,
+    TwoAxisGaussianPulse,
+]
+
+default_pulse_reader = construct_control_sequence_reader(controls=predefined_controls)
 
 
 def polynomial_feature_map(x: jnp.ndarray, degree: int):
