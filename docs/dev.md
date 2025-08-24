@@ -1,15 +1,5 @@
 # Developer Guide for Inspeqtor
 
-<!-- ## Table of Contents
-
-- [Getting Started](#getting-started)
-- [Project Setup](#project-setup)
-- [Development Workflow](#development-workflow)
-- [Testing](#testing)
-- [Code Quality](#code-quality)
-- [Documentation](#documentation)
-- [Performance Profiling](#performance-profiling) -->
-
 ## Getting Started
 
 This guide provides the necessary steps and commands for developing the Inspeqtor package. We use the `uv` package manager for dependency management and various tools for testing, linting, and documentation.
@@ -50,6 +40,12 @@ uv add . --editable --dev
 
 ```bash title="Install Jupyter integration"
 uv add ipykernel --dev
+```
+
+### Syncing dependencies
+
+```bash title="Install all optional dependencies"
+uv sync --all-extras
 ```
 
 ## Development Workflow
@@ -105,7 +101,7 @@ uv run pre-commit run --all-files
 We use MkDocs Material and pymdown-extensions for documentation generation. Follow the [Real Python tutorial](https://realpython.com/python-project-documentation-with-mkdocs/#step-4-prepare-your-documentation-with-mkdocs) for detailed setup instructions.
 
 ```bash title="Serve documentation locally"
-mkdocs serve
+uv run mkdocs serve
 ```
 
 ```bash title="Deploy to GitHub Pages"
@@ -129,4 +125,3 @@ For setting up GitHub Actions for CI/CD, refer to this [tutorial](https://www.yo
 ---
 
 This guide covers the essential commands and workflows for developing the Inspeqtor package. For more detailed information about specific components, refer to the respective documentation.
-
