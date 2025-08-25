@@ -73,9 +73,7 @@ def unitary_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.n
     )
 
 
-def unitary_model_prediction_to_expvals_v2(
-    output, unitaries: jnp.ndarray
-) -> jnp.ndarray:
+def toggling_unitary_predictive_fn(output, unitaries: jnp.ndarray) -> jnp.ndarray:
     UJ: jnp.ndarray = unitary(output)  # type: ignore
     UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
 
@@ -90,7 +88,7 @@ def unitary_model_prediction_to_expvals_v2(
     )
 
 
-def unitary_model_prediction_to_expvals_v3(
+def toggling_unitary_with_spam_predictive_fn(
     output, unitaries: jnp.ndarray
 ) -> jnp.ndarray:
     """To model the SPAM noise with probabilistic model and UJ model
@@ -771,7 +769,7 @@ def dense_deterministic_layer(
     return batched_matmul(x, W, b)  # type: ignore
 
 
-def make_posteriors_fn(guide, params, num_samples=10000):
+def make_posteriors_fn(key: jnp.ndarray, guide, params, num_samples=10000):
     """Make the posterior distribution function that will
     return the posterior of parameter of the given name, from guide and parameters.
 
@@ -785,7 +783,7 @@ def make_posteriors_fn(guide, params, num_samples=10000):
     """
     posterior_distribution = Predictive(
         model=guide, params=params, num_samples=num_samples
-    )(jax.random.key(0))
+    )(key)
 
     posterior_dict = construct_normal_prior_from_samples(posterior_distribution)
 
@@ -796,7 +794,11 @@ def make_posteriors_fn(guide, params, num_samples=10000):
 
 
 def auto_diagonal_normal_guide(
-    model, *args, block_sample: bool = False, init_loc_fn=jnp.zeros
+    model,
+    *args,
+    block_sample: bool = False,
+    init_loc_fn=jnp.zeros,
+    key: jnp.ndarray = jax.random.key(0),
 ):
     """Automatically generate guide from given model. Expected to be initialized with the example input of the model.
     The given input should also including the observed site.
@@ -811,9 +813,7 @@ def auto_diagonal_normal_guide(
     Returns:
         typing.Any: _description_
     """
-    model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
-        *args
-    )
+    model_trace = handlers.trace(handlers.seed(model, key)).get_trace(*args)
     # get the trace of the model
     # Then get only the sample site with observed equal to false
     sample_sites = [v for k, v in model_trace.items() if v["type"] == "sample"]
@@ -900,6 +900,7 @@ def auto_diagonal_noraml_guide_v2(
     init_dist_fn=init_normal_dist_fn,
     init_params_fn=init_params_fn,
     block_sample: bool = False,
+    key: jnp.ndarray = jax.random.key(0),
 ):
     """Automatically generate guide from given model. Expected to be initialized with the example input of the model.
     The given input should also including the observed site.
@@ -915,9 +916,7 @@ def auto_diagonal_noraml_guide_v2(
         typing.Any: _description_
     """
     # get the trace of the model
-    model_trace = handlers.trace(handlers.seed(model, jax.random.key(0))).get_trace(
-        *args
-    )
+    model_trace = handlers.trace(handlers.seed(model, key)).get_trace(*args)
     # Then get only the sample site with observed equal to false
     sample_sites = [v for k, v in model_trace.items() if v["type"] == "sample"]
     non_observed_sites = [v for v in sample_sites if not v["is_observed"]]
