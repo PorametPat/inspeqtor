@@ -92,6 +92,7 @@ nav:
     - explanation.md
     - How-To Guides:
           - Generate dataset: guides/generate-dataset.md
+          - Working memory: guides/working_memory.ipynb
 
     - API Reference:
           - Guide: api-reference.md
