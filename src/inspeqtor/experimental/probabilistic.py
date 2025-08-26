@@ -24,13 +24,17 @@ from copy import deepcopy
 
 from .constant import (
     default_expectation_values_order,
-    X,
-    Y,
-    Z,
 )
-from .model import ModelData, get_predict_expectation_value, unitary
+from .model import (
+    ModelData,
+    get_predict_expectation_value,
+    unitary_to_expvals as unitary_to_expvals,
+    toggling_unitary_to_expvals as toggling_unitary_to_expvals,
+    toggling_unitary_with_spam_to_expvals as toggling_unitary_with_spam_to_expvals,
+    observable_to_expvals as observable_to_expvals,
+)
 from .data import save_pytree_to_json, load_pytree_from_json
-from .utils import expectation_value_to_prob_minus, binary_to_eigenvalue, get_spam
+from .utils import expectation_value_to_prob_minus, binary_to_eigenvalue
 
 
 def make_update_fn(
@@ -57,114 +61,6 @@ SVIRunResult = namedtuple(
     "SVIRunResult",
     ["params", "state", "losses", "eval_losses"],
 )
-
-
-def unitary_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarray:
-    """Function to be used with Unitary-based model for probabilistic model construction
-    with `make_probabilistic_model` function.
-
-    Args:
-        output (typing.Any): The output from Unitary-based model
-        unitaries (jnp.ndarray): Ideal unitary, ignore in this function.
-
-    Returns:
-        jnp.ndarray: Expectation values array
-    """
-    U = unitary(output)
-    return get_predict_expectation_value(
-        {"X": X, "Y": Y, "Z": Z},
-        U,
-        default_expectation_values_order,
-    )
-
-
-def toggling_unitary_predictive_fn(output, unitaries: jnp.ndarray) -> jnp.ndarray:
-    UJ: jnp.ndarray = unitary(output)  # type: ignore
-    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
-
-    X_ = UJ_dagger @ X @ UJ
-    Y_ = UJ_dagger @ Y @ UJ
-    Z_ = UJ_dagger @ Z @ UJ
-
-    return get_predict_expectation_value(
-        {"X": X_, "Y": Y_, "Z": Z_},
-        unitaries,
-        default_expectation_values_order,
-    )
-
-
-def toggling_unitary_with_spam_predictive_fn(
-    output, unitaries: jnp.ndarray
-) -> jnp.ndarray:
-    """To model the SPAM noise with probabilistic model and UJ model
-
-    Expected the output structure as follows
-    ```python
-    spam_params = {
-        "SP": {
-            "+": jnp.array([0.9]),
-            "-": jnp.array([0.9]),
-            "r": jnp.array([0.9]),
-            "l": jnp.array([0.9]),
-            "0": jnp.array([0.9]),
-            "1": jnp.array([0.9]),
-        },
-        "AM": {
-            "X": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
-            "Y": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
-            "Z": {"prob_10": jnp.array([0.1]), "prob_01": jnp.array([0.1])},
-        },
-    }
-
-    output = {
-        "model_params": ...,
-        "spam_params": spam_params
-    }
-    ```
-
-    Args:
-        output (typing.Any): _description_
-        unitaries (jnp.ndarray): _description_
-
-    Returns:
-        jnp.ndarray: _description_
-    """
-
-    model_output = output["model_params"]
-    spam_output = output["spam_params"]
-
-    UJ: jnp.ndarray = unitary(model_output)  # type: ignore
-    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
-
-    expectation_value_order, observables = get_spam(spam_output)
-
-    X_ = UJ_dagger @ observables["X"] @ UJ
-    Y_ = UJ_dagger @ observables["Y"] @ UJ
-    Z_ = UJ_dagger @ observables["Z"] @ UJ
-
-    return get_predict_expectation_value(
-        {"X": X_, "Y": Y_, "Z": Z_},
-        unitaries,
-        expectation_value_order,
-    )
-
-
-def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarray:
-    """Function to be used with Wo-based model for probabilistic model construction
-    with `make_probabilistic_model` function.
-
-    Args:
-        output (typing.Any): The output from Wo-based model
-        unitaries (jnp.ndarray): Ideal unitary, ignore in this function.
-
-    Returns:
-        jnp.ndarray: Expectation values array
-    """
-    return get_predict_expectation_value(
-        observable=output,
-        unitaries=unitaries,
-        evaluate_expectation_values=default_expectation_values_order,
-    )
 
 
 def make_flax_probabilistic_graybox_model(

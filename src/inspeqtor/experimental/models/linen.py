@@ -9,23 +9,19 @@ from flax.typing import VariableDict
 
 from ..model import (
     LossMetric,
-    get_predict_expectation_value,
     calculate_metric,
-    Wo_2_level_v3,
-    unitary,
-    get_spam,
+    hermitian,
+    observable_to_expvals,
+    unitary_to_expvals,
+    toggling_unitary_to_expvals,
+    toggling_unitary_with_spam_to_expvals,
 )
 
 from ..optimize import DataBundled, HistoryEntryV3
 from ..utils import dataloader
-from ..constant import (
-    default_expectation_values_order,
-    X,
-    Y,
-    Z,
-)
 
 
+@deprecated.deprecated
 def make_basic_blackbox_model(
     unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
     * jnp.pi
@@ -84,7 +80,7 @@ def make_basic_blackbox_model(
                 # Apply the activation function
                 diag_params = diagonal_activation_fn(diag_params)
 
-                Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+                Wos[op] = hermitian(unitary_params, diag_params)
 
             return Wos
 
@@ -137,7 +133,7 @@ class WoModel(nn.Module):
             # Apply the activation function
             diag_params = self.diagonal_activation_fn(diag_params)
 
-            Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+            Wos[op] = hermitian(unitary_params, diag_params)
 
         return Wos
 
@@ -169,14 +165,7 @@ def wo_predictive_fn(
     # Calculate Wo_params
     Wo = model.apply(model_params, control_parameters, **model_kwargs)
 
-    # Calculate the predicted expectation values using model
-    predicted_expvals = get_predict_expectation_value(
-        Wo,  # type: ignore
-        unitaries,
-        default_expectation_values_order,
-    )
-
-    return predicted_expvals
+    return observable_to_expvals(Wo, unitaries)
 
 
 class UnitaryModel(nn.Module):
@@ -228,15 +217,7 @@ def noisy_unitary_predictive_fn(
     # Predict Unitary parameters
     unitary_params = model.apply(model_params, control_parameters, **model_kwargs)
 
-    U = unitary(unitary_params)  # type: ignore
-
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X, "Y": Y, "Z": Z},
-        U,
-        default_expectation_values_order,
-    )
-
-    return predicted_expvals
+    return unitary_to_expvals(unitary_params, unitaries)
 
 
 def toggling_unitary_predictive_fn(
@@ -267,28 +248,19 @@ def toggling_unitary_predictive_fn(
     # Predict Unitary parameters
     unitary_params = model.apply(model_params, control_parameters, **model_kwargs)
 
-    UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
-    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
-
     if not ignore_spam:
-        expectation_value_order, observables = get_spam(model_params["spam"])
-    else:
-        expectation_value_order, observables = (
-            default_expectation_values_order,
-            {"X": X, "Y": Y, "Z": Z},
+        return toggling_unitary_with_spam_to_expvals(
+            output={
+                "model_params": unitary_params,
+                "spam_params": model_params["spam"],
+            },
+            unitaries=unitaries,
         )
-
-    X_ = UJ_dagger @ observables["X"] @ UJ
-    Y_ = UJ_dagger @ observables["Y"] @ UJ
-    Z_ = UJ_dagger @ observables["Z"] @ UJ
-
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X_, "Y": Y_, "Z": Z_},
-        unitaries,
-        expectation_value_order,
-    )
-
-    return predicted_expvals
+    else:
+        return toggling_unitary_to_expvals(
+            unitary_params,  # type: ignore
+            unitaries=unitaries,
+        )
 
 
 def construct_unitary_model_from_config(
@@ -411,7 +383,7 @@ def make_dropout_blackbox_model(
                 # Apply the activation function
                 diag_params = self._diagonal_activation_fn(diag_params)
 
-                Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+                Wos[op] = hermitian(unitary_params, diag_params)
 
             return Wos
 
@@ -470,7 +442,7 @@ class WoDropoutModel(nn.Module):
             # Apply the activation function
             diag_params = self._diagonal_activation_fn(diag_params)
 
-            Wos[op] = Wo_2_level_v3(unitary_params, diag_params)
+            Wos[op] = hermitian(unitary_params, diag_params)
 
         return Wos
 

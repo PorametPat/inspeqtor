@@ -199,6 +199,39 @@ def auto_rotating_frame_hamiltonian(
     )
 
 
+def explicit_auto_rotating_frame_hamiltonian(
+    hamiltonian: typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray],
+    frame: jnp.ndarray,
+):
+    """Implement the Hamiltonian in the rotating frame with
+    H_I = U(t) @ H @ U^dagger(t) + i * U(t) @ dU^dagger(t)/dt
+
+    Note:
+        This is the implementation of `auto_rotating_frame_hamiltonian`
+        that perform explicit derivative.
+
+    Args:
+        hamiltonian (Callable): The hamiltonian function
+        frame (jnp.ndarray): The frame matrix
+    """
+
+    def frame_unitary(t: jnp.ndarray) -> jnp.ndarray:
+        return jax.scipy.linalg.expm(1j * frame * t)
+
+    def derivative_frame_unitary(t: jnp.ndarray) -> jnp.ndarray:
+        # NOTE: Assume that the frame is time independent.
+        return 1j * frame @ frame_unitary(t)
+
+    def rotating_frame_hamiltonian_v0(args: HamiltonianArgs, t: jnp.ndarray):
+        return frame_unitary(t) @ hamiltonian(args, t) @ jnp.transpose(
+            jnp.conjugate(frame_unitary(t))
+        ) + 1j * (
+            derivative_frame_unitary(t) @ jnp.transpose(jnp.conjugate(frame_unitary(t)))
+        )
+
+    return rotating_frame_hamiltonian_v0
+
+
 def a(dims: int) -> jnp.ndarray:
     """Annihilation operator of given dims
 
@@ -600,9 +633,9 @@ def make_trotterization_solver(
     hamiltonian = jax.jit(hamiltonian)
     time_step = jnp.linspace(0, control_sequence.pulse_length_dt * dt, trotter_steps)
 
-    def whitebox(pulse_parameter: jnp.ndarray):
+    def whitebox(control_parameters: jnp.ndarray):
         hamiltonians = jax.vmap(hamiltonian, in_axes=(None, 0))(
-            pulse_parameter, time_step
+            control_parameters, time_step
         )
         unitaries = jax.scipy.linalg.expm(
             -1j * (time_step[1] - time_step[0]) * hamiltonians
