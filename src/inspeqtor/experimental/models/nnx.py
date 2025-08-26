@@ -6,15 +6,15 @@ import optax
 
 from inspeqtor.experimental.decorator import warn_not_tested_function
 from ..model import (
-    Wo_2_level_v3,
-    get_predict_expectation_value,
+    hermitian,
     LossMetric,
     calculate_metric,
-    unitary,
-    get_spam,
+    observable_to_expvals,
+    unitary_to_expvals,
+    toggling_unitary_to_expvals,
+    toggling_unitary_with_spam_to_expvals,
 )
 from ..optimize import DataBundled, HistoryEntryV3
-from ..constant import default_expectation_values_order, X, Y, Z
 from ..utils import dataloader
 
 
@@ -81,7 +81,7 @@ class WoModel(Blackbox):
             unitary_param = 2 * jnp.pi * nnx.hard_sigmoid(unitary_param)
             diagonal_param = (2 * nnx.hard_sigmoid(diagonal_param)) - 1
 
-            observables[pauli] = Wo_2_level_v3(unitary_param, diagonal_param)
+            observables[pauli] = hermitian(unitary_param, diagonal_param)
 
         return observables
 
@@ -102,9 +102,7 @@ def wo_predictive_fn(
         jnp.ndarray: Predicted expectation values.
     """
     output = model(control_parameters)
-    return get_predict_expectation_value(
-        output, unitaries, default_expectation_values_order
-    )
+    return observable_to_expvals(output, unitaries)
 
 
 class UnitaryModel(Blackbox):
@@ -201,15 +199,8 @@ def noisy_unitary_predictive_fn(
         jnp.ndarray: Predicted expectation values.
     """
     unitary_params = model(control_parameters)
-    U = unitary(unitary_params)
 
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X, "Y": Y, "Z": Z},
-        U,
-        default_expectation_values_order,
-    )
-
-    return predicted_expvals
+    return unitary_to_expvals(unitary_params, unitaries)
 
 
 def toggling_unitary_predictive_fn(
@@ -228,25 +219,8 @@ def toggling_unitary_predictive_fn(
         jnp.ndarray: Predicted expectation values.
     """
     unitary_params = model(control_parameters)
-    UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
-    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
 
-    expectation_value_order, observables = (
-        default_expectation_values_order,
-        {"X": X, "Y": Y, "Z": Z},
-    )
-
-    X_ = UJ_dagger @ observables["X"] @ UJ
-    Y_ = UJ_dagger @ observables["Y"] @ UJ
-    Z_ = UJ_dagger @ observables["Z"] @ UJ
-
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X_, "Y": Y_, "Z": Z_},
-        unitaries,
-        expectation_value_order,
-    )
-
-    return predicted_expvals
+    return toggling_unitary_to_expvals(unitary_params, unitaries)
 
 
 def toggling_unitary_with_spam_predictive_fn(
@@ -266,22 +240,14 @@ def toggling_unitary_with_spam_predictive_fn(
         jnp.ndarray: Predicted expectation values.
     """
     unitary_params = model(control_parameters)
-    UJ: jnp.ndarray = unitary(unitary_params)  # type: ignore
-    UJ_dagger = jnp.swapaxes(UJ, -2, -1).conj()
 
-    expectation_value_order, observables = get_spam(model.spam_params)
-
-    X_ = UJ_dagger @ observables["X"] @ UJ
-    Y_ = UJ_dagger @ observables["Y"] @ UJ
-    Z_ = UJ_dagger @ observables["Z"] @ UJ
-
-    predicted_expvals = get_predict_expectation_value(
-        {"X": X_, "Y": Y_, "Z": Z_},
+    return toggling_unitary_with_spam_to_expvals(
+        {
+            "model_params": unitary_params,
+            "spam_params": model.spam_params,
+        },
         unitaries,
-        expectation_value_order,
     )
-
-    return predicted_expvals
 
 
 def make_loss_fn(

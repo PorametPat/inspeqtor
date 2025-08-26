@@ -42,6 +42,10 @@ uv add . --editable --dev
 uv add ipykernel --dev
 ```
 
+```bash title="Intall dependency in optional docs group"
+uv add mkdocs-marimo --optional docs
+```
+
 ### Syncing dependencies
 
 ```bash title="Install all optional dependencies"
