@@ -88,11 +88,13 @@ nav:
     - Tutorials:
           - Overviews: tutorials/overviews.md
           - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
+          - C&C: tutorials/tutorial_0003_cc.ipynb
           - Control Action: tutorials/tutorial_0002_control.ipynb
     - explanation.md
     - How-To Guides:
           - Generate dataset: guides/generate-dataset.md
           - Working memory: guides/working_memory.ipynb
+          - Converting DNN to BNN: guides/dnn_to_bnn.ipynb
 
     - API Reference:
           - Guide: api-reference.md

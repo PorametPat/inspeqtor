@@ -652,8 +652,8 @@ def train_model(
     # Number of epochs
     NUM_EPOCH: int = 1_000,
     # Optional state
-    model_params: typing.Any = None,
-    opt_state: typing.Any = None,
+    model_params: VariableDict | None = None,
+    opt_state: optax.OptState | None = None,
 ):
     """Train the BlackBox model
 
