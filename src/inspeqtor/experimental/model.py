@@ -147,6 +147,36 @@ def get_predict_expectation_value(
     return predict_expectation_values
 
 
+def make_get_predict_expectation_value_fn(
+    evaluate_expectation_values: list[ExpectationValue],
+):
+    """Generate a pure function of `get_predict_expectation_value`
+
+    Args:
+        evaluate_expectation_values (list[ExpectationValue]): The list of ExpectationValue to make static.
+    """
+
+    def _get_predict_expectation_value(
+        observable: dict[str, jnp.ndarray],
+        unitaries: jnp.ndarray,
+    ) -> jnp.ndarray:
+        """Calculate expectation values for given evaluate_expectation_values
+
+        Args:
+            observable (operators): observable operator
+            unitaries (jnp.ndarray): Unitary operators
+            evaluate_expectation_values (list[ExpectationValue]): Order of expectation value to be calculated
+
+        Returns:
+            jnp.ndarray: Expectation value with order as given with `evaluate_expectation_values`
+        """
+        return get_predict_expectation_value(
+            observable, unitaries, evaluate_expectation_values
+        )
+
+    return _get_predict_expectation_value
+
+
 class LossMetric(StrEnum):
     MSEE = "MSE[E]"
     AEF = "AE[F]"
@@ -503,6 +533,8 @@ def unitary_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarray:
     """Function to be used with Unitary-based model for probabilistic model construction
     with `make_probabilistic_model` function.
 
+
+
     Args:
         output (typing.Any): The output from Unitary-based model
         unitaries (jnp.ndarray): Ideal unitary, ignore in this function.
@@ -512,7 +544,11 @@ def unitary_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarray:
     """
     U = unitary(output)
     return get_predict_expectation_value(
-        {"X": X, "Y": Y, "Z": Z},
+        {
+            "X": jnp.broadcast_to(X, shape=(U.shape)),
+            "Y": jnp.broadcast_to(Y, shape=(U.shape)),
+            "Z": jnp.broadcast_to(Z, shape=(U.shape)),
+        },
         U,
         default_expectation_values_order,
     )
