@@ -5,17 +5,22 @@ from collections import namedtuple
 from numpyro.infer import svi as svilib  # type: ignore
 import numpyro  # type: ignore
 from numpyro import handlers
-from numpyro.contrib.module import random_flax_module, flax_module  # type: ignore
+from numpyro.contrib.module import (
+    random_flax_module,
+    flax_module,
+    nnx_module,
+)  # type: ignore
 import numpyro.util
 import numpyro.distributions as dist  # type: ignore
 from numpyro.infer import autoguide, Predictive
 import typing
 from functools import partial, reduce
-from flax import linen as nn
+from flax import linen as nn, nnx
 from dataclasses import dataclass
 import pathlib
 from enum import StrEnum, auto
 from numpyro.contrib.module import ParamShape
+from copy import deepcopy
 
 from .constant import (
     default_expectation_values_order,
@@ -164,12 +169,19 @@ def wo_model_prediction_to_expvals(output, unitaries: jnp.ndarray) -> jnp.ndarra
 
 def make_flax_probabilistic_graybox_model(
     name: str,  # graybox
-    base_model: nn.Module,
+    base_model: nn.Module | nnx.Module,
     model_prediction_to_expvals_fn: typing.Callable[..., jnp.ndarray],
     prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
-    enable_bnn: bool = True,
+    flax_module: typing.Callable = random_flax_module,
 ):
-    module = partial(random_flax_module, prior=prior) if enable_bnn else flax_module
+    if flax_module in [random_flax_module, random_nnx_module]:
+        module = partial(flax_module, prior=prior)
+    else:
+        module = flax_module
+
+    is_nnx = False
+    if flax_module in [random_nnx_module, nnx_module]:
+        is_nnx = not is_nnx
 
     def graybox_probabilistic_model(
         control_parameters: jnp.ndarray,
@@ -187,12 +199,10 @@ def make_flax_probabilistic_graybox_model(
         samples_shape = control_parameters.shape[:-2]
         unitaries = jnp.broadcast_to(unitaries, samples_shape + unitaries.shape[-3:])
 
+        _kwargs = {} if is_nnx else {"input_shape": control_parameters.shape}
+
         # Initialize BMLP model
-        model = module(
-            name,
-            base_model,
-            input_shape=control_parameters.shape,
-        )
+        model = module(name, base_model, **_kwargs)
 
         # Predict from control parameters
         output = model(control_parameters)
@@ -211,9 +221,17 @@ def make_flax_probabilistic_graybox_model_with_spam(
     spam_model: typing.Callable,
     model_prediction_to_expvals_fn: typing.Callable[..., jnp.ndarray],
     prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
-    enable_bnn: bool = True,
 ):
-    module = partial(random_flax_module, prior=prior) if enable_bnn else flax_module
+    # module = partial(random_flax_module, prior=prior) if enable_bnn else flax_module
+
+    if flax_module in [random_flax_module, random_nnx_module]:
+        module = partial(flax_module, prior=prior)
+    else:
+        module = flax_module
+
+    is_nnx = False
+    if flax_module in [random_nnx_module, nnx_module]:
+        is_nnx = not is_nnx
 
     def graybox_probabilistic_model(
         control_parameters: jnp.ndarray,
@@ -231,12 +249,10 @@ def make_flax_probabilistic_graybox_model_with_spam(
         samples_shape = control_parameters.shape[:-2]
         unitaries = jnp.broadcast_to(unitaries, samples_shape + unitaries.shape[-3:])
 
+        _kwargs = {} if is_nnx else {"input_shape": control_parameters.shape}
+
         # Initialize BMLP model
-        model = module(
-            name,
-            base_model,
-            input_shape=control_parameters.shape,
-        )
+        model = module(name, base_model, **_kwargs)
 
         # Predict from control parameters
         model_output = model(control_parameters)
@@ -251,6 +267,73 @@ def make_flax_probabilistic_graybox_model_with_spam(
         return expvals
 
     return graybox_probabilistic_model
+
+
+def _update_params(params, new_params, prior, prefix=""):
+    """
+    A helper to recursively set prior to new_params.
+
+    Note:
+        We copy the code from `numpyro.contrib` directly for now.
+    """
+    for name, item in params.items():
+        # Parse int to str
+        if isinstance(name, int):
+            _name = str(name)
+        else:
+            _name = name
+        flatten_name = ".".join([prefix, _name]) if prefix else _name
+        if isinstance(item, dict):
+            assert not isinstance(prior, dict) or flatten_name not in prior
+            new_item = new_params[name]
+            _update_params(item, new_item, prior, prefix=flatten_name)
+        elif (not isinstance(prior, dict)) or flatten_name in prior:
+            if isinstance(params[name], ParamShape):
+                param_shape = params[name].shape
+            else:
+                param_shape = jnp.shape(params[name])
+                params[name] = ParamShape(param_shape)
+            if isinstance(prior, dict):
+                d = prior[flatten_name]
+            elif callable(prior) and not isinstance(prior, dist.Distribution):
+                d = prior(flatten_name, param_shape)
+            else:
+                d = prior
+
+            param_batch_shape = param_shape[: len(param_shape) - d.event_dim]  # type: ignore
+            # XXX: here we set all dimensions of prior to event dimensions.
+            new_params[name] = numpyro.sample(
+                flatten_name,
+                d.expand(param_batch_shape).to_event(),  # type: ignore
+            )
+
+
+def random_nnx_module(
+    name,
+    nn_module,
+    prior,
+):
+    """A primitive to create a random :mod:`~flax.nnx` style neural network
+    which can be used in MCMC samplers. The parameters of the neural network
+    will be sampled from ``prior``.
+
+    Note:
+            We copy the code from `numpyro.contrib` directly for now.
+    """
+
+    nn = nnx_module(name, nn_module)
+
+    apply_fn = nn.func
+    params = nn.args[0]
+    other_args = nn.args[1:]
+    keywords = nn.keywords
+
+    new_params = deepcopy(params)
+
+    with numpyro.handlers.scope(prefix=name):
+        _update_params(params, new_params, prior)
+
+    return partial(apply_fn, new_params, *other_args, **keywords)
 
 
 def make_probabilistic_model(
@@ -894,7 +977,7 @@ def init_params_fn(name: str, shape: tuple[int, ...]):
         raise ValueError(f"name: {name} is not supported")
 
 
-def auto_diagonal_noraml_guide_v2(
+def auto_diagonal_normal_guide_v2(
     model,
     *args,
     init_dist_fn=init_normal_dist_fn,
