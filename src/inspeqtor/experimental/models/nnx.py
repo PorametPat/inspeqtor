@@ -1,10 +1,10 @@
+import deprecated
 import jax
 import jax.numpy as jnp
 from flax import nnx
 import typing
 import optax
 
-from inspeqtor.experimental.decorator import warn_not_tested_function
 from ..model import (
     hermitian,
     LossMetric,
@@ -146,7 +146,9 @@ class UnitaryModel(Blackbox):
 class UnitarySPAMModel(Blackbox):
     """Composite class of unitary-based model and the SPAM model."""
 
-    def __init__(self, unitary_model: UnitaryModel, *, rngs: nnx.Rngs) -> None:
+    def __init__(
+        self, unitary_model: UnitaryModel, spam_params, *, rngs: nnx.Rngs
+    ) -> None:
         """
 
         Args:
@@ -154,33 +156,10 @@ class UnitarySPAMModel(Blackbox):
             rngs (nnx.Rngs): Random number generator of `nnx`.
         """
         self.unitary_model = unitary_model
-        self.spam_params = {
-            "SP": {
-                "+": nnx.Param(jnp.array([0.9])),
-                "-": nnx.Param(jnp.array([0.9])),
-                "r": nnx.Param(jnp.array([0.9])),
-                "l": nnx.Param(jnp.array([0.9])),
-                "0": nnx.Param(jnp.array([0.9])),
-                "1": nnx.Param(jnp.array([0.9])),
-            },
-            "AM": {
-                "X": {
-                    "prob_10": nnx.Param(jnp.array([0.1])),
-                    "prob_01": nnx.Param(jnp.array([0.1])),
-                },
-                "Y": {
-                    "prob_10": nnx.Param(jnp.array([0.1])),
-                    "prob_01": nnx.Param(jnp.array([0.1])),
-                },
-                "Z": {
-                    "prob_10": nnx.Param(jnp.array([0.1])),
-                    "prob_01": nnx.Param(jnp.array([0.1])),
-                },
-            },
-        }
+        self.spam_params = jax.tree.map(nnx.Param, spam_params)
 
-    def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
-        return self.unitary_model(x)
+    def __call__(self, x: jnp.ndarray) -> dict:
+        return {"model_params": self.unitary_model(x), "spam_params": self.spam_params}
 
 
 def noisy_unitary_predictive_fn(
@@ -250,7 +229,8 @@ def toggling_unitary_with_spam_predictive_fn(
     )
 
 
-def make_loss_fn(
+@deprecated.deprecated
+def make_loss_fn_old(
     predictive_fn,
     calculate_metric_fn=calculate_metric,
     loss_metric: LossMetric = LossMetric.MSEE,
@@ -274,6 +254,45 @@ def make_loss_fn(
         return loss, metrics
 
     return loss_fn
+
+
+def make_loss_fn(
+    adapter_fn,
+    calculate_metric_fn=calculate_metric,
+    loss_metric: LossMetric = LossMetric.MSEE,
+):
+    """A function for preparing loss function to be used for model training.
+
+    Args:
+        predictive_fn (typing.Any): Adaptor function specifically for each model.
+        calculate_metric_fn (typing.Any, optional): Function for calculating metrics. Defaults to calculate_metric.
+        loss_metric (LossMetric, optional): The chosen loss function to be optimized. Defaults to LossMetric.MSEE.
+    """
+
+    def loss_fn(model: Blackbox, data: DataBundled):
+        output = model(data.control_params)
+
+        expval = adapter_fn(output, data.unitaries)
+
+        metrics = calculate_metric_fn(data.unitaries, data.observables, expval)
+        # Take mean of all the metrics
+        metrics = jax.tree.map(jnp.mean, metrics)
+        loss = metrics[loss_metric]
+
+        return loss, metrics
+
+    return loss_fn
+
+
+def make_predictive_fn(adapter_fn, model: Blackbox):
+    def predictive_fn(
+        control_parameters: jnp.ndarray, unitaries: jnp.ndarray
+    ) -> jnp.ndarray:
+        output = model(control_parameters)
+
+        return adapter_fn(output, unitaries)
+
+    return predictive_fn
 
 
 def create_step(
@@ -348,7 +367,6 @@ def reconstruct_model(model_params, config, Model: type[T]) -> T:
     return nnx.merge(graphdef, abstract_state)
 
 
-@warn_not_tested_function
 def train_model(
     # Random key
     key: jnp.ndarray,
