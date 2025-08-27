@@ -4,7 +4,6 @@ import jax.numpy as jnp
 import jax
 import pandas as pd  # type: ignore
 import chex
-from functools import partial
 
 
 qubit_test_cases = [
@@ -244,47 +243,8 @@ def test_ExperimentData_1(tmp_path):
     assert exp_data == exp_data_from_file
 
 
-def test_save_load_data_from_path(tmp_path):
-    sample_size = 10
-    shots = 1000
-    detune = 0.01
-
-    data_key = jax.random.key(0)
-
-    qubit_info = sq.predefined.get_mock_qubit_information()
-    control_sequence = sq.predefined.get_gaussian_control_sequence(
-        qubit_info=qubit_info
-    )
-    dt = 2 / 9
-
-    ideal_hamiltonian = partial(
-        sq.predefined.rotating_transmon_hamiltonian,
-        qubit_info=qubit_info,
-        signal=sq.physics.signal_func_v5(
-            get_envelope=sq.predefined.get_envelope_transformer(
-                control_sequence=control_sequence
-            ),
-            drive_frequency=qubit_info.frequency,
-            dt=dt,
-        ),
-    )
-
-    total_hamiltonian = sq.predefined.detune_x_hamiltonian(
-        ideal_hamiltonian, detune * qubit_info.frequency
-    )
-
-    exp_data, control_sequence, unitaries, noisy_simulator = (
-        sq.predefined.generate_experimental_data(
-            key=data_key,
-            hamiltonian=total_hamiltonian,
-            sample_size=sample_size,
-            shots=shots,
-            strategy=sq.predefined.SimulationStrategy.SHOT,
-            get_qubit_information_fn=lambda: qubit_info,
-            get_control_sequence_fn=lambda: control_sequence,
-            method=sq.predefined.WhiteboxStrategy.TROTTER,
-        )
-    )
+def test_save_load_data_from_path_v2(tmp_path, load_dataset):
+    loaded_data, _, _ = load_dataset
 
     # Test the save and load
     d = tmp_path / "test"
@@ -292,10 +252,12 @@ def test_save_load_data_from_path(tmp_path):
 
     # Save the data to temp folder
     sq.predefined.save_data_to_path(
-        path=d, experiment_data=exp_data, control_sequence=control_sequence
+        path=d,
+        experiment_data=loaded_data.experiment_data,
+        control_sequence=loaded_data.control_sequence,
     )
 
-    loaded_data = sq.predefined.load_data_from_path(
+    reloaded_data = sq.predefined.load_data_from_path(
         path=d,
         hamiltonian_spec=sq.predefined.HamiltonianSpec(
             sq.predefined.WhiteboxStrategy.TROTTER,
@@ -304,6 +266,6 @@ def test_save_load_data_from_path(tmp_path):
     )
 
     # Test equivalent
-    assert loaded_data.experiment_data == exp_data
-    assert loaded_data.control_sequence == control_sequence
-    assert callable(loaded_data.whitebox)
+    assert reloaded_data.experiment_data == loaded_data.experiment_data
+    assert reloaded_data.control_sequence == loaded_data.control_sequence
+    assert callable(reloaded_data.whitebox)

@@ -8,4 +8,8 @@ from ..model import (
     get_spam as get_spam,
     ModelData as ModelData,
     LossMetric as LossMetric,
+    toggling_unitary_with_spam_to_expvals as toggling_unitary_with_spam_to_expvals,
+    toggling_unitary_to_expvals as toggling_unitary_to_expvals,
+    unitary_to_expvals as unitary_to_expvals,
+    observable_to_expvals as observable_to_expvals,
 )

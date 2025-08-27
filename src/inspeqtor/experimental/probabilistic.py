@@ -9,18 +9,16 @@ from numpyro.contrib.module import (
     random_flax_module,
     flax_module,
     nnx_module,
+    random_nnx_module,
 )  # type: ignore
 import numpyro.util
 import numpyro.distributions as dist  # type: ignore
-from numpyro.infer import autoguide, Predictive
+from numpyro.infer import Predictive
 import typing
 from functools import partial, reduce
 from flax import linen as nn, nnx
-from dataclasses import dataclass
-import pathlib
 from enum import StrEnum, auto
 from numpyro.contrib.module import ParamShape
-from copy import deepcopy
 
 from .constant import (
     default_expectation_values_order,
@@ -33,7 +31,6 @@ from .model import (
     toggling_unitary_with_spam_to_expvals as toggling_unitary_with_spam_to_expvals,
     observable_to_expvals as observable_to_expvals,
 )
-from .data import save_pytree_to_json, load_pytree_from_json
 from .utils import expectation_value_to_prob_minus, binary_to_eigenvalue
 
 
@@ -163,73 +160,6 @@ def make_flax_probabilistic_graybox_model_with_spam(
     return graybox_probabilistic_model
 
 
-def _update_params(params, new_params, prior, prefix=""):
-    """
-    A helper to recursively set prior to new_params.
-
-    Note:
-        We copy the code from `numpyro.contrib` directly for now.
-    """
-    for name, item in params.items():
-        # Parse int to str
-        if isinstance(name, int):
-            _name = str(name)
-        else:
-            _name = name
-        flatten_name = ".".join([prefix, _name]) if prefix else _name
-        if isinstance(item, dict):
-            assert not isinstance(prior, dict) or flatten_name not in prior
-            new_item = new_params[name]
-            _update_params(item, new_item, prior, prefix=flatten_name)
-        elif (not isinstance(prior, dict)) or flatten_name in prior:
-            if isinstance(params[name], ParamShape):
-                param_shape = params[name].shape
-            else:
-                param_shape = jnp.shape(params[name])
-                params[name] = ParamShape(param_shape)
-            if isinstance(prior, dict):
-                d = prior[flatten_name]
-            elif callable(prior) and not isinstance(prior, dist.Distribution):
-                d = prior(flatten_name, param_shape)
-            else:
-                d = prior
-
-            param_batch_shape = param_shape[: len(param_shape) - d.event_dim]  # type: ignore
-            # XXX: here we set all dimensions of prior to event dimensions.
-            new_params[name] = numpyro.sample(
-                flatten_name,
-                d.expand(param_batch_shape).to_event(),  # type: ignore
-            )
-
-
-def random_nnx_module(
-    name,
-    nn_module,
-    prior,
-):
-    """A primitive to create a random :mod:`~flax.nnx` style neural network
-    which can be used in MCMC samplers. The parameters of the neural network
-    will be sampled from ``prior``.
-
-    Note:
-            We copy the code from `numpyro.contrib` directly for now.
-    """
-
-    nn = nnx_module(name, nn_module)
-
-    apply_fn = nn.func
-    params = nn.args[0]
-    other_args = nn.args[1:]
-    keywords = nn.keywords
-
-    new_params = deepcopy(params)
-
-    with numpyro.handlers.scope(prefix=name):
-        _update_params(params, new_params, prior)
-
-    return partial(apply_fn, new_params, *other_args, **keywords)
-
-
 def make_probabilistic_model(
     graybox_probabilistic_model: typing.Callable[..., jnp.ndarray],
     shots: int = 1,
@@ -318,6 +248,7 @@ def make_probabilistic_model(
     return bernoulli_model
 
 
+@deprecated
 def get_args_of_distribution(x):
     """Get the arguments used to construct Distribution, if the provided parameter is not Distribution, return it.
     So that the function can be used with `jax.tree.map`.
@@ -334,6 +265,7 @@ def get_args_of_distribution(x):
         return x
 
 
+@deprecated
 def construct_normal_priors(posterior):
     """Construct a dict of Normal Distributions with posterior
 
@@ -374,73 +306,6 @@ def construct_normal_prior_from_samples(
     return prior
 
 
-@deprecated("Use ModelData instead")
-@dataclass
-class ProbabilisticModel:
-    """Dataclass to save and load probabilistic model from inference result and file."""
-
-    posterior: dict[str, jnp.ndarray]
-    shots: int
-    hidden_sizes: list[list[int]]
-
-    @classmethod
-    def from_file(cls, path: str | pathlib.Path) -> "ProbabilisticModel":
-        # data = load_pytree_from_json(path, array_keys=["posterior"])
-        data = load_pytree_from_json(path)
-
-        return cls(
-            posterior=data["posterior"],
-            shots=data["shots"],
-            hidden_sizes=data["hidden_sizes"],
-        )
-
-    @classmethod
-    def from_result(
-        cls,
-        guide: autoguide.AutoDiagonalNormal,
-        svi_params,
-        key: jnp.ndarray,
-        shots: int,
-        hidden_sizes: list[list[int]],
-        sample_shape: tuple[int, ...] = (10000,),
-        prefix: str = "graybox/",
-    ):
-        posterior_samples = guide.sample_posterior(
-            key, svi_params, sample_shape=sample_shape
-        )
-
-        posterior = construct_normal_prior_from_samples(posterior_samples)
-        posterior = {
-            name.split("/")[1]: prior
-            for name, prior in posterior.items()
-            if name.startswith(prefix)
-        }
-
-        posterior = jax.tree.map(
-            get_args_of_distribution,
-            posterior,
-            is_leaf=lambda x: isinstance(x, dist.Distribution),
-        )
-
-        return cls(
-            posterior=posterior,
-            shots=shots,
-            hidden_sizes=hidden_sizes,
-        )
-
-    def to_file(self, path: str | pathlib.Path):
-        data = {
-            "posterior": self.posterior,
-            "shots": self.shots,
-            "hidden_sizes": self.hidden_sizes,
-        }
-
-        save_pytree_to_json(data, path)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(\n\thidden_sizes={str(self.hidden_sizes)}\n\tshots={self.shots}\n\tposterior=...\n)"
-
-
 class LearningModel(StrEnum):
     """The learning model."""
 
@@ -453,6 +318,54 @@ def make_predictive_fn(
     learning_model: LearningModel,
 ):
     """Construct predictive model from the probabilsitic model.
+    This function does not relied on guide and the variational parameters
+
+    Examples:
+        ```python
+        characterized_result = sq.probabilistic.SVIResult.from_file(
+            PGM_model_path / "model.json"
+        )
+
+        base_model = sq.models.linen.WoModel(
+            hidden_sizes_1=characterized_result.config["model_config"]["hidden_sizes"][0],
+            hidden_sizes_2=characterized_result.config["model_config"]["hidden_sizes"][1],
+        )
+        graybox_model = sq.probabilistic.make_flax_probabilistic_graybox_model(
+            name="graybox",
+            base_model=base_model,
+            adapter_fn=sq.probabilistic.observable_to_expvals,
+            prior=dist.Normal(0, 1),
+        )
+        model = sq.probabilistic.make_probabilistic_model(
+            graybox_probabilistic_model=graybox_model,
+        )
+        # initialize guide
+        guide = sq.probabilistic.auto_diagonal_normal_guide(
+            model,
+            ml.custom_feature_map(loaded_data.control_parameters),
+            loaded_data.unitaries,
+            jnp.zeros(shape=(shots, loaded_data.control_parameters.shape[0], 18)),
+        )
+        priors = {
+            k.strip("graybox/"): v
+            for k, v in make_prior_from_params(guide, characterized_result.params).items()
+        }
+        graybox_model = sq.probabilistic.make_flax_probabilistic_graybox_model(
+            name="graybox",
+            base_model=base_model,
+            adapter_fn=sq.probabilistic.observable_to_expvals,
+            prior=priors,
+        )
+        posterior_model = sq.probabilistic.make_probabilistic_model(
+            graybox_probabilistic_model=graybox_model,
+            shots=shots,
+            block_graybox=True,
+            log_expectation_values=True,
+        )
+        predicetive_fn = sq.probabilistic.make_predictive_fn(
+            posterior_model, sq.probabilistic.LearningModel.BernoulliProbs
+        )
+        ```
 
     Args:
         posterior_model (typing.Any): probabilsitic model
@@ -972,13 +885,14 @@ def compose(functions):
     return reduce(lambda f, g: lambda x: g(f(x)), functions, lambda x: x)
 
 
-def make_predictive_model_fn_v2(
+def make_predictive_fn_v2(
     model,
     guide,
     params,
     shots: int,
 ):
     """Make a postirior predictive model function from model, guide, SVI parameters, and the number of shots.
+    This version relied explicitly on the guide and variational parameters. It might be slow than the first version.
 
     Args:
         model (typing.Any): Probabilistic model.
@@ -999,6 +913,7 @@ def make_predictive_model_fn_v2(
     return predictive_fn
 
 
+@deprecated
 def make_predictive_SGM_model(
     model: nn.Module, model_params, output_to_expectation_values_fn, shots: int
 ):

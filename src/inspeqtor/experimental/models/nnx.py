@@ -40,22 +40,32 @@ class WoModel(Blackbox):
             pauli_layers (list[int]): Each integer in the list is a size of the width of each hidden layer in the Pauli layers.
             rngs (nnx.Rngs): Random number generator of `nnx`.
         """
-        self.shared_layers = [
-            nnx.Linear(in_features=in_features, out_features=out_features, rngs=rngs)
-            for in_features, out_features in zip(shared_layers[:-1], shared_layers[1:])
-        ]
+
+        self.shared_layers = {
+            f"shared/{idx}": nnx.Linear(
+                in_features=in_features, out_features=out_features, rngs=rngs
+            )
+            for idx, (in_features, out_features) in enumerate(
+                zip(shared_layers[:-1], shared_layers[1:])
+            )
+        }
+
+        self.num_shared_layers = len(shared_layers) - 1
+        self.num_pauli_layers = len(pauli_layers) - 1
+
         self.pauli_layers = {}
         self.unitary_layers = {}
         self.diagonal_layers = {}
         for pauli in ["X", "Y", "Z"]:
-            layers = [
-                nnx.Linear(
+            layers = {
+                f"pauli/{idx}": nnx.Linear(
                     in_features=in_features, out_features=out_features, rngs=rngs
                 )
-                for in_features, out_features in zip(
-                    pauli_layers[:-1], pauli_layers[1:]
+                for idx, (in_features, out_features) in enumerate(
+                    zip(pauli_layers[:-1], pauli_layers[1:])
                 )
-            ]
+            }
+
             self.pauli_layers[pauli] = layers
 
             self.unitary_layers[pauli] = nnx.Linear(
@@ -66,13 +76,15 @@ class WoModel(Blackbox):
             )
 
     def __call__(self, x: jnp.ndarray):
-        for layer in self.shared_layers:
+        for idx in range(self.num_shared_layers):
+            layer = self.shared_layers[f"shared/{idx}"]
             x = nnx.relu(layer(x))
 
         observables: dict[str, jnp.ndarray] = dict()
         for pauli, pauli_layer in self.pauli_layers.items():
             _x = jnp.copy(x)
-            for layer in pauli_layer:
+            for idx in range(self.num_pauli_layers):
+                layer = pauli_layer[f"pauli/{idx}"]
                 _x = nnx.relu(layer(_x))
 
             unitary_param = self.unitary_layers[pauli](_x)
@@ -118,11 +130,12 @@ class UnitaryModel(Blackbox):
         self.hidden_sizes = hidden_sizes
         self.NUM_UNITARY_PARAMS = 4
 
-        # Initialize the dense layers for each hidden size
-        self.hidden_layers = [
-            nnx.Linear(in_features=hidden_size, out_features=hidden_size, rngs=rngs)
-            for hidden_size in self.hidden_sizes
-        ]
+        self.hidden_layers = {
+            f"hidden_layers/{idx}": nnx.Linear(
+                in_features=hidden_size, out_features=hidden_size, rngs=rngs
+            )
+            for idx, hidden_size in enumerate(self.hidden_sizes)
+        }
 
         # Initialize the final layer for unitary parameters
         self.final_layer = nnx.Linear(
@@ -133,7 +146,7 @@ class UnitaryModel(Blackbox):
 
     def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
         # Apply the hidden layers with ReLU activation
-        for layer in self.hidden_layers:
+        for _, layer in self.hidden_layers.items():
             x = nnx.relu(layer(x))
 
         # Apply the final layer and transform the output

@@ -2,15 +2,13 @@ from deprecated import deprecated
 import jax
 import jax.numpy as jnp
 import typing
-from flax import linen as nn
 from flax.typing import VariableDict
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 import pathlib
 import json
 from datetime import datetime
 from enum import StrEnum
-import pandas as pd
 import chex
 from numpyro.contrib.module import ParamShape
 
@@ -32,7 +30,6 @@ from .constant import (
     Z,
     default_expectation_values_order,
 )
-from .control import ControlSequence
 from .ctyping import Wos
 
 jax.config.update("jax_enable_x64", True)
@@ -281,140 +278,8 @@ class ModelState:
         return cls(model_config, model_params)
 
 
-@deprecated("Prefer explicitly specify hamiltonian to use.")
-@dataclass
-class DataConfig:
-    """Config for pulse sequence and Hamiltonian used for Whitebox"""
-
-    EXPERIMENT_IDENTIFIER: str
-    hamiltonian: str
-    control_sequence: dict
-
-    def to_file(self, path: typing.Union[str, pathlib.Path]):
-        """Save the data config to file.
-
-        Args:
-            path (typing.Union[str, pathlib.Path]): Path to the folder, will be created if not existed.
-        """
-        if isinstance(path, str):
-            path = pathlib.Path(path)
-
-        path.mkdir(exist_ok=True)
-        with open(f"{path}/data_config.json", "w") as f:
-            json.dump(self.to_dict(), f, indent=4)
-
-    def to_dict(self):
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(**data)
-
-    @classmethod
-    def from_file(cls, path: typing.Union[str, pathlib.Path]):
-        """Load model and initialize instance of DataConfig from given folder.
-
-        Args:
-            path (typing.Union[str, pathlib.Path]): Path to the folder, will be created if not existed.
-
-        Returns:
-            DataConfig: Intance of DataConfig read from folder.
-        """
-        if isinstance(path, str):
-            path = pathlib.Path(path)
-        with open(path / "data_config.json", "r") as f:
-            config_dict = json.load(f)
-        return cls.from_dict(config_dict)
-
-
 def generate_path_with_datetime(sub_dir: pathlib.Path):
     return sub_dir / datetime.now().strftime("Y%YM%mD%d-H%HM%MS%S")
-
-
-@deprecated(reason="We encourage user to use atomic function to save each component")
-def save_model(
-    path: pathlib.Path | str,
-    experiment_identifier: str,
-    control_sequence: ControlSequence,
-    hamiltonian: typing.Union[str, typing.Callable],
-    model_config: dict,
-    model_params: VariableDict,
-    history: typing.Sequence[dict[typing.Any, typing.Any]] | None = None,
-    with_auto_datetime: bool = True,
-) -> pathlib.Path:
-    """Function to save training result, including model config, training history, data config.
-
-    Args:
-        path (pathlib.Path | str): Path to folder to save data
-        experiment_identifier (str): Experiment identifier
-        control_sequence (PulseSequence): Pulse sequence used in the training
-        hamiltonian (typing.Union[str, typing.Callable]): Ideal Hamiltonian used for Whitebox
-        model_config (dict): Configuration of model, used for model initialization
-        model_params (VariableDict): Parameters of model.
-        history (typing.Sequence[dict[typing.Any, typing.Any]] | None, optional): Training history. Defaults to None.
-        with_auto_datetime (bool, optional): True to automatically append datetime as a parent folder. Defaults to True.
-
-    Returns:
-        pathlib.Path: Path to the saved data.
-    """
-    if not isinstance(path, pathlib.Path):
-        path = pathlib.Path(path)
-
-    path = generate_path_with_datetime(path) if with_auto_datetime else path
-
-    path.mkdir(parents=True, exist_ok=True)
-
-    model_state = ModelState(
-        model_config=model_config,
-        model_params=model_params,
-    )
-
-    model_state.save(path / "model_state")
-
-    if history is not None:
-        # Save the history
-        hist_df = pd.DataFrame(history)
-        hist_df.to_csv(path / "history.csv", index=False)
-
-    # Save the data config
-    data_config = DataConfig(
-        EXPERIMENT_IDENTIFIER=experiment_identifier,
-        hamiltonian=(
-            hamiltonian if isinstance(hamiltonian, str) else hamiltonian.__name__
-        ),
-        control_sequence=control_sequence.to_dict(),
-    )
-
-    data_config.to_file(path)
-
-    return path
-
-
-@deprecated(reason="We encourage user to use atomic function to load each component")
-def load_model(path: pathlib.Path | str, skip_history: bool = False):
-    """Load model state, training history, data config from given folder path
-
-    Args:
-        path (pathlib.Path | str): Path to the folder.
-        skip_history (bool, optional): True to skip reading the history. Defaults to False.
-
-    Returns:
-        (ModelState, pd.DataFrame, DataConfig): tuple of Intance of `ModelState`, `pd.DataFrame`, and `DataConfig`.
-    """
-    if isinstance(path, str):
-        path = pathlib.Path(path)
-    model_state = ModelState.load(path / "model_state")
-    if skip_history:
-        hist_df = None
-    else:
-        hist_df = pd.read_csv(path / "history.csv").to_dict(orient="records")
-    data_config = DataConfig.from_file(path)
-
-    return (
-        model_state,
-        hist_df,
-        data_config,
-    )
 
 
 def hermitian(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
@@ -712,149 +577,3 @@ class ModelData:
             return False
 
         return True if value.config == self.config else False
-
-
-class StatisticalModel(ModelData):
-    pass
-
-
-@deprecated
-class BasicBlackBox(nn.Module):
-    feature_size: int
-    hidden_sizes_1: typing.Sequence[int] = (20, 10)
-    hidden_sizes_2: typing.Sequence[int] = (20, 10)
-    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
-
-    NUM_UNITARY_PARAMS: int = 3
-    NUM_DIAGONAL_PARAMS: int = 2
-
-    @nn.compact
-    def __call__(self, x: jnp.ndarray):
-        x = nn.Dense(features=self.feature_size)(x)
-        # Apply a activation function
-        x = nn.relu(x)
-        # Apply a dense layer for each hidden size
-        for hidden_size in self.hidden_sizes_1:
-            x = nn.Dense(features=hidden_size)(x)
-            x = nn.relu(x)
-
-        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
-        for op in self.pauli_operators:
-            # ! Hotfix for the typing complaint
-            # ! That _x might be unbound. But it is actually bound.
-            _x = jnp.zeros_like(x)
-            # Sub hidden layer
-            for hidden_size in self.hidden_sizes_2:
-                _x = nn.Dense(features=hidden_size)(x)
-                _x = nn.relu(_x)
-
-            Wos_params[op] = dict()
-            # For the unitary part, we use a dense layer with 3 features
-            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS)(_x)
-            # Apply sigmoid to this layer
-            unitary_params = 2 * jnp.pi * nn.sigmoid(unitary_params)
-            # For the diagonal part, we use a dense layer with 1 feature
-            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS)(_x)
-            # Apply the activation function
-            diag_params = nn.tanh(diag_params)
-
-            Wos_params[op] = {
-                "U": unitary_params,
-                "D": diag_params,
-            }
-
-        return Wos_params
-
-
-@deprecated
-class BasicBlackBoxV2(nn.Module):
-    hidden_sizes_1: typing.Sequence[int] = (20, 10)
-    hidden_sizes_2: typing.Sequence[int] = (20, 10)
-    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
-
-    NUM_UNITARY_PARAMS: int = 3
-    NUM_DIAGONAL_PARAMS: int = 2
-
-    @nn.compact
-    def __call__(self, x: jnp.ndarray):
-        # Apply a dense layer for each hidden size
-        for hidden_size in self.hidden_sizes_1:
-            x = nn.Dense(features=hidden_size)(x)
-            x = nn.relu(x)
-
-        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
-        for op in self.pauli_operators:
-            # Sub hidden layer
-            # Copy the input
-            _x = jnp.copy(x)
-            for hidden_size in self.hidden_sizes_2:
-                _x = nn.Dense(features=hidden_size)(_x)
-                _x = nn.relu(_x)
-
-            Wos_params[op] = dict()
-            # For the unitary part, we use a dense layer with 3 features
-            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
-                _x
-            )
-            # Apply sigmoid to this layer
-            unitary_params = 2 * jnp.pi * nn.sigmoid(unitary_params)
-            # For the diagonal part, we use a dense layer with 1 feature
-            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
-                _x
-            )
-            # Apply the activation function
-            diag_params = nn.tanh(diag_params)
-
-            Wos_params[op] = {
-                "U": unitary_params,
-                "D": diag_params,
-            }
-
-        return Wos_params
-
-
-@deprecated
-class BasicBlackBoxV3(nn.Module):
-    hidden_sizes_1: typing.Sequence[int] = (20, 10)
-    hidden_sizes_2: typing.Sequence[int] = (20, 10)
-    pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
-
-    NUM_UNITARY_PARAMS: int = 3
-    NUM_DIAGONAL_PARAMS: int = 2
-
-    @nn.compact
-    def __call__(self, x: jnp.ndarray):
-        # Apply a dense layer for each hidden size
-        for hidden_size in self.hidden_sizes_1:
-            x = nn.Dense(features=hidden_size)(x)
-            x = nn.relu(x)
-
-        Wos_params: dict[str, dict[str, jnp.ndarray]] = dict()
-        for op in self.pauli_operators:
-            # Sub hidden layer
-            # Copy the input
-            _x = jnp.copy(x)
-            for hidden_size in self.hidden_sizes_2:
-                _x = nn.Dense(features=hidden_size)(_x)
-                _x = nn.relu(_x)
-
-            Wos_params[op] = dict()
-            # For the unitary part, we use a dense layer with 3 features
-            unitary_params = nn.Dense(features=self.NUM_UNITARY_PARAMS, name=f"U_{op}")(
-                _x
-            )
-            # Apply sigmoid to this layer
-            unitary_params = 2 * jnp.pi * nn.hard_sigmoid(unitary_params)
-            # For the diagonal part, we use a dense layer with 1 feature
-            diag_params = nn.Dense(features=self.NUM_DIAGONAL_PARAMS, name=f"D_{op}")(
-                _x
-            )
-            # Apply the activation function
-            diag_params = (2 * nn.hard_sigmoid(diag_params)) - 1
-
-            Wos_params[op] = {
-                "U": unitary_params,
-                "D": diag_params,
-            }
-
-        return Wos_params
