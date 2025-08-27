@@ -80,6 +80,10 @@ uv run --python 3.12 --with '.[test]' pytest tests/experimental/.
 uv run -m doctest src/inspeqtor/experimental/utils.py
 ```
 
+```bash title="Test with live logging"
+uv run -m doctest src/inspeqtor/experimental/utils.py --log-cli-level=INFO
+```
+
 ## Code Quality
 
 ```bash title="Run linting with Ruff"

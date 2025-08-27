@@ -66,7 +66,7 @@ SVIRunResult = namedtuple(
 def make_flax_probabilistic_graybox_model(
     name: str,  # graybox
     base_model: nn.Module | nnx.Module,
-    model_prediction_to_expvals_fn: typing.Callable[..., jnp.ndarray],
+    adapter_fn: typing.Callable[..., jnp.ndarray],
     prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
     flax_module: typing.Callable = random_flax_module,
 ):
@@ -104,7 +104,7 @@ def make_flax_probabilistic_graybox_model(
         output = model(control_parameters)
 
         # With unitary and Wo, calculate expectation values
-        expvals = model_prediction_to_expvals_fn(output, unitaries)
+        expvals = adapter_fn(output, unitaries)
 
         return expvals
 
@@ -115,11 +115,9 @@ def make_flax_probabilistic_graybox_model_with_spam(
     name: str,  # graybox
     base_model: nn.Module,
     spam_model: typing.Callable,
-    model_prediction_to_expvals_fn: typing.Callable[..., jnp.ndarray],
+    adapter_fn: typing.Callable[..., jnp.ndarray],
     prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
 ):
-    # module = partial(random_flax_module, prior=prior) if enable_bnn else flax_module
-
     if flax_module in [random_flax_module, random_nnx_module]:
         module = partial(flax_module, prior=prior)
     else:
@@ -158,7 +156,7 @@ def make_flax_probabilistic_graybox_model_with_spam(
         output = {"model_params": model_output, "spam_params": spam_params}
 
         # With unitary and Wo, calculate expectation values
-        expvals = model_prediction_to_expvals_fn(output, unitaries)
+        expvals = adapter_fn(output, unitaries)
 
         return expvals
 
