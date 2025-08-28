@@ -122,7 +122,7 @@ class BaseControl(ABC):
 class ControlSequence:
     """Control sequence, expect to be sum of atomic control."""
 
-    pulses: typing.Sequence[BaseControl]
+    controls: typing.Sequence[BaseControl]
     pulse_length_dt: int
     validate: bool = True
 
@@ -135,7 +135,7 @@ class ControlSequence:
         # Must check that the sum of the pulse lengths is equal to the total length of the pulse sequence
         key = jax.random.PRNGKey(0)
         subkeys = jax.random.split(key, self.pulse_length_dt)
-        for pulse_key, pulse in zip(subkeys, self.pulses):
+        for pulse_key, pulse in zip(subkeys, self.controls):
             params = sample_params(pulse_key, *pulse.get_bounds())
             waveform = pulse.get_waveform(params)
             assert isinstance(waveform, jax.Array)
@@ -170,7 +170,7 @@ class ControlSequence:
         subkeys = jax.random.split(key, self.pulse_length_dt)
 
         params_list: list[ParametersDictType] = []
-        for pulse_key, pulse in zip(subkeys, self.pulses):
+        for pulse_key, pulse in zip(subkeys, self.controls):
             params = sample_params(pulse_key, *pulse.get_bounds())
             params_list.append(params)
 
@@ -193,7 +193,7 @@ class ControlSequence:
         # Create base waveform
         total_waveform = jnp.zeros(self.pulse_length_dt, dtype=jnp.complex64)
 
-        for _params, _pulse in zip(params_list, self.pulses):
+        for _params, _pulse in zip(params_list, self.controls):
             waveform = _pulse.get_waveform(_params)
             total_waveform += waveform
 
@@ -209,7 +209,7 @@ class ControlSequence:
             typing.Callable: Envelope function
         """
         callables = []
-        for _params, _pulse in zip(params_list, self.pulses):
+        for _params, _pulse in zip(params_list, self.controls):
             callables.append(_pulse.get_envelope(_params))
 
         # Create a function that returns the sum of the envelopes
@@ -226,7 +226,7 @@ class ControlSequence:
         """
         lower_bounds = []
         upper_bounds = []
-        for pulse in self.pulses:
+        for pulse in self.controls:
             lower, upper = pulse.get_bounds()
             lower_bounds.append(lower)
             upper_bounds.append(upper)
@@ -258,34 +258,34 @@ class ControlSequence:
         """
         return {
             **asdict(self),
-            "pulses": [
+            "controls": [
                 {**pulse.to_dict(), "_name": pulse.__class__.__name__}
-                for pulse in self.pulses
+                for pulse in self.controls
             ],
         }
 
     @classmethod
     def from_dict(
-        cls, data: dict[str, typing.Any], pulses: typing.Sequence[type[BaseControl]]
+        cls, data: dict[str, typing.Any], controls: typing.Sequence[type[BaseControl]]
     ) -> "ControlSequence":
         """Construct the control sequence from dict.
 
         Args:
             data (dict[str, typing.Any]): Dict contain information for sequence construction
-            pulses (typing.Sequence[type[BasePulse]]): Constructor of the controls
+            control (typing.Sequence[type[BasePulse]]): Constructor of the controls
 
         Returns:
-            PulseSequence: Instance of the control sequence.
+            ControlSequence: Instance of the control sequence.
         """
         parsed_data = []
-        for d, pulse in zip(data["pulses"], pulses):
+        for d, pulse in zip(data["controls"], controls):
             assert isinstance(d, dict), f"Expected dict, got {type(d)}"
 
             # remove the _name key
             d.pop("_name")
             parsed_data.append(pulse.from_dict(d))
 
-        data["pulses"] = parsed_data
+        data["controls"] = parsed_data
         data["validate"] = True
 
         return cls(**data)
@@ -307,16 +307,16 @@ class ControlSequence:
     def from_file(
         cls,
         path: typing.Union[str, pathlib.Path],
-        pulses: typing.Sequence[type[BaseControl]],
+        controls: typing.Sequence[type[BaseControl]],
     ) -> "ControlSequence":
         """Construct control seqence from path
 
         Args:
             path (typing.Union[str, pathlib.Path]): Path to configuration of control sequence.
-            pulses (typing.Sequence[type[BasePulse]]): Constructor of the control in the sequence.
+            controls (typing.Sequence[type[BasePulse]]): Constructor of the control in the sequence.
 
         Returns:
-            PulseSequence: Control sequence instance.
+            ControlSequence: Control sequence instance.
         """
         if isinstance(path, str):
             path = pathlib.Path(path)
@@ -324,7 +324,7 @@ class ControlSequence:
         with open(path / "control_sequence.json", "r") as f:
             dict_control_sequence = json.load(f)
 
-        return cls.from_dict(dict_control_sequence, pulses=pulses)
+        return cls.from_dict(dict_control_sequence, controls=controls)
 
 
 def array_to_list_of_params(
@@ -377,7 +377,7 @@ def get_param_array_converter(control_sequence: ControlSequence):
     >>> array_to_list_of_params_fn, list_of_params_to_array_fn = get_param_array_converter(control_sequence)
 
         Args:
-        control_sequence (PulseSequence): The pulse sequence object.
+        control_sequence (ControlSequence): The pulse sequence object.
 
     Returns:
         typing.Any: A tuple containing two functions. The first function converts an array to a list of parameter dictionaries, and the second function converts a list of parameter dictionaries to an array.
@@ -422,7 +422,7 @@ def construct_control_sequence_reader(
             path (typing.Union[str, pathlib.Path]): Path of the saved control sequence configuration.
 
         Returns:
-            PulseSequence: Control sequence instance.
+            ControlSeqence: Control sequence instance.
         """
         if isinstance(path, str):
             path = pathlib.Path(path)
@@ -430,14 +430,16 @@ def construct_control_sequence_reader(
         with open(path / "control_sequence.json", "r") as f:
             control_sequence_dict = json.load(f)
 
-        parsed_pulses = []
+        parsed_controls = []
 
-        for pulse_dict in control_sequence_dict["pulses"]:
+        for pulse_dict in control_sequence_dict["controls"]:
             for control_class in controls_list:
                 if pulse_dict["_name"] == control_class.__name__:
-                    parsed_pulses.append(control_class)
+                    parsed_controls.append(control_class)
 
-        return ControlSequence.from_dict(control_sequence_dict, pulses=parsed_pulses)
+        return ControlSequence.from_dict(
+            control_sequence_dict, controls=parsed_controls
+        )
 
     return control_sequence_reader
 
@@ -446,7 +448,7 @@ def get_envelope_transformer(control_sequence: ControlSequence):
     """Generate get_envelope function with control parameter array as an input instead of list form
 
     Args:
-        control_sequence (PulseSequence): Control seqence instance
+        control_sequence (ControlSequence): Control seqence instance
 
     Returns:
         typing.Callable[[jnp.ndarray], typing.Any]: Transformed get envelope function

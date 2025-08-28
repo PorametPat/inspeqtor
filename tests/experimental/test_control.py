@@ -16,7 +16,7 @@ def test_jax_DRAG_pulse():
     # Check to_dict and from_dict
     control_sequence_dict = control_sequence.to_dict()
     control_sequence_from_dict = sq.control.ControlSequence.from_dict(
-        control_sequence_dict, pulses=[sq.predefined.MultiDragPulseV3] * 1
+        control_sequence_dict, controls=[sq.predefined.MultiDragPulseV3] * 1
     )
 
     # Check that the waveform is the same after serialization and deserialization

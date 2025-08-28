@@ -121,7 +121,7 @@ def prepare_data(
 
     Args:
         exp_data (ExperimentData): `ExperimentData` instance
-        control_sequence (PulseSequence): Control sequence of the experiment
+        control_sequence (ControlSequence): Control sequence of the experiment
         whitebox (typing.Callable): Ideal unitary solver.
 
     Returns:

@@ -105,7 +105,7 @@ def test_save_and_load_model(tmp_path, load_dataset, models):
     )
 
     model = sq.probabilistic.make_probabilistic_model(
-        graybox_probabilistic_model=graybox_model,
+        predictive_model=graybox_model,
     )
 
     guide = sq.probabilistic.auto_diagonal_normal_guide(

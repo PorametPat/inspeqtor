@@ -6,6 +6,7 @@ from functools import partial
 import inspeqtor.experimental as sq
 from scipy.stats import unitary_group
 import chex
+import logging
 
 jax.config.update("jax_enable_x64", True)
 
@@ -366,8 +367,8 @@ def test_crosscheck(unitaries):
     # chex.assert_trees_all_close(fidelities[-1], jnp.ones_like(fidelities[-1]))
 
 
-@pytest.mark.skip(reason="4 / 320 mismatch somehow")
-def test_crosscheck_pennylane_difflax():
+# There used to be issue with get_drag_control_sequence at near zero area with the diffrax solver.
+def test_crosscheck_difflax():
     qubit_info = sq.predefined.get_mock_qubit_information()
     control_sequence = sq.predefined.get_drag_control_sequence(
         qubit_info.drive_strength
@@ -395,9 +396,11 @@ def test_crosscheck_pennylane_difflax():
             sq.physics.solver,
             t_eval=t_eval,
             hamiltonian=hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex64),
+            y0=jnp.eye(2, dtype=jnp.complex128),
             t0=0,
             t1=control_sequence.pulse_length_dt * time_step,
+            rtol=1e-8,
+            atol=1e-8,
         )
     )
 
@@ -416,7 +419,7 @@ def test_crosscheck_pennylane_difflax():
 
     frame = (jnp.pi * qubit_info.frequency) * sq.constant.Z
 
-    rotating_hamiltonian = sq.physics.auto_rotating_frame_hamiltonian(
+    rotating_hamiltonian = sq.physics.explicit_auto_rotating_frame_hamiltonian(
         hamiltonian, frame
     )
 
@@ -432,26 +435,9 @@ def test_crosscheck_pennylane_difflax():
     )
     auto_rotated_unitaries = jitted_simulator(hamil_params)
 
-    # # NOTE: Crosscheck with pennylane
-    # qml_simulator = get_simulator(
-    #     qubit_info=qubit_info,
-    #     t_eval=t_eval,
-    #     hamiltonian=rotating_transmon_hamiltonian,
-    # )
-    # qml_unitary = qml_simulator(control_sequence.get_waveform(params))
-
-    # NOTE: Crosscheck with the hamiltonian_fn flow
-    # backend = FakeJakartaV2()
-    # backend_properties = qk.IBMQDeviceProperties.from_backend(
-    #     backend=backend, qubit_indices=[0]
-    # )
-    # backend_properties.qubit_informations = [qubit_info]
-
     qubit_informations = [sq.predefined.get_mock_qubit_information()]
     coupling_infos = []
     dt = 2 / 9
-
-    # coupling_infos = qk.get_coupling_strengths(backend_properties)
 
     total_hamiltonian = sq.physics.gen_hamiltonian_from(
         qubit_informations=qubit_informations,
@@ -486,7 +472,7 @@ def test_crosscheck_pennylane_difflax():
     }
 
     frame = total_hamiltonian[static_terms[0]].operator
-    rotating_hamiltonian = sq.physics.auto_rotating_frame_hamiltonian(
+    rotating_hamiltonian = sq.physics.explicit_auto_rotating_frame_hamiltonian(
         hamiltonian, frame
     )
 
@@ -512,18 +498,139 @@ def test_crosscheck_pennylane_difflax():
     )
 
     unitaries_tuple = [
-        (unitaries_manual_rotated, auto_rotated_unitaries),
-        # (unitaries_manual_rotated, qml_unitary),
-        # (qml_unitary, auto_rotated_unitaries),
-        (unitaries_manual_rotated, unitaries_hamiltonian_fn),
-        (unitaries_manual_rotated, unitaries_v5),
+        (
+            unitaries_manual_rotated,
+            unitaries_hamiltonian_fn,
+            "From automatic hamiltonian construction fn",
+        ),
+        (unitaries_manual_rotated, unitaries_v5, "Predefined auto rotate"),
+        (unitaries_manual_rotated, auto_rotated_unitaries, "Auto rotate"),
     ]
 
-    for uni_1, uni_2 in unitaries_tuple:
+    for uni_1, uni_2, name in unitaries_tuple:
+        logging.info(f"Test with: {name}")
         fidelities = jax.vmap(sq.physics.gate_fidelity, in_axes=(0, 0))(uni_1, uni_2)
 
-        # assert jnp.allclose(fidelities, jnp.ones_like(fidelities), rtol=1e-3)
         chex.assert_trees_all_close(fidelities, jnp.ones_like(fidelities))
+
+
+def get_diffrax_solver(hamiltonian, control_seq, dt):
+    t_eval = jnp.linspace(
+        0, control_seq.pulse_length_dt * dt, control_seq.pulse_length_dt
+    )
+    diffrax_solver = partial(
+        sq.physics.solver,
+        t_eval=t_eval,
+        hamiltonian=hamiltonian,
+        y0=jnp.eye(2, dtype=jnp.complex128),
+        t0=0,
+        t1=control_seq.pulse_length_dt * dt,
+        rtol=1e-7,
+        atol=1e-7,
+    )
+    return diffrax_solver
+
+
+def get_trotter_solver(hamiltonian, control_seq, dt):
+    TROTTER_STEPS = 10_000
+    trotter_solver = sq.physics.make_trotterization_solver(
+        hamiltonian=hamiltonian,
+        control_sequence=control_seq,
+        dt=dt,
+        trotter_steps=TROTTER_STEPS,
+    )
+    return trotter_solver
+
+
+def test_trotter_diffrax_close():
+    data_model = sq.predefined.get_predefined_data_model_m1()
+
+    hamiltonian = data_model.total_hamiltonian
+    control_seq = data_model.control_sequence
+    dt = data_model.dt
+
+    trotter_solver = get_trotter_solver(hamiltonian, control_seq, dt)
+
+    diffrax_solver = get_diffrax_solver(hamiltonian, control_seq, dt)
+
+    _, l2a_fn = sq.control.get_param_array_converter(control_seq)
+    params = l2a_fn(control_seq.sample_params(jax.random.key(0)))
+
+    trotter_unitary = trotter_solver(params)
+    diffrax_unitary = diffrax_solver(params)
+
+    assert sq.physics.gate_fidelity(trotter_unitary[-1], diffrax_unitary[-1]) > 0.999
+
+
+def get_manual_rotated_hamiltonian(qubit_info, control_seq, dt):
+    hamiltonian = partial(
+        sq.predefined.rotating_transmon_hamiltonian,
+        qubit_info=qubit_info,
+        signal=sq.physics.signal_func_v5(
+            sq.control.get_envelope_transformer(control_seq), qubit_info.frequency, dt
+        ),
+    )
+    return hamiltonian
+
+
+def get_auto_rotated_hamiltonian(qubit_info, control_seq, dt):
+    hamiltonian = partial(
+        sq.predefined.transmon_hamiltonian,
+        qubit_info=qubit_info,
+        signal=sq.physics.signal_func_v5(
+            sq.control.get_envelope_transformer(control_seq), qubit_info.frequency, dt
+        ),
+    )
+    frame = (jnp.pi * qubit_info.frequency) * sq.constant.Z
+
+    rotating_hamiltonian = sq.physics.auto_rotating_frame_hamiltonian(
+        hamiltonian, frame
+    )
+    return rotating_hamiltonian
+
+
+def test_auto_rotate_trotter():
+    data_model = sq.predefined.get_predefined_data_model_m1()
+
+    qubit_info = sq.predefined.get_mock_qubit_information()
+    control_seq = data_model.control_sequence
+    dt = data_model.dt
+    _, l2a_fn = sq.control.get_param_array_converter(control_seq)
+    params = l2a_fn(control_seq.sample_params(jax.random.key(0)))
+
+    hamiltonian_1 = get_manual_rotated_hamiltonian(qubit_info, control_seq, dt)
+    trotter_solver = get_trotter_solver(hamiltonian_1, control_seq, dt)
+    unitary_1 = trotter_solver(params)
+
+    hamiltonian_2 = get_auto_rotated_hamiltonian(qubit_info, control_seq, dt)
+    trotter_solver = get_trotter_solver(hamiltonian_2, control_seq, dt)
+    unitary_2 = trotter_solver(params)
+    fideilities = jax.vmap(sq.physics.gate_fidelity, in_axes=(0, 0))(
+        unitary_1, unitary_2
+    )
+    chex.assert_trees_all_close(fideilities, jnp.ones_like(fideilities))
+
+
+def test_auto_rotate_diffrax():
+    data_model = sq.predefined.get_predefined_data_model_m1()
+
+    qubit_info = sq.predefined.get_mock_qubit_information()
+    control_seq = data_model.control_sequence
+    dt = data_model.dt
+    _, l2a_fn = sq.control.get_param_array_converter(control_seq)
+    params = l2a_fn(control_seq.sample_params(jax.random.key(0)))
+
+    hamiltonian_1 = get_manual_rotated_hamiltonian(qubit_info, control_seq, dt)
+    trotter_solver = get_diffrax_solver(hamiltonian_1, control_seq, dt)
+    unitary_1 = trotter_solver(params)
+
+    hamiltonian_2 = get_auto_rotated_hamiltonian(qubit_info, control_seq, dt)
+    trotter_solver = get_diffrax_solver(hamiltonian_2, control_seq, dt)
+    unitary_2 = trotter_solver(params)
+    fideilities = jax.vmap(sq.physics.gate_fidelity, in_axes=(0, 0))(
+        unitary_1, unitary_2
+    )
+    chex.assert_trees_all_close(fideilities, jnp.ones_like(fideilities))
 
 
 @pytest.mark.parametrize(
@@ -552,38 +659,6 @@ def wrong_to_superop(U: jnp.ndarray) -> jnp.ndarray:
     return jnp.kron(U, U.conj())
 
 
-# @pytest.mark.parametrize(
-#     "gate",
-#     [
-#         jnp.eye(2),
-#         sq.constant.X,
-#         sq.constant.Y,
-#         sq.constant.Z,
-#         # jax.scipy.linalg.sqrtm(sq.constant.X),
-#         sq.constant.SX,
-#     ],
-# )
-# def test_process_tomography(gate: jnp.ndarray):
-#     init_0 = jnp.array(sq.data.State.from_label("0", dm=True))
-#     init_1 = jnp.array(sq.data.State.from_label("1", dm=True))
-#     init_p = jnp.array(sq.data.State.from_label("+", dm=True))
-#     init_m = jnp.array(sq.data.State.from_label("r", dm=True))
-
-#     rho_0 = gate @ init_0 @ gate.conj().T
-#     rho_1 = gate @ init_1 @ gate.conj().T
-#     rho_p = gate @ init_p @ gate.conj().T
-#     rho_m = gate @ init_m @ gate.conj().T
-
-#     # Normally, those rho would be retrived from state tomography.
-#     assert jnp.allclose(
-#         sq.physics.avg_gate_fidelity_from_superop(
-#             bm.process_tomography(rho_0, rho_1, rho_p, rho_m),
-#             sq.physics.to_superop(gate),
-#         ),
-#         jnp.array(1.0),
-#     )
-
-
 def test_SX():
     state_0 = sq.data.State.from_label("0", dm=True)
     state_1 = sq.data.State.from_label("1", dm=True)
@@ -598,50 +673,6 @@ def theoretical_fidelity_of_amplitude_dampling_channel_with_itself(gamma):
     process_fidelity = 1 - gamma + (gamma**2) / 2
 
     return (2 * process_fidelity + 1) / (2 + 1)
-
-
-# @pytest.mark.skip("Remove forest-benchmarking dependency")
-# @pytest.mark.parametrize(
-#     "gate_with_fidelity",
-#     [
-#         ([jnp.eye(2)], jnp.array(1.0)),
-#         ([sq.constant.X], jnp.array(1.0)),
-#         ([sq.constant.Y], jnp.array(1.0)),
-#         ([sq.constant.Z], jnp.array(1.0)),
-#         ([jax.scipy.linalg.sqrtm(sq.constant.X)], jnp.array(1.0)),
-#         ([sq.constant.SX], jnp.array(1.0)),
-#         (
-#             [
-#                 jnp.array([[1, 0], [0, jnp.sqrt(1 - 0.2)]]),
-#                 jnp.array([[0, jnp.sqrt(0.2)], [0, 0]]),
-#             ],
-#             theoretical_fidelity_of_amplitude_dampling_channel_with_itself(0.2),
-#         ),
-#     ],
-# )
-# def test_forest_process_tomography(gate_with_fidelity: list[jnp.ndarray]):
-#     gate = gate_with_fidelity[0]
-#     expected_fidelity = gate_with_fidelity[1]
-
-#     expvals = []
-#     for exp in sq.constant.default_expectation_values_order:
-#         rho_i = jnp.array(sq.data.State.from_label(exp.initial_state, dm=True))
-#         rho_f = ot.apply_kraus_ops_2_state(gate, rho_i)  # pyright: ignore
-
-#         exp.expectation_value = float(
-#             jnp.trace(jnp.array(rho_f @ exp.observable_matrix)).real
-#         )
-#         expvals.append(exp)
-
-#     est_superoperator = ot.choi2superop(bm.forest_process_tomography(expvals))
-
-#     assert jnp.allclose(
-#         sq.physics.avg_gate_fidelity_from_superop(
-#             est_superoperator,  # pyright: ignore
-#             ot.kraus2superop(np.array(gate)),  # pyright: ignore
-#         ),
-#         expected_fidelity,
-#     )
 
 
 def test_direct_AFG_estimation_coefficients():

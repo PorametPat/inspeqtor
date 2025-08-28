@@ -161,7 +161,7 @@ def make_flax_probabilistic_graybox_model_with_spam(
 
 
 def make_probabilistic_model(
-    graybox_probabilistic_model: typing.Callable[..., jnp.ndarray],
+    predictive_model: typing.Callable[..., jnp.ndarray],
     shots: int = 1,
     block_graybox: bool = False,
     separate_observables: bool = False,
@@ -188,11 +188,11 @@ def make_probabilistic_model(
     ):
         key = numpyro.prng_key()
         with handlers.block(), handlers.seed(rng_seed=key):
-            expvals = graybox_probabilistic_model(control_parameters, unitaries)
+            expvals = predictive_model(control_parameters, unitaries)
 
         return expvals
 
-    graybox_fn = block_graybox_fn if block_graybox else graybox_probabilistic_model
+    graybox_fn = block_graybox_fn if block_graybox else predictive_model
 
     def bernoulli_model(
         control_parameters: jnp.ndarray,
@@ -546,9 +546,7 @@ def get_trace(fn, key=jax.random.key(0)):
     """
 
     def inner(*args, **kwargs):
-        return numpyro.handlers.trace(numpyro.handlers.seed(fn, key)).get_trace(
-            *args, **kwargs
-        )
+        return handlers.trace(handlers.seed(fn, key)).get_trace(*args, **kwargs)
 
     return inner
 
