@@ -11,7 +11,7 @@ def test_jax_DRAG_pulse():
     waveform = control_sequence.get_waveform(params)
 
     # Check that the waveform is of the correct length
-    assert waveform.shape == (control_sequence.pulse_length_dt,)
+    assert waveform.shape == (control_sequence.total_dt,)
 
     # Check to_dict and from_dict
     control_sequence_dict = control_sequence.to_dict()

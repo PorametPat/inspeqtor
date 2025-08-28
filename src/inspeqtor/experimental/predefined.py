@@ -180,7 +180,7 @@ def get_gaussian_control_sequence(
                 max_theta=2 * jnp.pi,
             ),
         ],
-        pulse_length_dt=total_length,
+        total_dt=total_length,
     )
 
     return control_sequence
@@ -279,7 +279,7 @@ def get_two_axis_gaussian_control_sequence(
                 max_theta_y=2 * jnp.pi,
             ),
         ],
-        pulse_length_dt=total_length,
+        total_dt=total_length,
     )
 
     return control_sequence
@@ -372,7 +372,7 @@ def get_drag_pulse_v2_sequence(
                 max_beta=max_beta,
             ),
         ],
-        pulse_length_dt=total_length,
+        total_dt=total_length,
     )
 
     return control_sequence
@@ -442,7 +442,7 @@ def get_drag_control_sequence(
                 final_amp=1.0,
             )
         ],
-        pulse_length_dt=total_length,
+        total_dt=total_length,
     )
 
     return control_sequence
@@ -535,7 +535,7 @@ def get_multi_drag_control_sequence_v3():
     )
 
     control_sequence = ControlSequence(
-        pulse_length_dt=80,
+        total_dt=80,
         controls=[pulse],
     )
     return control_sequence
@@ -574,7 +574,7 @@ def get_mock_prefined_exp_v1(
         EXPERIMENT_TAGS=["test"],
         description="Generated for test",
         device_cycle_time_ns=2 / 9,
-        sequence_duration_dt=control_sequence.pulse_length_dt,
+        sequence_duration_dt=control_sequence.total_dt,
         instance="inspeqtor/tester",
         sample_size=sample_size,
     )
@@ -664,7 +664,7 @@ def generate_experimental_data(
         )
     else:
         t_eval = jnp.linspace(
-            0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
+            0, control_sequence.total_dt * dt, control_sequence.total_dt
         )
         noisy_simulator = jax.jit(
             partial(
@@ -673,7 +673,7 @@ def generate_experimental_data(
                 hamiltonian=hamiltonian,
                 y0=jnp.eye(2, dtype=jnp.complex64),
                 t0=0,
-                t1=control_sequence.pulse_length_dt * dt,
+                t1=control_sequence.total_dt * dt,
                 max_steps=max_steps,
             )
         )
@@ -775,7 +775,7 @@ def get_single_qubit_whitebox(
         typing.Callable[[jnp.ndarray], jnp.ndarray]: Whitebox with ODE solver
     """
     t_eval = jnp.linspace(
-        0, control_sequence.pulse_length_dt * dt, control_sequence.pulse_length_dt
+        0, control_sequence.total_dt * dt, control_sequence.total_dt
     )
 
     hamiltonian = partial(
@@ -794,7 +794,7 @@ def get_single_qubit_whitebox(
         hamiltonian=hamiltonian,
         y0=jnp.eye(2, dtype=jnp.complex64),
         t0=0,
-        t1=control_sequence.pulse_length_dt * dt,
+        t1=control_sequence.total_dt * dt,
         max_steps=max_steps,
     )
 

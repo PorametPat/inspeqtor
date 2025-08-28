@@ -123,24 +123,24 @@ class ControlSequence:
     """Control sequence, expect to be sum of atomic control."""
 
     controls: typing.Sequence[BaseControl]
-    pulse_length_dt: int
+    total_dt: int
     validate: bool = True
 
     def __post_init__(self):
-        # validate that each pulse have len of pulse_length_dt
+        # validate that each pulse have len of total_dt
         if self.validate:
             self._validate()
 
     def _validate(self):
         # Must check that the sum of the pulse lengths is equal to the total length of the pulse sequence
         key = jax.random.PRNGKey(0)
-        subkeys = jax.random.split(key, self.pulse_length_dt)
+        subkeys = jax.random.split(key, self.total_dt)
         for pulse_key, pulse in zip(subkeys, self.controls):
             params = sample_params(pulse_key, *pulse.get_bounds())
             waveform = pulse.get_waveform(params)
             assert isinstance(waveform, jax.Array)
             # Assert the waveform is of the correct length
-            assert waveform.shape == (self.pulse_length_dt,)
+            assert waveform.shape == (self.total_dt,)
             # Assert that all key of params dict is string and all value is jax.Array
             assert all(
                 [isinstance(k, str) for k in params.keys()]
@@ -167,7 +167,7 @@ class ControlSequence:
             list[ParametersDictType]: control parameters
         """
         # Split key for each pulse
-        subkeys = jax.random.split(key, self.pulse_length_dt)
+        subkeys = jax.random.split(key, self.total_dt)
 
         params_list: list[ParametersDictType] = []
         for pulse_key, pulse in zip(subkeys, self.controls):
@@ -191,7 +191,7 @@ class ControlSequence:
             params_list, total_waveform = sample(key)
         """
         # Create base waveform
-        total_waveform = jnp.zeros(self.pulse_length_dt, dtype=jnp.complex64)
+        total_waveform = jnp.zeros(self.total_dt, dtype=jnp.complex64)
 
         for _params, _pulse in zip(params_list, self.controls):
             waveform = _pulse.get_waveform(_params)

@@ -90,7 +90,6 @@ nav:
           - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
           - C&C: tutorials/tutorial_0003_cc.ipynb
           - Control Action: tutorials/tutorial_0002_control.ipynb
-          - Marimo: tutorials/tutortial_0004_marimo.md
     - explanation.md
     - How-To Guides:
           - Generate dataset: guides/generate-dataset.md

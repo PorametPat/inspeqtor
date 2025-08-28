@@ -631,7 +631,7 @@ def make_trotterization_solver(
         typing.Callable[..., jnp.ndarray]: Trotterization Whitebox function
     """
     hamiltonian = jax.jit(hamiltonian)
-    time_step = jnp.linspace(0, control_sequence.pulse_length_dt * dt, trotter_steps)
+    time_step = jnp.linspace(0, control_sequence.total_dt * dt, trotter_steps)
 
     def whitebox(control_parameters: jnp.ndarray):
         hamiltonians = jax.vmap(hamiltonian, in_axes=(None, 0))(
