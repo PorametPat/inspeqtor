@@ -5,6 +5,32 @@
 
 We catergorized characterization and calibration of the quantum device into multiple phase. You might not necessary needs to do or understand every phases and chose to work with specific phases.
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant Model as Predictive Model
+    participant Device as Quantum Device
+    note over User, Device: Characterization
+    loop 
+    User ->> Device: Perform experiments
+    Device ->> User: Data
+    User ->> Model: Characterization
+    opt Selection strategy
+        Model ->> User: Select new experiments
+    end
+    end
+    note over User, Device: Calibration
+    loop Optimization
+    User <<->> Model: Find the control that <br/> maximize fidelity
+    end
+    User ->> Device: Deploy calibrated control
+    Note over User, Device: Operational
+    loop Operating and monitering
+    User ->> Device: Use device
+    User ->> Device: Check the quality
+    end
+```
+
 - [Experimental Phase](#experimental-phase) is a preparation of the characterization of the quantum device. It might dictate the constraint of your control calibration too.
 - [Characterization Phase](#characterization-phase)
 - [Control Calibration Phase](#control-calibration-phase)
@@ -56,40 +82,63 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant User
-    participant ExpData as Experimental Data<br/>(Predefined Model M1)
-    participant Model as Neural Network Model
-    participant Optimizer as Training Optimizer
-    participant Storage as File System
-    
-    User->>ExpData: Generate synthetic experimental data
-    Note over ExpData: Predefined data model M1<br/>100 samples with shot noise<br/>Trotter simulation (10,000 steps)
-    ExpData->>User: Return measurement results & whitebox solver
-    
-    User->>User: Prepare dataset
-    Note over User: Split data (90% train, 10% test)<br/>Apply DRAG feature mapping
-    
-    User->>Model: Create WoModel architecture
-    Note over Model: Neural network with<br/>hidden_sizes_1=[10], hidden_sizes_2=[10]
-    
-    User->>Optimizer: Setup optimizer (5000 epochs)
-    
-    loop Training Loop (5000 epochs)
-        User->>Model: Forward pass with training data
-        Model->>User: Return predictions
-        User->>User: Calculate MSEE loss
-        User->>Optimizer: Update model parameters
-        Optimizer->>Model: Apply gradients
-        User->>User: Validate on test data
-        User->>User: Log training & validation metrics
+    participant Data
+    participant Optimizer
+    participant Models
+
+    Note over User,Data: Data Preparation
+    User->>Data: Prepare & Split Data
+    Data-->>User: Return Training & Testing Data
+
+    Note over User,Models: Model Initialization
+    alt Statistical Model (DNN)
+        User->>Optimizer: Define Model & Loss Function
+        Optimizer->>Models: Initialize Parameters
+    else Probabilistic Model (BNN)
+        User->>Optimizer: Define Model, Prior, Guide, & SVI
+        Optimizer->>Models: Initialize SVI State
+    end
+
+    Note over Optimizer,Models: Model Training
+    User->>Optimizer: Start Training Loop
+
+    loop For each epoch
+        Optimizer->>Models: Update parameters
+        Note right of Optimizer: Validates against testing data
+    end
+
+    Optimizer-->>User: Return Trained Model
+
+```
+
+## Alternative Characterization phase
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Strategy as Abstract Strategy
+    participant Model
+    participant Device
+
+    User->>Strategy: Prepare Experiment
+
+    loop Characterization Loop
+        Strategy->>Strategy: Select next experiment parameters
+        Note right of Strategy: This can be Random (Open-Loop) or <br> Model-Informed/Adaptive (Closed-Loop).
+
+        Strategy-->>User: Recommend experiment
+
+        User->>Device: Perform experiment
+        Device-->>User: Measurement data
+
+        User->>Model: Update/Characterize Model
+        
+        Model-->>Strategy: Provide Posterior Model (if adaptive)
+
+        Strategy->>Strategy: Check termination condition
     end
     
-    User->>Storage: Save trained model
-    Note over Storage: ModelData with params & config<br/>saved as JSON file
-    Storage->>User: Confirm model saved
-    
-    User->>User: Create predictive model function
-    Note over User: Embed whitebox solver for<br/>complete parameter-to-expectation pipeline
-
+    Strategy-->>User: Return Final Characterized Model
 ```
 
 ## Control Calibration Phase
@@ -97,46 +146,31 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant User
-    participant PredModel as Predictive Model
-    participant CostFn as Cost Function
-    participant Calibrator as Parameter Optimizer
-    participant QDevice as Quantum Device
-    participant Storage as File System
+    participant Optimizer
+    participant CostFunction as Cost Function <br/> (e.g., Avg. Gate Infidelity)
+    participant Model as PredictiveModel
+    participant Device as Quantum Device<br/>(Real or Simulator)
     
-    User->>Storage: Load trained model
-    Storage->>User: Return ModelData (params & config)
+    Note over User, Model: Starts with Trained Predictive Model from Characterization
     
-    User->>PredModel: Initialize predictive model
-    Note over PredModel: Combine trained model with<br/>whitebox solver for full pipeline
+    User->>CostFunction: Define(Target Gate, PredictiveModel)
+    User->>Optimizer: Start Optimization(CostFunction, Initial Params)
     
-    User->>User: Define target quantum gate (√X)
-    User->>CostFn: Create AGF-based cost function
-    Note over CostFn: Minimize (1 - AGF)²<br/>where AGF = Average Gate Fidelity
-    
-    User->>User: Set parameter bounds from control sequence
-    User->>Calibrator: Initialize optimization
-    Note over Calibrator: 1000 iterations with<br/>random initial parameters
-    
-    loop Calibration Loop (1000 iterations)
-        User->>PredModel: Predict expectation values for params
-        PredModel->>User: Return 18 expectation values
-        User->>CostFn: Calculate Average Gate Fidelity
-        CostFn->>User: Return infidelity cost & AGF
-        User->>Calibrator: Update control parameters
-        Calibrator->>User: Return optimized params
-        User->>User: Log optimization progress
+    loop Optimization Steps
+        Optimizer->>CostFunction: Evaluate(current_params)
+        CostFunction->>Model: Predict(current_params)
+        Model-->>CostFunction: Return Expectation Values
+        CostFunction-->>Optimizer: Return Loss (Infidelity)
+        Optimizer->>Optimizer: Update Parameters
     end
     
-    User->>User: Extract final optimized parameters
-    Note over User: Final params: [1.938, 0.051]<br/>Predicted AGF: 0.975
+    Optimizer-->>User: Return Optimized Control Parameters
     
-    Note over User,QDevice: Benchmarking Phase
-    User->>QDevice: Test with optimized parameters
-    QDevice->>User: Return actual expectation values
-    User->>User: Calculate real AGF: 0.973
-    
-    Note over User: Validation: Predicted vs Actual<br/>AGF difference < 0.002
-
+    %% alt Benchmarking
+    User->>Device: Execute(Optimized Params)
+    Device-->>User: Return Measured Fidelity
+    User->>Model: Predict(Optimized Params)
+    Model-->>User: Return Predicted Fidelity
 ```
 
 ## Physics

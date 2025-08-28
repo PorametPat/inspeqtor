@@ -164,13 +164,13 @@ def get_gaussian_control_sequence(
         max_amp (float, optional): The maximum amplitude. Defaults to 0.5.
 
     Returns:
-        PulseSequence: Control sequence instance
+        ControlSequence: Control sequence instance
     """
     total_length = 320
     dt = 2 / 9
 
     control_sequence = ControlSequence(
-        pulses=[
+        controls=[
             GaussianPulse(
                 duration=total_length,
                 qubit_drive_strength=qubit_info.drive_strength,
@@ -261,13 +261,13 @@ def get_two_axis_gaussian_control_sequence(
         max_amp (float, optional): The maximum amplitude. Defaults to 0.5.
 
     Returns:
-        PulseSequence: Control sequence instance
+        ControlSequence: Control sequence instance
     """
     total_length = 320
     dt = 2 / 9
 
     control_sequence = ControlSequence(
-        pulses=[
+        controls=[
             TwoAxisGaussianPulse(
                 duration=total_length,
                 qubit_drive_strength=qubit_info.drive_strength,
@@ -356,11 +356,11 @@ def get_drag_pulse_v2_sequence(
         max_amp (float, optional): The maximum amplitude. Defaults to 0.5.
 
     Returns:
-        PulseSequence: Control sequence instance
+        ControlSequence: Control sequence instance
     """
     total_length = 320
     control_sequence = ControlSequence(
-        pulses=[
+        controls=[
             DragPulseV2(
                 duration=total_length,
                 qubit_drive_strength=qubit_info_drive_strength,
@@ -430,7 +430,7 @@ def get_drag_control_sequence(
     dt = 2 / 9
 
     control_sequence = ControlSequence(
-        pulses=[
+        controls=[
             DragPulse(
                 duration=total_length,
                 beta=0,
@@ -536,7 +536,7 @@ def get_multi_drag_control_sequence_v3():
 
     control_sequence = ControlSequence(
         pulse_length_dt=80,
-        pulses=[pulse],
+        controls=[pulse],
     )
     return control_sequence
 
@@ -631,7 +631,7 @@ def generate_experimental_data(
         shots (int, optional): Number of shots used to estimate expectation value, will be used if `SimulationStrategy` is `SHOT`, otherwise ignored. Defaults to 1000.
         strategy (SimulationStrategy, optional): Simulation strategy. Defaults to SimulationStrategy.RANDOM.
         get_qubit_information_fn (typing.Callable[ [], QubitInformation ], optional): Function that return qubit information. Defaults to get_mock_qubit_information.
-        get_control_sequence_fn (typing.Callable[ [], PulseSequence ], optional): Function that return control sequence. Defaults to get_multi_drag_control_sequence_v3.
+        get_control_sequence_fn (typing.Callable[ [], ControlSequence ], optional): Function that return control sequence. Defaults to get_multi_drag_control_sequence_v3.
         max_steps (int, optional): Maximum step of solver. Defaults to int(2**16).
         method (WhiteboxStrategy, optional): Unitary solver method. Defaults to WhiteboxStrategy.ODE.
 
@@ -639,7 +639,7 @@ def generate_experimental_data(
         NotImplementedError: Not support strategy
 
     Returns:
-        tuple[ExperimentData, PulseSequence, jnp.ndarray, typing.Callable[[jnp.ndarray], jnp.ndarray]]: tuple of (1) Experiment data, (2) Pulse sequence, (3) Noisy unitary, (4) Noisy solver
+        tuple[ExperimentData, ControlSequence, jnp.ndarray, typing.Callable[[jnp.ndarray], jnp.ndarray]]: tuple of (1) Experiment data, (2) Pulse sequence, (3) Noisy unitary, (4) Noisy solver
     """
     qubit_info, control_sequence, config = get_mock_prefined_exp_v1(
         sample_size=sample_size,
@@ -766,7 +766,7 @@ def get_single_qubit_whitebox(
 
     Args:
         hamiltonian (typing.Callable[..., jnp.ndarray]): Hamiltonian
-        control_sequence (PulseSequence): Control sequence instance
+        control_sequence (ControlSequence): Control sequence instance
         qubit_info (QubitInformation): Qubit information
         dt (float): Duration of 1 timestep in nanosecond
         max_steps (int, optional): Maximum steps of solver. Defaults to int(2**16).
@@ -809,7 +809,7 @@ def get_single_qubit_rotating_frame_whitebox(
     """Generate single qubit whitebox with rotating transmon hamiltonian
 
     Args:
-        control_sequence (PulseSequence): Control sequence
+        control_sequence (ControlSequence): Control sequence
         qubit_info (QubitInformation): Qubit information
         dt (float): Duration of 1 timestep in nanosecond
 

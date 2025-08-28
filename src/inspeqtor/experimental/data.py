@@ -535,17 +535,19 @@ class ExperimentData:
             self.experiment_config.parameter_names
         )
         num_features = len(self.experiment_config.parameter_names[0])
-        num_pulses = len(self.experiment_config.parameter_names)
+        num_controls = len(self.experiment_config.parameter_names)
 
         try:
             temp_params = np.array(
                 self.postprocessed_data[self.parameter_columns]
                 .to_numpy()
-                .reshape((self.experiment_config.sample_size, num_pulses, num_features))
+                .reshape(
+                    (self.experiment_config.sample_size, num_controls, num_features)
+                )
             )
         except Exception:
             logging.info(
-                "Could not reshape parameters with shape (sample_size, num_pulses, num_features), automatically reshaping to (sample_size, -1)"
+                "Could not reshape parameters with shape (sample_size, num_controls, num_features), automatically reshaping to (sample_size, -1)"
             )
             temp_params = np.array(
                 self.postprocessed_data[self.parameter_columns]

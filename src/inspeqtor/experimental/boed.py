@@ -3,7 +3,6 @@ import jax.numpy as jnp
 from numpyro import handlers, plate_stack  # type: ignore
 
 import optax  # type: ignore
-from alive_progress import alive_it  # type: ignore
 import typing
 import jaxtyping
 import chex
@@ -388,12 +387,8 @@ def opt_eig_ape_loss(
     # jit the loss function
     loss_fn = jax.jit(loss_fn)
 
-    iterator = (
-        alive_it(range(num_steps), force_tty=True) if progress else range(num_steps)
-    )
-
     history = []
-    for step in iterator:
+    for step in range(num_steps):
         key, subkey = jax.random.split(key)
         # Compute the loss and its gradient
         (loss, aux), grad = jax.value_and_grad(loss_fn, has_aux=True)(params, subkey)
@@ -401,10 +396,11 @@ def opt_eig_ape_loss(
         updates, opt_state = optim.update(grad, opt_state, params)
         params = optax.apply_updates(params, updates)
 
-        history.append((step, loss, aux))
+        entry = (step, loss, aux)
+        history.append(entry)
 
         for callback in callbacks:
-            callback(history[-1])
+            callback(*entry)
 
     return params, history
 

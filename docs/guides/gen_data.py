@@ -26,7 +26,7 @@ pulse = sq.predefined.DragPulseV2(
 )
 
 control_sequence = sq.control.ControlSequence(
-    pulses=[
+    controls=[
         pulse,
     ],
     pulse_length_dt=total_length,

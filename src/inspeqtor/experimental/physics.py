@@ -455,9 +455,9 @@ def signal_func_v5(
                     set to 1 if the envelope function is already in unit of ns
     """
 
-    def signal(pulse_parameters: ControlParam, t: jnp.ndarray):
+    def signal(control_parameters: ControlParam, t: jnp.ndarray):
         return jnp.real(
-            get_envelope(pulse_parameters)(t / dt)
+            get_envelope(control_parameters)(t / dt)
             * jnp.exp(1j * (2 * jnp.pi * drive_frequency * t))
         )
 
@@ -623,7 +623,7 @@ def make_trotterization_solver(
 
     Args:
         hamiltonian (typing.Callable[..., jnp.ndarray]): The Hamiltonian function of the system
-        control_sequence (PulseSequence): The pulse sequence instance
+        control_sequence (ControlSequence): The pulse sequence instance
         dt (float, optional): The duration of time step in nanosecond. Defaults to 2/9.
         trotter_steps (int, optional): The number of trotterization step. Defaults to 1000.
 

@@ -4,7 +4,6 @@ import jax.numpy as jnp
 from dataclasses import dataclass
 import flax.traverse_util as traverse_util
 import optax  # type: ignore
-from alive_progress import alive_it  # type: ignore
 
 import chex
 
@@ -45,6 +44,7 @@ def minimize(
     lower: chex.ArrayTree | None = None,
     upper: chex.ArrayTree | None = None,
     maxiter: int = 1000,
+    callbacks: list[typing.Callable] = [],
 ) -> tuple[chex.ArrayTree, list[typing.Any]]:
     """Optimize the loss function with bounded parameters.
 
@@ -62,7 +62,7 @@ def minimize(
     opt_state = optimizer.init(params)
     history = []
 
-    for _ in alive_it(range(maxiter), force_tty=True):
+    for step_idx in range(maxiter):
         grads, aux = jax.grad(func, has_aux=True)(params)
         updates, opt_state = optimizer.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
@@ -75,6 +75,9 @@ def minimize(
         aux["params"] = params
         history.append(aux)
 
+        for callback in callbacks:
+            callback(step_idx, aux)
+
     return params, history
 
 
@@ -86,6 +89,7 @@ def stochastic_minimize(
     lower: chex.ArrayTree | None = None,
     upper: chex.ArrayTree | None = None,
     maxiter: int = 1000,
+    callbacks: list[typing.Callable] = [],
 ) -> tuple[chex.ArrayTree, list[typing.Any]]:
     """Optimize the loss function with bounded parameters.
 
@@ -103,7 +107,7 @@ def stochastic_minimize(
     opt_state = optimizer.init(params)
     history = []
 
-    for _ in alive_it(range(maxiter), force_tty=True):
+    for step_idx in range(maxiter):
         key, _ = jax.random.split(key)
         grads, aux = jax.grad(func, has_aux=True)(params, key)
         updates, opt_state = optimizer.update(grads, opt_state, params)
@@ -116,6 +120,9 @@ def stochastic_minimize(
         # Log the history
         aux["params"] = params
         history.append(aux)
+
+        for callback in callbacks:
+            callback(step_idx, aux)
 
     return params, history
 
