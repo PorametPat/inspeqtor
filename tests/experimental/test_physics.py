@@ -32,7 +32,7 @@ def test_signal_func_v3():
     DURATION = 100
 
     discreted_signal = signal(
-        signal_params, jnp.linspace(0, control_sequence.pulse_length_dt * dt, DURATION)
+        signal_params, jnp.linspace(0, control_sequence.total_dt * dt, DURATION)
     )
 
     assert discreted_signal.shape == (DURATION,)
@@ -134,7 +134,7 @@ def test_run():
     # Get the unitaries
     unitaries = batched_simulator(waveforms)
     # Assert the unitaries shape
-    assert unitaries.shape == (batch_size, control_sequence.pulse_length_dt, 2, 2)
+    assert unitaries.shape == (batch_size, control_sequence.total_dt, 2, 2)
 
 
 def setup_crosscheck_setting():
@@ -155,8 +155,8 @@ def setup_crosscheck_setting():
     time_step = 2 / 9
     t_eval = jnp.linspace(
         0,
-        control_sequence.pulse_length_dt * time_step,
-        control_sequence.pulse_length_dt,
+        control_sequence.total_dt * time_step,
+        control_sequence.total_dt,
     )
 
     return qubit_info, control_sequence, params, t_eval, time_step
@@ -180,7 +180,7 @@ def solve_with_manual_rotate():
             hamiltonian=hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=control_sequence.pulse_length_dt * time_step,
+            t1=control_sequence.total_dt * time_step,
         )
     )
 
@@ -214,7 +214,7 @@ def solve_with_auto_rotate():
             hamiltonian=rotating_hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=control_sequence.pulse_length_dt * time_step,
+            t1=control_sequence.total_dt * time_step,
         )
     )
 
@@ -295,7 +295,7 @@ def solve_with_auto_hamiltonian_extractor():
         hamiltonian=rotating_hamiltonian,
         y0=jnp.eye(2, dtype=jnp.complex64),
         t0=0,
-        t1=control_sequence.pulse_length_dt * time_step,
+        t1=control_sequence.total_dt * time_step,
     )
 
     return unitaries_hamiltonian_fn
@@ -379,7 +379,7 @@ def test_crosscheck_difflax():
 
     time_step = 2 / 9
     t_eval = jnp.linspace(
-        0, control_sequence.pulse_length_dt * (2 / 9), control_sequence.pulse_length_dt
+        0, control_sequence.total_dt * (2 / 9), control_sequence.total_dt
     )
 
     # NOTE: This hamiltonian is the analytical rotated Hamiltonian of single qubit
@@ -398,7 +398,7 @@ def test_crosscheck_difflax():
             hamiltonian=hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex128),
             t0=0,
-            t1=control_sequence.pulse_length_dt * time_step,
+            t1=control_sequence.total_dt * time_step,
             rtol=1e-8,
             atol=1e-8,
         )
@@ -430,7 +430,7 @@ def test_crosscheck_difflax():
             hamiltonian=rotating_hamiltonian,
             y0=jnp.eye(2, dtype=jnp.complex64),
             t0=0,
-            t1=control_sequence.pulse_length_dt * time_step,
+            t1=control_sequence.total_dt * time_step,
         )
     )
     auto_rotated_unitaries = jitted_simulator(hamil_params)
@@ -482,7 +482,7 @@ def test_crosscheck_difflax():
         hamiltonian=rotating_hamiltonian,
         y0=jnp.eye(2, dtype=jnp.complex64),
         t0=0,
-        t1=control_sequence.pulse_length_dt * time_step,
+        t1=control_sequence.total_dt * time_step,
     )
 
     whitebox_v5 = sq.predefined.get_single_qubit_rotating_frame_whitebox(
@@ -516,7 +516,7 @@ def test_crosscheck_difflax():
 
 def get_diffrax_solver(hamiltonian, control_seq, dt):
     t_eval = jnp.linspace(
-        0, control_seq.pulse_length_dt * dt, control_seq.pulse_length_dt
+        0, control_seq.total_dt * dt, control_seq.total_dt
     )
     diffrax_solver = partial(
         sq.physics.solver,
@@ -524,7 +524,7 @@ def get_diffrax_solver(hamiltonian, control_seq, dt):
         hamiltonian=hamiltonian,
         y0=jnp.eye(2, dtype=jnp.complex128),
         t0=0,
-        t1=control_seq.pulse_length_dt * dt,
+        t1=control_seq.total_dt * dt,
         rtol=1e-7,
         atol=1e-7,
     )

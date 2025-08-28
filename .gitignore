@@ -16,3 +16,4 @@ wheels/
 experiments/
 .DS_Store
 **/.DS_Store
+.coverage

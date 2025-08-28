@@ -29,7 +29,7 @@ control_sequence = sq.control.ControlSequence(
     controls=[
         pulse,
     ],
-    pulse_length_dt=total_length,
+    total_dt=total_length,
 )
 # --8<-- [end:control]
 
