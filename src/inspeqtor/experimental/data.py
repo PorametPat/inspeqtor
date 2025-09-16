@@ -639,6 +639,9 @@ class ExperimentData:
     def transform_preprocess_data_to_postprocess_data(self) -> pd.DataFrame:
         """Internal method to post process the dataset.
 
+        Todo:
+            Use new experimental implementation from_long to wide dataframe
+
         Raises:
             ValueError: There is duplicate entry of the expectation value.
 
@@ -940,3 +943,65 @@ def save_pytree_to_json(pytree, path: str | Path):
 
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
+
+
+def from_long_to_wide(preprocessed_df: pd.DataFrame):
+    """An experimental function to transform preprocess dataframe to postprocess dataframe.
+
+    Args:
+        preprocessed_df (pd.DataFrame): The preprocess dataframe
+
+    Returns:
+        pd.DataFrame: The postprocessed dataframe
+    """
+    # Handle the expectation value using unstack
+    expvals_df = preprocessed_df.pivot(
+        index="parameters_id",
+        columns=["initial_state", "observable"],
+        values="expectation_value",  # Note: string, not a list
+    )
+
+    # Rename columns using another idiomatic approach
+    expvals_df.columns = [
+        f"expectation_value/{state}/{obs}" for state, obs in expvals_df.columns
+    ]
+
+    # Handle parameters columns
+    params_df = (
+        preprocessed_df.groupby("parameters_id")
+        .first()
+        .drop(
+            ["expectation_value", "initial_state", "observable"], axis=1, inplace=False
+        )
+    )
+
+    # Combine with join
+    return params_df.join(expvals_df)
+
+
+def from_wide_to_long_simple(wide_df: pd.DataFrame):
+    """
+    A more concise version to convert a wide DataFrame back to the long format.
+    """
+    # Work with the index as a column
+    df = wide_df.reset_index()
+
+    # 1. Identify all columns that should NOT be melted (the "id" columns)
+    id_vars = [col for col in df.columns if not col.startswith("expectation_value/")]
+
+    # 2. Melt the DataFrame. pd.melt automatically uses all columns NOT in id_vars as value_vars.
+    long_df = df.melt(
+        id_vars=id_vars, var_name="descriptor", value_name="expectation_value"
+    )
+
+    # 3. Split the descriptor and assign new columns in one step
+    long_df[["_,", "initial_state", "observable"]] = long_df["descriptor"].str.split(
+        "/", expand=True
+    )
+
+    # 4. Clean up the DataFrame by dropping temporary columns and sorting
+    return (
+        long_df.drop(columns=["descriptor", "_,"])
+        .sort_values("parameters_id")
+        .reset_index(drop=True)
+    )

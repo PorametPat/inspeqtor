@@ -1,6 +1,8 @@
 import jax
 import jax.numpy as jnp
+import numpyro
 from numpyro import handlers, plate_stack  # type: ignore
+from numpyro import distributions as dist
 
 import optax  # type: ignore
 import typing
@@ -192,9 +194,7 @@ def marginal_loss(
             ).sum(axis=0)
 
         agg_loss, loss = _safe_mean_terms_v2(terms)
-        # return agg_loss, AuxEntry(terms=None, eig=None)
-        # return agg_loss, {"terms": terms, "eig": loss}
-        return agg_loss, AuxEntry(terms=None, eig=loss)
+        return agg_loss, AuxEntry(terms=terms, eig=loss)
 
     return loss_fn
 
@@ -315,7 +315,6 @@ def vnmc_eig_loss(
             ).sum(axis=0)
 
         agg_loss, loss = _safe_mean_terms_v2(terms)
-        # return agg_loss, {"terms": terms, "eig": loss}
         return agg_loss, AuxEntry(terms=terms, eig=loss)
 
     return loss_fn
@@ -367,9 +366,8 @@ def opt_eig_ape_loss(
     num_steps: int,
     optim: optax.GradientTransformation,
     key: jnp.ndarray,
-    progress: bool = True,
     callbacks: list = [],
-) -> tuple[chex.ArrayTree, list[typing.Any]]:
+) -> chex.ArrayTree:
     """Optimize the EIG loss function.
 
     Args:
@@ -387,7 +385,6 @@ def opt_eig_ape_loss(
     # jit the loss function
     loss_fn = jax.jit(loss_fn)
 
-    history = []
     for step in range(num_steps):
         key, subkey = jax.random.split(key)
         # Compute the loss and its gradient
@@ -396,13 +393,13 @@ def opt_eig_ape_loss(
         updates, opt_state = optim.update(grad, opt_state, params)
         params = optax.apply_updates(params, updates)
 
-        entry = (step, loss, aux)
-        history.append(entry)
+        # entry = (step, loss, aux)
+        entry = HistoryEntry(step=step, loss=loss, aux=aux)
 
         for callback in callbacks:
-            callback(*entry)
+            callback(entry)
 
-    return params, history
+    return params
 
 
 def estimate_eig(
@@ -418,7 +415,6 @@ def estimate_eig(
     num_particles: tuple[int, int] | int,
     final_num_particles: tuple[int, int] | int | None = None,
     loss_fn: typing.Callable = marginal_loss,
-    progress: bool = True,
     callbacks: list = [],
 ) -> tuple[jnp.ndarray, dict[str, typing.Any]]:
     """Optimize for marginal EIG
@@ -450,12 +446,11 @@ def estimate_eig(
         *args,
         key=subkey,
         design=design,
-        # , num_particles=num_particles
     )
 
     # Optimize the loss function first to get the optimal parameters
     # for marginal guide
-    params, history = opt_eig_ape_loss(
+    params = opt_eig_ape_loss(
         loss_fn=loss_fn(
             model,
             marginal_guide,
@@ -470,7 +465,6 @@ def estimate_eig(
         num_steps=num_optimization_steps,
         optim=optimizer,
         key=subkey,
-        progress=progress,
         callbacks=callbacks,
     )
 
@@ -489,7 +483,6 @@ def estimate_eig(
 
     return aux.eig, {
         "params": params,
-        "history": history,
     }
 
 
@@ -503,12 +496,48 @@ def vectorized_for_eig(model):
     def wrapper(
         design: jnp.ndarray,
         *args,
-        # unitaries: jnp.ndarray,
-        # observables: jnp.ndarray | None = None,
+        **kwargs,
     ):
         # This wrapper has the same call signature as the probabilistic graybox model
         # Expect the design to has shape == (extra, design, feature)
         with plate_stack(prefix="vectorized_plate", sizes=[*design.shape[:2]]):
-            return model(design, *args)
+            return model(design, *args, **kwargs)
 
     return wrapper
+
+
+def marginal_init_params_fn(name: str, shape: tuple[int, ...], num_candiadtes: int):
+    if name.endswith("_loc"):
+        return numpyro.param(name, jnp.zeros((num_candiadtes,) + shape))
+    elif name.endswith("_scale"):
+        return numpyro.param(
+            name,
+            0.1 * jnp.ones((num_candiadtes,) + shape),
+            constraint=dist.constraints.softplus_positive,
+        )
+    else:
+        raise ValueError(f"name: {name} is not supported")
+
+
+def marginal_guide(design, unitaries, observation_labels, target_labels):
+    # This shape allows us to learn a different parameter for each candidate design l
+    q_logit = numpyro.param("theta", jnp.zeros((design.shape[-2],) + (18,)))
+    numpyro.sample("obs", dist.Bernoulli(logits=q_logit).to_event(1))  # type: ignore
+
+
+def auto_marginal_guide(model, guide):
+    # The guide should be create for the model with block = True
+
+    def marginal_guide(control_parameters, *args, observation_labels, target_labels):
+        # Get the number of candidate designs
+        num_candidates = control_parameters.shape[-2]
+
+        with numpyro.plate("candidates", num_candidates):
+            params = guide(control_parameters, *args)
+
+            cond_model = numpyro.handlers.condition(model, params)
+            expectation_values = cond_model(control_parameters, *args)
+
+        return expectation_values
+
+    return marginal_guide

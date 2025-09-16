@@ -22,6 +22,8 @@ from numpyro.contrib.module import random_flax_module, random_nnx_module
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from flax import nnx
 
+jax.config.update("jax_enable_x64", True)
+
 
 def test_eigenvalue_binary_conversion():
     import chex
@@ -290,10 +292,15 @@ def test_dense_layer():
             assert expected_site["event_shape"] == site["fn"].event_shape
 
 
-def make_basic_blackbox_bnn_model(
+def make_WoBased_bnn_model(
     name: str,
+    shared_layers: tuple[int, ...] = (),
+    pauli_layers: tuple[int, ...] = (),
+    pauli_operators: tuple[str, ...] = ("X", "Y", "Z"),
+    NUM_UNITARY_PARAMS: int = 3,
+    NUM_DIAGONAL_PARAMS: int = 2,
     priors_fn: typing.Callable[
-        [str], dist.Distribution
+        [str, tuple[int, ...]], dist.Distribution
     ] = sq.probabilistic.default_priors_fn,
     unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
     * jnp.pi
@@ -314,20 +321,15 @@ def make_basic_blackbox_bnn_model(
         Callable: Blackbox BNN model function
     """
 
-    def blackbox_bnn_model(
+    def model(
         x: jnp.ndarray,
-        hidden_sizes_1: tuple[int, ...] = (),
-        hidden_sizes_2: tuple[int, ...] = (),
-        pauli_operators: tuple[str, ...] = ("X", "Y", "Z"),
-        NUM_UNITARY_PARAMS: int = 3,
-        NUM_DIAGONAL_PARAMS: int = 2,
     ) -> dict[str, jnp.ndarray]:
         # Main trunk network
         shared_x = x
-        for i, hidden_size in enumerate(hidden_sizes_1):
-            shared_x = sq.probabilistic.dense_layer(
+        for i, hidden_size in enumerate(shared_layers):
+            shared_x = dense_layer(
                 shared_x,
-                f"{name}/shared/Dense_{i}",
+                f"{name}/shared.dense_{i}",
                 shared_x.shape[-1],
                 hidden_size,
                 priors_fn,
@@ -341,10 +343,10 @@ def make_basic_blackbox_bnn_model(
             branch_x = jnp.copy(shared_x)
 
             # Sub hidden layers for this operator
-            for i, hidden_size in enumerate(hidden_sizes_2):
-                branch_x = sq.probabilistic.dense_layer(
+            for i, hidden_size in enumerate(pauli_layers):
+                branch_x = dense_layer(
                     branch_x,
-                    f"{name}/Pauli_{op}/Dense_{i}",
+                    f"{name}/pauli_{op}.dense_{i}",
                     branch_x.shape[-1],
                     hidden_size,
                     priors_fn,
@@ -352,7 +354,7 @@ def make_basic_blackbox_bnn_model(
                 branch_x = jax.nn.relu(branch_x)
 
             # Unitary parameters output
-            unitary_params = sq.probabilistic.dense_layer(
+            unitary_params = dense_layer(
                 branch_x,
                 f"{name}/U_{op}",
                 branch_x.shape[-1],
@@ -362,7 +364,7 @@ def make_basic_blackbox_bnn_model(
             unitary_params = unitary_activation_fn(unitary_params)
 
             # Diagonal parameters output
-            diag_params = sq.probabilistic.dense_layer(
+            diag_params = dense_layer(
                 branch_x,
                 f"{name}/D_{op}",
                 branch_x.shape[-1],
@@ -377,7 +379,7 @@ def make_basic_blackbox_bnn_model(
         numpyro.deterministic(f"{name}/Wo", Wos)  # type: ignore
         return Wos
 
-    return blackbox_bnn_model
+    return model
 
 
 def test_probabilistic_graybox():
@@ -387,7 +389,7 @@ def test_probabilistic_graybox():
     for test_input in [test_input_1, test_input_2]:
         batch_shape = test_input.shape[:-1]
 
-        blackbox_bnn = make_basic_blackbox_bnn_model("graybox")
+        blackbox_bnn = make_WoBased_bnn_model("graybox")
         out = sq.probabilistic.get_trace(blackbox_bnn)(test_input)["graybox/Wo"][
             "value"
         ]
@@ -438,6 +440,7 @@ def get_data_model(
             control_sequence=control_sequence,
             trotter_steps=trotter_steps,
             dt=dt,
+            y0=jnp.eye(2, dtype=jnp.complex128),
         )
 
     solver = ode_solver if not trotterization else trotter_solver
@@ -463,7 +466,7 @@ def probabilistic_graybox_model(
     samples_shape = control_parameters.shape[:-2]
     unitaries = jnp.broadcast_to(unitaries, samples_shape + unitaries.shape[-3:])
 
-    model = make_basic_blackbox_bnn_model("graybox", priors_fn=priors_fn)
+    model = make_WoBased_bnn_model("graybox", priors_fn=priors_fn)
 
     output = model(control_parameters)
 
@@ -773,6 +776,5 @@ def test_boed():
         target_labels=[],
         num_particles=1000 if not FAST_MODE else 10,
         final_num_particles=1_000 if not FAST_MODE else 1_000,
-        progress=True,
         callbacks=[],
     )

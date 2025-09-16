@@ -335,7 +335,11 @@ def solver_with_trotterization():
     )
 
     whitebox = sq.physics.make_trotterization_solver(
-        hamiltonian, control_sequence, time_step, trotter_steps=1000
+        hamiltonian,
+        control_sequence,
+        time_step,
+        trotter_steps=1000,
+        y0=jnp.eye(2, dtype=jnp.complex128),
     )
 
     unitary = whitebox(
@@ -515,9 +519,7 @@ def test_crosscheck_difflax():
 
 
 def get_diffrax_solver(hamiltonian, control_seq, dt):
-    t_eval = jnp.linspace(
-        0, control_seq.total_dt * dt, control_seq.total_dt
-    )
+    t_eval = jnp.linspace(0, control_seq.total_dt * dt, control_seq.total_dt)
     diffrax_solver = partial(
         sq.physics.solver,
         t_eval=t_eval,
@@ -538,6 +540,7 @@ def get_trotter_solver(hamiltonian, control_seq, dt):
         control_sequence=control_seq,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
+        y0=jnp.eye(2, dtype=jnp.complex128),
     )
     return trotter_solver
 

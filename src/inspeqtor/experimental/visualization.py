@@ -68,7 +68,7 @@ def plot_loss_with_moving_average(
     y: jnp.ndarray | np.ndarray,
     ax: Axes,
     window: int = 50,
-    annotate_at: list[int] = [2000, 4000, 6000, 8000, 10000],
+    annotate_at: list[float] = [0.2, 0.4, 0.6, 0.8, 1.0],
     **kwargs,
 ) -> Axes:
     """Plot the moving average of the given argument y
@@ -91,14 +91,20 @@ def plot_loss_with_moving_average(
         **kwargs,
     )
 
-    # Annotate the loss values every 1000 iterations
-    for idx in annotate_at:
-        i = idx - 1
-        loss_value = y[i]
+    for percentile in annotate_at:
+        # Calculate the data index that corresponds to the percentile
+        idx = int(percentile * (len(x) - 1))
+
+        loss_value = moving_average[idx]
+
+        # Skip annotation if the moving average value is not available (e.g., at the beginning)
+        if pd.isna(loss_value):
+            continue
+
         ax.annotate(
-            f"{loss_value:.2f}",
-            xy=(x[i].item(), y[i].item()),
-            xytext=(-10, 10),  # 10 points vertical offset
+            f"{loss_value:.3g}",
+            xy=(x[idx].item(), loss_value),
+            xytext=(-10, 10),  # Offset the text for better readability
             textcoords="offset points",
             ha="center",
             va="bottom",

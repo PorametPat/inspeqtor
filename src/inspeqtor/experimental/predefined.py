@@ -660,6 +660,7 @@ def generate_experimental_data(
                 control_sequence=control_sequence,
                 dt=dt,
                 trotter_steps=trotter_steps,
+                y0=jnp.eye(2, dtype=jnp.complex128),
             )
         )
     else:
@@ -774,9 +775,7 @@ def get_single_qubit_whitebox(
     Returns:
         typing.Callable[[jnp.ndarray], jnp.ndarray]: Whitebox with ODE solver
     """
-    t_eval = jnp.linspace(
-        0, control_sequence.total_dt * dt, control_sequence.total_dt
-    )
+    t_eval = jnp.linspace(0, control_sequence.total_dt * dt, control_sequence.total_dt)
 
     hamiltonian = partial(
         hamiltonian,
@@ -915,6 +914,7 @@ class HamiltonianSpec:
                 control_sequence=control_sequence,
                 dt=dt,
                 trotter_steps=self.trotter_steps,
+                y0=jnp.eye(2, dtype=jnp.complex128),
             )
             return whitebox
         elif self.method == WhiteboxStrategy.ODE:
@@ -1022,6 +1022,7 @@ def get_predefined_data_model_m1(detune: float = 0.0001):
         control_sequence=control_seq,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
+        y0=jnp.eye(2, dtype=jnp.complex128),
     )
 
     ideal_hamiltonian = partial(
@@ -1036,6 +1037,7 @@ def get_predefined_data_model_m1(detune: float = 0.0001):
         control_sequence=control_seq,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
+        y0=jnp.eye(2, dtype=jnp.complex128),
     )
 
     return SyntheticDataModel(

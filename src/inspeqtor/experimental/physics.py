@@ -616,16 +616,18 @@ def unitaries_prod(
 def make_trotterization_solver(
     hamiltonian: typing.Callable[..., jnp.ndarray],
     control_sequence: ControlSequence,
-    dt: float = 2 / 9,
-    trotter_steps: int = 1000,
+    dt: float,
+    trotter_steps: int,
+    y0: jnp.ndarray,
 ):
     """Retutn whitebox function compute using Trotterization strategy.
 
     Args:
         hamiltonian (typing.Callable[..., jnp.ndarray]): The Hamiltonian function of the system
         control_sequence (ControlSequence): The pulse sequence instance
-        dt (float, optional): The duration of time step in nanosecond. Defaults to 2/9.
-        trotter_steps (int, optional): The number of trotterization step. Defaults to 1000.
+        dt (float, optional): The duration of time step in nanosecond.
+        trotter_steps (int, optional): The number of trotterization step.
+        y0 (jnp.ndarray): The initial unitary state. Defaults to jnp.eye(2, dtype=jnp.complex128)
 
     Returns:
         typing.Callable[..., jnp.ndarray]: Trotterization Whitebox function
@@ -642,9 +644,7 @@ def make_trotterization_solver(
         )
         # * Nice explanation of scan
         # * https://www.nelsontang.com/blog/a-friendly-introduction-to-scan-with-jax
-        _, unitaries = jax.lax.scan(
-            unitaries_prod, jnp.eye(2, dtype=jnp.complex128), unitaries
-        )
+        _, unitaries = jax.lax.scan(unitaries_prod, y0, unitaries)
         return unitaries
 
     return whitebox
