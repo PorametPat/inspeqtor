@@ -119,7 +119,7 @@ mkdocs gh-deploy
 ## Performance Profiling
 
 ```bash title="Generate import profile"
-uv run python -X importtime profile.py 2> import.log
+uv run python -X importtime profile.py > import.log
 ```
 
 ```bash title="Visualize import profile"

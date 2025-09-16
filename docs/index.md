@@ -14,6 +14,9 @@ description: Data-efficient Framework for Characterization and Calibration of Qu
 
 We aim to be a Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. We would like to squeeze every drop of information from the data.
 
+!!! warning
+    This package and document are still under development. Please proceed with caution.
+
 ## Installation
 
 To install `inspeqtor`, you have to pull the repository locally via
