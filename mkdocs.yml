@@ -42,6 +42,7 @@ repo_url: https://github.com/PorametPat/inspeqtor
 
 plugins:
     - search
+    - social
     - mkdocstrings:
           handlers:
               python:
