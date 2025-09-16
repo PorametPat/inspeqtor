@@ -11,16 +11,31 @@ We aim to be a Data-efficient Framework for Characterization and Calibration of 
 
 ## Installation
 
-To install `inspeqtor`, you can do so via,
+To install `inspeqtor`, you have to pull the repository locally via
 
+```bash
+    git clone https://github.com/PorametPat/inspeqtor.git
+```
+
+Then install it using
 === "uv"
+    ``` bash
+    uv add ./<PATH>
+    ```
+=== "pip"
+    ``` bash
+    pip install ./<PATH>
+    ```
+where the `<PATH>` is the path to the local `inspeqtor` repository that you cloned.
+
+<!-- === "uv"
     ``` bash
     uv add inspeqtor
     ```
 === "pip"
     ``` bash
     pip install inspeqtor
-    ```
+    ``` -->
 
 ## What you can do with `inspeqtor`
 

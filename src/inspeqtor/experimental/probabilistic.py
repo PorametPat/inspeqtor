@@ -11,6 +11,7 @@ from numpyro.contrib.module import (
     nnx_module,
     random_nnx_module,
 )  # type: ignore
+from dataclasses import dataclass
 import numpyro.util
 import numpyro.distributions as dist  # type: ignore
 from numpyro.infer import Predictive
@@ -30,6 +31,7 @@ from .model import (
     toggling_unitary_to_expvals as toggling_unitary_to_expvals,
     toggling_unitary_with_spam_to_expvals as toggling_unitary_with_spam_to_expvals,
     observable_to_expvals as observable_to_expvals,
+    hermitian,
 )
 from .utils import expectation_value_to_prob_minus, binary_to_eigenvalue
 
@@ -64,7 +66,11 @@ def make_flax_probabilistic_graybox_model(
     name: str,  # graybox
     base_model: nn.Module | nnx.Module,
     adapter_fn: typing.Callable[..., jnp.ndarray],
-    prior: dict[str, dist.Distribution] | dist.Distribution = dist.Normal(0.0, 1.0),
+    prior: dict[str, dist.Distribution]
+    | dist.Distribution
+    | typing.Callable[[str, tuple[int, ...]], dist.Distribution] = dist.Normal(
+        0.0, 1.0
+    ),
     flax_module: typing.Callable = random_flax_module,
 ):
     if flax_module in [random_flax_module, random_nnx_module]:
@@ -99,6 +105,8 @@ def make_flax_probabilistic_graybox_model(
 
         # Predict from control parameters
         output = model(control_parameters)
+
+        numpyro.deterministic("output", output)
 
         # With unitary and Wo, calculate expectation values
         expvals = adapter_fn(output, unitaries)
@@ -306,6 +314,52 @@ def construct_normal_prior_from_samples(
     return prior
 
 
+def make_normal_posterior_dist_fn_from_svi_result(
+    key: jnp.ndarray,
+    guide: typing.Callable,
+    params: dict[str, jnp.ndarray],
+    num_samples: int,
+    prefix: str,
+) -> typing.Callable[[str, tuple[int, ...]], dist.Distribution]:
+    """This function create a get posterior function to be used with `numpyro.contrib.module`.
+
+    Args:
+        key (jnp.ndarray): The random key
+        guide (typing.Callable): The guide (variational distribution)
+        params (dict[str, jnp.ndarray]): The variational parameters
+        num_samples (int): The number of sample for approxiatation the posterior distributions
+
+    Examples:
+        ```python
+        prefix = "graybox"
+        prior_fn = make_normal_posterior_dist_fn_from_svi_result(
+            jax.random.key(0), guide, result.params, 10_000, prefix
+        )
+        graybox_model = sq.probabilistic.make_flax_probabilistic_graybox_model(
+            name=prefix,
+            base_model=base_model,
+            adapter_fn=sq.probabilistic.observable_to_expvals,
+            prior=prior_fn,
+        )
+        posterior_model = sq.probabilistic.make_probabilistic_model(
+            predictive_model=graybox_model, log_expectation_values=True
+        )
+        ```
+
+    Returns:
+        typing.Callable[[str, tuple[int, ...]], dist.Distribution]: The function that return posterior distribution
+    """
+    posterior_samples = Predictive(model=guide, params=params, num_samples=num_samples)(
+        key
+    )
+
+    def posterior_dist_fn(name: str, shape: tuple[int, ...]) -> dist.Distribution:
+        site_name = prefix + "/" + name
+        return construct_normal_prior_from_samples(posterior_samples)[site_name]
+
+    return posterior_dist_fn
+
+
 class LearningModel(StrEnum):
     """The learning model."""
 
@@ -461,7 +515,7 @@ def safe_jensenshannon_divergence(p: jnp.ndarray, q: jnp.ndarray):
     return (safe_kl_divergence(p, m) + safe_kl_divergence(q, m)) / 2
 
 
-def jensenshannon_divergence_from_pdf(p: jnp.ndarray, q: jnp.ndarray):
+def jensenshannon_divergence_from_pmf(p: jnp.ndarray, q: jnp.ndarray):
     """Calculate the Jensen-Shannon Divergence from PMF
 
     Example
@@ -519,7 +573,7 @@ def jensenshannon_divergence_from_sample(
     dis_1 = make_pdf(sample_1, bins=bins, srange=srange)
     dis_2 = make_pdf(sample_2, bins=bins, srange=srange)
 
-    return jensenshannon_divergence_from_pdf(dis_1, dis_2)
+    return jensenshannon_divergence_from_pmf(dis_1, dis_2)
 
 
 def batched_matmul(x, w, b):
@@ -551,20 +605,20 @@ def get_trace(fn, key=jax.random.key(0)):
     return inner
 
 
-def default_priors_fn(param_name: str):
+def default_priors_fn(name: str, shape: tuple[int, ...]) -> dist.Distribution:
     """This is a default prior function for the `dense_layer`
 
     Args:
-        param_name (str): The site name of the parameters, if end with `sigma` will return Log Normal distribution,
+        name (str): The site name of the parameters, if end with `sigma` will return Log Normal distribution,
                           otherwise, return Normal distribution
 
     Returns:
         typing.Any: _description_
     """
-    if param_name.endswith("sigma"):
-        return dist.LogNormal(0, 1)
+    if name.endswith("bias"):
+        return dist.LogNormal(0, 1).expand(shape)
 
-    return dist.Normal(0, 1)
+    return dist.Normal(0, 1).expand(shape)
 
 
 def dense_layer(
@@ -572,7 +626,9 @@ def dense_layer(
     name: str,
     in_features: int,
     out_features: int,
-    priors_fn: typing.Callable[[str], dist.Distribution] = default_priors_fn,
+    priors_fn: typing.Callable[
+        [str, tuple[int, ...]], dist.Distribution
+    ] = default_priors_fn,
 ):
     """A custom probabilistic dense layer for neural network model.
     This function intended to be used with `numpyro`
@@ -590,12 +646,12 @@ def dense_layer(
     w_name = f"{name}.kernel"
     w = numpyro.sample(
         w_name,
-        priors_fn(w_name).expand((in_features, out_features)).to_event(2),  # type: ignore
+        priors_fn(w_name, (in_features, out_features)).to_event(2),  # type: ignore
     )
     b_name = f"{name}.bias"
     b = numpyro.sample(
         b_name,
-        priors_fn(b_name).expand((out_features,)).to_event(1),  # type: ignore
+        priors_fn(b_name, (out_features,)).to_event(1),  # type: ignore
     )
     return batched_matmul(x, w, b)  # type: ignore
 
@@ -657,6 +713,7 @@ def dense_deterministic_layer(
     return batched_matmul(x, W, b)  # type: ignore
 
 
+@deprecated
 def make_posteriors_fn(key: jnp.ndarray, guide, params, num_samples=10000):
     """Make the posterior distribution function that will
     return the posterior of parameter of the given name, from guide and parameters.
@@ -993,3 +1050,237 @@ def make_predictive_resampling_model(
         ).mean(axis=0)
 
     return predictive_model
+
+
+@dataclass
+class WoModel:
+    name: str
+    shared_layers: tuple[int, ...] = ()
+    pauli_layers: tuple[int, ...] = ()
+    pauli_operators: tuple[str, ...] = ("X", "Y", "Z")
+    NUM_UNITARY_PARAMS: int = 3
+    NUM_DIAGONAL_PARAMS: int = 2
+    priors_fn: typing.Callable[[str, tuple[int, ...]], dist.Distribution] = (
+        default_priors_fn
+    )
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
+        lambda x: 2 * jnp.pi * jax.nn.hard_sigmoid(x)
+    )
+    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
+        lambda x: (2 * jax.nn.hard_sigmoid(x)) - 1
+    )
+
+    def __call__(self, x: jnp.ndarray) -> dict[str, jnp.ndarray]:
+        # Main trunk network
+        shared_x = x
+        for i, hidden_size in enumerate(self.shared_layers):
+            shared_x = dense_layer(
+                shared_x,
+                f"{self.name}/shared.dense_{i}",
+                shared_x.shape[-1],
+                hidden_size,
+                self.priors_fn,
+            )
+            shared_x = jax.nn.relu(shared_x)
+
+        Wos: dict[str, jnp.ndarray] = dict()
+
+        for op in self.pauli_operators:
+            # Branch network for each Pauli operator
+            branch_x = jnp.copy(shared_x)
+
+            # Sub hidden layers for this operator
+            for i, hidden_size in enumerate(self.pauli_layers):
+                branch_x = dense_layer(
+                    branch_x,
+                    f"{self.name}/pauli_{op}.dense_{i}",
+                    branch_x.shape[-1],
+                    hidden_size,
+                    self.priors_fn,
+                )
+                branch_x = jax.nn.relu(branch_x)
+
+            # Unitary parameters output
+            unitary_params = dense_layer(
+                branch_x,
+                f"{self.name}/U_{op}",
+                branch_x.shape[-1],
+                self.NUM_UNITARY_PARAMS,
+                self.priors_fn,
+            )
+            unitary_params = self.unitary_activation_fn(unitary_params)
+
+            # Diagonal parameters output
+            diag_params = dense_layer(
+                branch_x,
+                f"{self.name}/D_{op}",
+                branch_x.shape[-1],
+                self.NUM_DIAGONAL_PARAMS,
+                self.priors_fn,
+            )
+            diag_params = self.diagonal_activation_fn(diag_params)
+
+            # Combine into Wo using your existing function
+            Wos[op] = hermitian(unitary_params, diag_params)
+
+        numpyro.deterministic(f"{self.name}/Wo", Wos)  # type: ignore
+        return Wos
+
+
+def make_probabilistic_graybox_model(model, adapter_fn):
+    """This function make a probabilistic graybox model using custom numpyro BNN model
+
+    Args:
+        model (_type_): _description_
+        adapter_fn (_type_): _description_
+    """
+
+    def probabilistic_graybox_model(control_parameters, unitaries):
+        samples_shape = control_parameters.shape[:-2]
+        unitaries = jnp.broadcast_to(unitaries, samples_shape + unitaries.shape[-3:])
+
+        # Predict from control parameters
+        output = model(control_parameters)
+
+        numpyro.deterministic("output", output)
+
+        # With unitary and Wo, calculate expectation values
+        expvals = adapter_fn(output, unitaries)
+
+        return expvals
+
+    return probabilistic_graybox_model
+
+
+def default_transform_dist_fn(name: str, d: dist.Distribution) -> dist.Distribution:
+    return d.to_event()
+
+
+def bnn_init_dist_fn(name: str):
+    if name.startswith("SPAM/"):
+        return partial(dist.TruncatedNormal, low=0.0, high=1.0)
+
+    if name.endswith("bias"):
+        return dist.LogNormal
+
+    return dist.Normal
+
+
+def bnn_init_params_fn(name: str, shape: tuple[int, ...]):
+    if name.endswith("_loc"):
+        return numpyro.param(name, jnp.zeros(shape))
+    elif name.endswith("_scale"):
+        return numpyro.param(
+            name, 0.1 * jnp.ones(shape), constraint=dist.constraints.softplus_positive
+        )
+    else:
+        raise ValueError(f"name: {name} is not supported")
+
+
+def bnn_dist_transform_fn(name: str, d: dist.Distribution) -> dist.Distribution:
+    if name.endswith("kernel"):
+        d = d.to_event(2)
+    elif name.endswith("bias"):
+        d = d.to_event(1)
+    else:
+        d = d.to_event()
+
+    return d
+
+
+def auto_diagonal_normal_guide_v3(
+    model,
+    *args,
+    init_dist_fn=bnn_init_dist_fn,
+    init_params_fn=bnn_init_params_fn,
+    dist_transform_fn=default_transform_dist_fn,
+    block_sample: bool = False,
+    key: jnp.ndarray = jax.random.key(0),
+):
+    """Automatically generate guide from given model. Expected to be initialized with the example input of the model.
+    The given input should also including the observed site.
+    The blocking capability is intended to be used in the when the guide will be used with its corresponding model in anothe model.
+    This is the avoid site name duplication, while allows for model to use newly sample from the guide.
+
+    Notes:
+        This version enable even more flexible initialization strategy.
+        This function intended to be able to be compatible with auto marginal guide.
+
+    Args:
+        model (typing.Any): The probabilistic model.
+        block_sample (bool, optional): Flag to block the sample site. Defaults to False.
+        init_loc_fn (typing.Any, optional): Initialization of guide parameters function. Defaults to jnp.zeros.
+
+    Returns:
+        typing.Any: _description_
+    """
+    # get the trace of the model
+    model_trace = handlers.trace(handlers.seed(model, key)).get_trace(*args)
+    # Then get only the sample site with observed equal to false
+    sample_sites = [v for k, v in model_trace.items() if v["type"] == "sample"]
+    non_observed_sites = [v for v in sample_sites if not v["is_observed"]]
+    params_sites = [
+        {"name": v["name"], "shape": v["value"].shape} for v in non_observed_sites
+    ]
+
+    def sample_fn(
+        params_loc: dict[str, typing.Any], params_scale: dict[str, typing.Any]
+    ):
+        samples = {}
+        # Sample from Normal distribution
+        for (k_loc, v_loc), (k_scale, v_scale) in zip(
+            params_loc.items(), params_scale.items(), strict=True
+        ):
+            s = numpyro.sample(
+                k_loc,
+                dist_transform_fn(k_loc, init_dist_fn(k_loc)(v_loc, v_scale)),  # type: ignore
+            )
+            samples[k_loc] = s
+
+        return samples
+
+    def guide(
+        *args,
+        **kwargs,
+    ):
+        params_loc = {
+            param["name"]: init_params_fn(f"{param['name']}_loc", param["shape"])
+            for param in params_sites
+        }
+
+        params_scale = {
+            param["name"]: init_params_fn(f"{param['name']}_scale", param["shape"])
+            for param in params_sites
+        }
+
+        with numpyro.util.optional(block_sample, handlers.block()):
+            samples = sample_fn(params_loc, params_scale)
+
+        return samples
+
+    return guide
+
+
+def make_posterior_fn(params, get_dist_fn: typing.Callable[[str], typing.Any]):
+    """This function create a posterior function to make a posterior predictive model
+
+    Examples:
+        ```python
+        posterior_model = sq.probabilistic.make_probabilistic_model(
+            predictive_model=partial(
+                    probabilistic_graybox_model,
+                    priors_fn=make_posterior_fn(result.params, init_bnn_dist_fn),
+                ),
+            log_expectation_values=True,
+        )
+        ```
+
+    Args:
+        params (_type_): The variational parameters from SVI
+        get_dist_fn (typing.Callable[[str], dist.Distribution]): The function that return function given name
+    """
+
+    def posterior_fn(name: str, shape: tuple[int, ...]):
+        return get_dist_fn(name)(params[name + "_loc"], params[name + "_scale"])
+
+    return posterior_fn

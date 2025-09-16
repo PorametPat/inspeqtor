@@ -1,4 +1,5 @@
 import jax
+import jax.numpy as jnp
 import inspeqtor.experimental as sq
 import logging
 import pytest
@@ -42,6 +43,7 @@ def load_dataset(generate_dataset):
         data_model.control_sequence,
         data_model.dt,
         trotter_steps=TROTTER_STEPS,
+        y0=jnp.eye(2, dtype=jnp.complex128),
     )
     loaded_data = sq.utils.prepare_data(exp_data, data_model.control_sequence, whitebox)
 

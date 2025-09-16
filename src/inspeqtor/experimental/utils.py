@@ -575,3 +575,11 @@ def parse_expectation_values(
         )
         for exp, expval in zip(expectation_value_receipt, expectation_values)
     ]
+
+
+def enable_jax_x64():
+    jax.config.update("jax_enable_x64", True)
+
+
+def disable_jax_x64():
+    jax.config.update("jax_enable_x64", False)
