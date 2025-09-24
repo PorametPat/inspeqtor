@@ -40,7 +40,7 @@ def load_dataset(generate_dataset):
     # Now we can prepare the dataset that ready to use.
     whitebox = sq.physics.make_trotterization_solver(
         data_model.ideal_hamiltonian,
-        data_model.control_sequence,
+        data_model.control_sequence.total_dt,
         data_model.dt,
         trotter_steps=TROTTER_STEPS,
         y0=jnp.eye(2, dtype=jnp.complex128),
@@ -59,7 +59,7 @@ def load_dataset(generate_dataset):
         int(loaded_data.control_parameters.shape[0] * 0.1),  # Test size
         loaded_data.control_parameters,
         loaded_data.unitaries,
-        loaded_data.expectation_values,
+        loaded_data.observed_values,
     )
     train_data = sq.optimize.DataBundled(
         control_params=sq.predefined.drag_feature_map(train_control_parameters),

@@ -657,7 +657,7 @@ def generate_experimental_data(
         noisy_simulator = jax.jit(
             make_trotterization_solver(
                 hamiltonian=hamiltonian,
-                control_sequence=control_sequence,
+                total_dt=control_sequence.total_dt,
                 dt=dt,
                 trotter_steps=trotter_steps,
                 y0=jnp.eye(2, dtype=jnp.complex128),
@@ -762,6 +762,7 @@ def get_single_qubit_whitebox(
     qubit_info: QubitInformation,
     dt: float,
     max_steps: int = int(2**16),
+    get_envelope_transformer=get_envelope_transformer,
 ) -> typing.Callable[[jnp.ndarray], jnp.ndarray]:
     """Generate single qubit whitebox
 
@@ -882,6 +883,7 @@ class HamiltonianSpec:
         control_sequence: ControlSequence,
         qubit_info: QubitInformation,
         dt: float,
+        get_envelope_transformer=get_envelope_transformer,
     ):
         """Return Unitary solver from the given specification of the Hamiltonian and solver
 
@@ -911,7 +913,7 @@ class HamiltonianSpec:
 
             whitebox = make_trotterization_solver(
                 hamiltonian=hamiltonian,
-                control_sequence=control_sequence,
+                total_dt=control_sequence.total_dt,
                 dt=dt,
                 trotter_steps=self.trotter_steps,
                 y0=jnp.eye(2, dtype=jnp.complex128),
@@ -978,7 +980,9 @@ def save_data_to_path(
     return None
 
 
-def get_predefined_data_model_m1(detune: float = 0.0001):
+def get_predefined_data_model_m1(
+    detune: float = 0.0001, get_envelope_transformer=get_envelope_transformer
+):
     dt = 2 / 9
     real_qubit_info = QubitInformation(
         unit="GHz",
@@ -1019,7 +1023,7 @@ def get_predefined_data_model_m1(detune: float = 0.0001):
 
     solver = make_trotterization_solver(
         hamiltonian=hamiltonian,
-        control_sequence=control_seq,
+        total_dt=control_seq.total_dt,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
         y0=jnp.eye(2, dtype=jnp.complex128),
@@ -1034,7 +1038,7 @@ def get_predefined_data_model_m1(detune: float = 0.0001):
 
     whitebox = make_trotterization_solver(
         hamiltonian=ideal_hamiltonian,
-        control_sequence=control_seq,
+        total_dt=control_seq.total_dt,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
         y0=jnp.eye(2, dtype=jnp.complex128),

@@ -55,7 +55,7 @@ class BaseControl(ABC):
 
         lower, upper = self.get_bounds()
         # Validate that the sampling function is working
-        key = jax.random.PRNGKey(0)
+        key = jax.random.key(0)
         params = sample_params(key, lower, upper)
         waveform = self.get_waveform(params)
 
@@ -133,8 +133,8 @@ class ControlSequence:
 
     def _validate(self):
         # Must check that the sum of the pulse lengths is equal to the total length of the pulse sequence
-        key = jax.random.PRNGKey(0)
-        subkeys = jax.random.split(key, self.total_dt)
+        key = jax.random.key(0)
+        subkeys = jax.random.split(key, len(self.controls))
         for pulse_key, pulse in zip(subkeys, self.controls):
             params = sample_params(pulse_key, *pulse.get_bounds())
             waveform = pulse.get_waveform(params)
@@ -167,7 +167,7 @@ class ControlSequence:
             list[ParametersDictType]: control parameters
         """
         # Split key for each pulse
-        subkeys = jax.random.split(key, self.total_dt)
+        subkeys = jax.random.split(key, len(self.controls))
 
         params_list: list[ParametersDictType] = []
         for pulse_key, pulse in zip(subkeys, self.controls):
