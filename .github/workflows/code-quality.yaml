@@ -28,28 +28,28 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: ./.github/actions/setup
-            - run: uv run pyright src/inspeqtor/experimental/.
+            - run: uv run pyright src/inspeqtor/.
     tests_py3-13:
         runs-on: ubuntu-latest
         needs: [lock_file]
         steps:
             - uses: actions/checkout@v4
             - uses: ./.github/actions/setup
-            - run: uv run --python 3.13 --with '.[test]' pytest tests/experimental/. -vv --durations=0
+            - run: uv run --python 3.13 --with '.[test]' pytest tests/. -vv --durations=0
     tests_py3-12:
         runs-on: ubuntu-latest
         needs: [lock_file]
         steps:
             - uses: actions/checkout@v4
             - uses: ./.github/actions/setup
-            - run: uv run --python 3.12 --with '.[test]' pytest tests/experimental/. -vv --durations=0
+            - run: uv run --python 3.12 --with '.[test]' pytest tests/. -vv --durations=0
     tests_py3-11:
         runs-on: ubuntu-latest
         needs: [lock_file]
         steps:
             - uses: actions/checkout@v4
             - uses: ./.github/actions/setup
-            - run: uv run --python 3.11 --with '.[test]' pytest tests/experimental/. -vv --durations=0
+            - run: uv run --python 3.11 --with '.[test]' pytest tests/. -vv --durations=0
     build:
         runs-on: ubuntu-latest
         needs:

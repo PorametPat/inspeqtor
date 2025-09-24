@@ -437,7 +437,7 @@ def get_data_model(
     def trotter_solver(hamiltonian):
         return sq.physics.make_trotterization_solver(
             hamiltonian=hamiltonian,
-            control_sequence=control_sequence,
+            total_dt=control_sequence.total_dt,
             trotter_steps=trotter_steps,
             dt=dt,
             y0=jnp.eye(2, dtype=jnp.complex128),

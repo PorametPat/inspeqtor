@@ -336,7 +336,7 @@ def solver_with_trotterization():
 
     whitebox = sq.physics.make_trotterization_solver(
         hamiltonian,
-        control_sequence,
+        control_sequence.total_dt,
         time_step,
         trotter_steps=1000,
         y0=jnp.eye(2, dtype=jnp.complex128),
@@ -537,7 +537,7 @@ def get_trotter_solver(hamiltonian, control_seq, dt):
     TROTTER_STEPS = 10_000
     trotter_solver = sq.physics.make_trotterization_solver(
         hamiltonian=hamiltonian,
-        control_sequence=control_seq,
+        total_dt=control_seq.total_dt,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
         y0=jnp.eye(2, dtype=jnp.complex128),

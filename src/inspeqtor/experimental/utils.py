@@ -9,7 +9,8 @@ from inspeqtor.experimental.data import (
     QubitInformation,
     State,
 )
-from inspeqtor.experimental.model import mse, VariableDict
+from flax.typing import VariableDict
+from inspeqtor.experimental.model import mse
 from inspeqtor.experimental.constant import (
     X,
     Y,
@@ -29,7 +30,7 @@ class LoadedData:
     experiment_data: ExperimentData
     control_parameters: jnp.ndarray
     unitaries: jnp.ndarray
-    expectation_values: jnp.ndarray
+    observed_values: jnp.ndarray
     control_sequence: ControlSequence
     whitebox: typing.Callable
     noisy_whitebox: typing.Callable | None = None
@@ -148,7 +149,7 @@ def prepare_data(
         experiment_data=exp_data,
         control_parameters=control_parameters,
         unitaries=unitaries[:, -1, :, :],
-        expectation_values=expectation_values,
+        observed_values=expectation_values,
         control_sequence=control_sequence,
         whitebox=whitebox,
     )
@@ -376,7 +377,7 @@ def get_dataset_metrics(
 ) -> DatasetMetrics:
     # * Data variance
     var = variance_of_observable(
-        loaded_data.expectation_values,
+        loaded_data.observed_values,
         shots=loaded_data.experiment_data.experiment_config.shots,
     ).mean()
 
@@ -384,7 +385,7 @@ def get_dataset_metrics(
     # Calculate the ideal expectation values of the original pulse
     ideal_expectation_values = calculate_expectation_values(loaded_data.unitaries)
     mse_ideal2exp = jax.vmap(mse, in_axes=(0, 0))(
-        loaded_data.expectation_values, ideal_expectation_values
+        loaded_data.observed_values, ideal_expectation_values
     ).mean()
 
     # * The training iteration.

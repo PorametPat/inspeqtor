@@ -8,7 +8,6 @@ import diffrax  # type: ignore
 from .ctyping import ParametersDictType
 from .data import QubitInformation
 from .constant import X, Y, Z
-from .control import ControlSequence
 
 
 @struct.dataclass
@@ -615,7 +614,7 @@ def unitaries_prod(
 
 def make_trotterization_solver(
     hamiltonian: typing.Callable[..., jnp.ndarray],
-    control_sequence: ControlSequence,
+    total_dt: int,
     dt: float,
     trotter_steps: int,
     y0: jnp.ndarray,
@@ -624,7 +623,7 @@ def make_trotterization_solver(
 
     Args:
         hamiltonian (typing.Callable[..., jnp.ndarray]): The Hamiltonian function of the system
-        control_sequence (ControlSequence): The pulse sequence instance
+        total_dt (int): The total duration of control sequence
         dt (float, optional): The duration of time step in nanosecond.
         trotter_steps (int, optional): The number of trotterization step.
         y0 (jnp.ndarray): The initial unitary state. Defaults to jnp.eye(2, dtype=jnp.complex128)
@@ -633,7 +632,7 @@ def make_trotterization_solver(
         typing.Callable[..., jnp.ndarray]: Trotterization Whitebox function
     """
     hamiltonian = jax.jit(hamiltonian)
-    time_step = jnp.linspace(0, control_sequence.total_dt * dt, trotter_steps)
+    time_step = jnp.linspace(0, total_dt * dt, trotter_steps)
 
     def whitebox(control_parameters: jnp.ndarray):
         hamiltonians = jax.vmap(hamiltonian, in_axes=(None, 0))(
