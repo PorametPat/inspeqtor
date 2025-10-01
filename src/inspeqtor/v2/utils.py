@@ -5,8 +5,14 @@ import logging
 from dataclasses import dataclass
 
 from inspeqtor.experimental.data import QubitInformation
+from inspeqtor.experimental.physics import calculate_exp
 from inspeqtor.v2.control import ControlSequence
-from inspeqtor.v2.data import ExperimentalData
+from inspeqtor.v2.data import (
+    ExpectationValue,
+    ExperimentalData,
+    get_complete_expectation_values,
+)
+from inspeqtor.experimental.utils import calculate_shots_expectation_value
 
 
 @dataclass
@@ -67,3 +73,68 @@ def prepare_data(
         control_sequence=control_sequence,
         whitebox=whitebox,
     )
+
+
+def calculate_expectation_values(
+    unitaries: jnp.ndarray,
+    expectation_value_order: list[ExpectationValue] = get_complete_expectation_values(
+        1
+    ),
+) -> jnp.ndarray:
+    # Calculate the ideal expectation values of the original pulse
+    ideal_expectation_values = jnp.zeros(tuple(unitaries.shape[:-2]) + (18,))
+    for idx, exp in enumerate(expectation_value_order):
+        expvals = calculate_exp(
+            unitaries,
+            exp.observable_matrix,
+            exp.initial_density_matrix,
+        )
+        ideal_expectation_values = ideal_expectation_values.at[..., idx].set(expvals)
+
+    return ideal_expectation_values
+
+
+def shot_quantum_device(
+    key: jnp.ndarray,
+    control_parameters: jnp.ndarray,
+    solver: typing.Callable[[jnp.ndarray], jnp.ndarray],
+    SHOTS: int,
+    expectation_value_receipt: typing.Sequence[
+        ExpectationValue
+    ] = get_complete_expectation_values(1),
+) -> jnp.ndarray:
+    """This is the shot estimate expectation value quantum device
+
+    Args:
+        control_parameters (jnp.ndarray): The control parameter to be feed to simlulator
+        key (jnp.ndarray): Random key
+        solver (typing.Callable[[jnp.ndarray], jnp.ndarray]): The ODE solver for propagator
+        SHOTS (int): The number of shots used to estimate expectation values
+
+    Returns:
+        jnp.ndarray: The expectation value of shape (control_parameters.shape[0], 18)
+    """
+
+    expectation_values = jnp.zeros(
+        (control_parameters.shape[0], len(expectation_value_receipt))
+    )
+    unitaries = jax.vmap(solver)(control_parameters)[:, -1, :, :]
+
+    for idx, exp in enumerate(expectation_value_receipt):
+        key, sample_key = jax.random.split(key)
+        sample_keys = jax.random.split(sample_key, num=unitaries.shape[0])
+
+        expectation_value = jax.vmap(
+            calculate_shots_expectation_value,
+            in_axes=(0, None, 0, None, None),
+        )(
+            sample_keys,
+            exp.initial_density_matrix,
+            unitaries,
+            exp.observable_matrix,
+            SHOTS,
+        )
+
+        expectation_values = expectation_values.at[..., idx].set(expectation_value)
+
+    return expectation_values

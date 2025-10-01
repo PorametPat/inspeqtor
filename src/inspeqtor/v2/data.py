@@ -5,8 +5,157 @@ from datetime import datetime
 from pathlib import Path
 import json
 import polars as pl
+from functools import cached_property
+import itertools
 
-from ..experimental.data import QubitInformation, ExpectationValue
+from ..experimental.data import QubitInformation, Operator, State
+
+
+@dataclass
+class ExpectationValue:
+    """Class representing a single experimental setting of state initialization and observable measurement.
+
+    Supports both single-qubit and multi-qubit configurations using string representation:
+    - Observable: "XYZ" (instead of ["X", "Y", "Z"])
+    - Initial state: "+0r" (instead of ["+", "0", "r"])
+    """
+
+    initial_state: str
+    # String where each character represents an observable for one qubit
+    observable: str
+    # String where each character represents an initial state for one qubit
+    expectation_value: float | None = None
+
+    def __post_init__(self):
+        # Ensure both strings have the same length (number of qubits)
+        assert (
+            len(self.observable) == len(self.initial_state)
+        ), f"Observable and initial state must have same number of qubits: {len(self.observable)} != {len(self.initial_state)}"
+
+        # Validate observable characters
+        for o in self.observable:
+            assert (
+                o in "XYZ"
+            ), f"Invalid observable '{o}'. Must be one of 'X', 'Y', or 'Z'"
+
+        # Validate initial state characters
+        valid_states = "+-rl01"
+        for s in self.initial_state:
+            assert (
+                s in valid_states
+            ), f"Invalid initial state '{s}'. Must be one of {valid_states}"
+
+    @cached_property
+    def num_qubits(self) -> int:
+        """Return the number of qubits in this experimental setting"""
+        return len(self.observable)
+
+    @cached_property
+    def observable_list(self) -> list[str]:
+        """Get the observable as a list of strings, one per qubit"""
+        return [o for o in self.observable]
+
+    @cached_property
+    def initial_state_list(self) -> list[str]:
+        """Get the initial state as a list of strings, one per qubit"""
+        return [s for s in self.initial_state]
+
+    @cached_property
+    def initial_statevector(self) -> jnp.ndarray:
+        return self.get_initial_state(dm=False)
+
+    @cached_property
+    def initial_density_matrix(self) -> jnp.ndarray:
+        return self.get_initial_state(dm=True)
+
+    @cached_property
+    def observable_matrix(self) -> jnp.ndarray:
+        return self.get_observable_operator()
+
+    def get_observable_operator(self) -> jnp.ndarray:
+        """Get the full observable operator as a tensor product"""
+        ops = [Operator.from_label(label) for label in self.observable_list]
+        if len(ops) == 1:
+            return ops[0]
+        return tensor_product(*ops)
+
+    def get_initial_state(self, dm: bool = True) -> jnp.ndarray:
+        """Get the initial state as state vector or density matrix"""
+        states = [
+            State.from_label(label, dm=False) for label in self.initial_state_list
+        ]
+
+        if len(states) == 1:
+            state = states[0]
+        else:
+            # For multi-qubit state, compute the tensor product
+            result = states[0]
+            for s in states[1:]:
+                result = jnp.kron(result, s)
+            state = result
+
+        # Convert to vector shape if needed
+        if state.shape == (2, 1) or state.shape == (2 ** len(states), 1):
+            # Already in correct shape
+            pass
+        elif state.shape == (2,) or state.shape == (2 ** len(states),):
+            # Reshape to column vector
+            state = state.reshape(-1, 1)
+
+        if dm:
+            return jnp.outer(state, state.conj())
+        return state
+
+    def to_dict(self):
+        return {
+            "initial_state": self.initial_state,
+            "observable": self.observable,
+            "expectation_value": self.expectation_value,
+        }
+
+    def __eq__(self, __value: object) -> bool:
+        if not isinstance(__value, ExpectationValue):
+            return False
+
+        return (
+            self.initial_state == __value.initial_state
+            and self.observable == __value.observable
+            and self.expectation_value == __value.expectation_value
+        )
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**data)
+
+
+# Helper function for tensor products
+def tensor_product(*operators) -> jnp.ndarray:
+    """Create tensor product of multiple operators"""
+    if not operators:
+        raise ValueError("Need at least one operator")
+
+    result = operators[0]
+    for op in operators[1:]:
+        result = jnp.kron(result, op)
+    return result
+
+
+def get_complete_expectation_values(num_qubits: int) -> list[ExpectationValue]:
+    """Generate a complete set of expectation values for characterizing a multi-qubit system"""
+    observables = ["X", "Y", "Z"]
+    states = ["+", "-", "r", "l", "0", "1"]
+
+    # For n qubits, we need all combinations of observables and states
+    result = []
+
+    # Generate all combinations of observables
+    for obs_combo in itertools.product(observables, repeat=num_qubits):
+        for state_combo in itertools.product(states, repeat=num_qubits):
+            obs_str = "".join(obs_combo)
+            state_str = "".join(state_combo)
+            result.append(ExpectationValue(observable=obs_str, initial_state=state_str))
+
+    return result
 
 
 @dataclass
@@ -89,8 +238,11 @@ class ExperimentalData:
         assert "parameter_id" in self.parameter_dataframe
         assert "parameter_id" in self.observed_dataframe
 
-        assert self.parameter_dataframe["parameter_id"].unique().sort().equals(
-            self.observed_dataframe["parameter_id"].unique().sort()
+        assert (
+            self.parameter_dataframe["parameter_id"]
+            .unique()
+            .sort()
+            .equals(self.observed_dataframe["parameter_id"].unique().sort())
         )
 
     def get_parameter(self) -> jnp.ndarray:

@@ -488,7 +488,7 @@ def shot_quantum_device(
     control_parameters: jnp.ndarray,
     solver: typing.Callable[[jnp.ndarray], jnp.ndarray],
     SHOTS: int,
-    expectation_value_receipt: list[
+    expectation_value_receipt: typing.Sequence[
         ExpectationValue
     ] = default_expectation_values_order,
 ) -> jnp.ndarray:

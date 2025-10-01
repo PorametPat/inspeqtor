@@ -8,11 +8,19 @@ import diffrax  # type: ignore
 from .ctyping import ParametersDictType
 from .data import QubitInformation
 from .constant import X, Y, Z
+# import optimistix as optx
 
 
 @struct.dataclass
 class SignalParameters:
     pulse_params: list[ParametersDictType]
+    phase: float
+    random_key: None | jnp.ndarray = None
+
+
+@struct.dataclass
+class SignalParametersV2:
+    pulse_params: dict[str, ParametersDictType]
     phase: float
     random_key: None | jnp.ndarray = None
 
@@ -430,6 +438,25 @@ def signal_func_v3(get_envelope: typing.Callable, drive_frequency: float, dt: fl
             * jnp.exp(
                 1j * ((2 * jnp.pi * drive_frequency * t) + pulse_parameters.phase)
             )
+        )
+
+    return signal
+
+
+def signal_func_v4(get_envelope: typing.Callable, drive_frequency: float, dt: float):
+    """Make the envelope function into signal with drive frequency
+
+    Args:
+        get_envelope (Callable): The envelope function in unit of dt
+        drive_frequency (float): drive freuqency in unit of GHz
+        dt (float): The dt provived will be used to convert envelope unit to ns,
+                    set to 1 if the envelope function is already in unit of ns
+    """
+
+    def signal(control_param: SignalParametersV2, t: jnp.ndarray):
+        return jnp.real(
+            get_envelope(control_param.pulse_params)(t / dt)
+            * jnp.exp(1j * ((2 * jnp.pi * drive_frequency * t) + control_param.phase))
         )
 
     return signal

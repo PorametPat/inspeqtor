@@ -7,8 +7,34 @@ import inspeqtor.experimental as sq
 from scipy.stats import unitary_group
 import chex
 import logging
+import typing
 
-jax.config.update("jax_enable_x64", True)
+sq.utils.enable_jax_x64()
+
+
+def get_single_qubit_rotating_frame_whitebox(
+    control_sequence: sq.control.ControlSequence,
+    qubit_info: sq.data.QubitInformation,
+    dt: float,
+) -> typing.Callable[[jnp.ndarray], jnp.ndarray]:
+    """Generate single qubit whitebox with rotating transmon hamiltonian
+
+    Args:
+        control_sequence (ControlSequence): Control sequence
+        qubit_info (QubitInformation): Qubit information
+        dt (float): Duration of 1 timestep in nanosecond
+
+    Returns:
+        typing.Callable[[jnp.ndarray], jnp.ndarray]: Whitebox with ODE solver and rotating transmon hamiltonian
+    """
+    whitebox = sq.predefined.get_single_qubit_whitebox(
+        sq.predefined.rotating_transmon_hamiltonian,
+        control_sequence,
+        qubit_info,
+        dt,
+    )
+
+    return whitebox
 
 
 def test_signal_func_v3():
@@ -122,7 +148,7 @@ def test_run():
 
     # Get the simualtor
     # simulator = get_simulator(qubit_info=qubit_info, t_eval=t_eval)
-    simulator = sq.predefined.get_single_qubit_rotating_frame_whitebox(
+    simulator = get_single_qubit_rotating_frame_whitebox(
         control_sequence=control_sequence, qubit_info=qubit_info, dt=dt
     )
 
@@ -304,7 +330,7 @@ def solve_with_auto_hamiltonian_extractor():
 def solve_with_signal_v5():
     qubit_info, control_sequence, params, t_eval, time_step = setup_crosscheck_setting()
 
-    whitebox_v5 = sq.predefined.get_single_qubit_rotating_frame_whitebox(
+    whitebox_v5 = get_single_qubit_rotating_frame_whitebox(
         control_sequence=control_sequence,
         qubit_info=qubit_info,
         dt=time_step,
@@ -489,7 +515,7 @@ def test_crosscheck_difflax():
         t1=control_sequence.total_dt * time_step,
     )
 
-    whitebox_v5 = sq.predefined.get_single_qubit_rotating_frame_whitebox(
+    whitebox_v5 = get_single_qubit_rotating_frame_whitebox(
         control_sequence=control_sequence,
         qubit_info=qubit_info,
         dt=2 / 9,

@@ -595,9 +595,6 @@ class WhiteboxStrategy(StrEnum):
     TROTTER = auto()
 
 
-# end-example
-
-
 def generate_experimental_data(
     key: jnp.ndarray,
     hamiltonian: typing.Callable[..., jnp.ndarray],
@@ -792,35 +789,10 @@ def get_single_qubit_whitebox(
         solver,
         t_eval=t_eval,
         hamiltonian=hamiltonian,
-        y0=jnp.eye(2, dtype=jnp.complex64),
+        y0=jnp.eye(2, dtype=jnp.complex_),
         t0=0,
         t1=control_sequence.total_dt * dt,
         max_steps=max_steps,
-    )
-
-    return whitebox
-
-
-def get_single_qubit_rotating_frame_whitebox(
-    control_sequence: ControlSequence,
-    qubit_info: QubitInformation,
-    dt: float,
-) -> typing.Callable[[jnp.ndarray], jnp.ndarray]:
-    """Generate single qubit whitebox with rotating transmon hamiltonian
-
-    Args:
-        control_sequence (ControlSequence): Control sequence
-        qubit_info (QubitInformation): Qubit information
-        dt (float): Duration of 1 timestep in nanosecond
-
-    Returns:
-        typing.Callable[[jnp.ndarray], jnp.ndarray]: Whitebox with ODE solver and rotating transmon hamiltonian
-    """
-    whitebox = get_single_qubit_whitebox(
-        rotating_transmon_hamiltonian,
-        control_sequence,
-        qubit_info,
-        dt,
     )
 
     return whitebox
