@@ -4,7 +4,11 @@ import numpy as np
 from flax.traverse_util import flatten_dict
 
 import inspeqtor.experimental as sq
-from inspeqtor.v2.data import ExperimentConfiguration, ExperimentalData
+from inspeqtor.v2.data import (
+    ExperimentConfiguration,
+    ExperimentalData,
+    get_complete_expectation_values,
+)
 from inspeqtor.v2.predefined import (
     get_predefined_data_model_m1,
     save_data_to_path,
@@ -18,7 +22,7 @@ def test_ExperimentConfig(tmp_path):
 
     experiment_config = ExperimentConfiguration(
         qubits=[qubit_info],
-        expectation_values_order=sq.constant.default_expectation_values_order,
+        expectation_values_order=get_complete_expectation_values(1),
         parameter_structure=[("0", "param1"), ("1", "param2")],
         backend_name="qasm_simulator",
         sample_size=2,
@@ -59,7 +63,7 @@ def test_ExperimentalData(tmp_path):
 
     config = ExperimentConfiguration(
         qubits=[data_model.qubit_information],
-        expectation_values_order=sq.constant.default_expectation_values_order,
+        expectation_values_order=get_complete_expectation_values(1),
         parameter_structure=seq.get_structure(),
         backend_name="inspeqtor",
         shots=1000,

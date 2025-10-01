@@ -8,6 +8,7 @@ import pathlib
 from ..experimental.control import BaseControl, sample_params
 from ..experimental.data import save_pytree_to_json, load_pytree_from_json
 
+
 @dataclass
 class ControlSequence:
     """Control sequence, expect to be sum of atomic control."""
@@ -46,9 +47,7 @@ class ControlSequence:
         params_dict: dict[str, ParametersDictType] = {}
         for idx, ctrl_key in enumerate(self.controls.keys()):
             subkey = jax.random.fold_in(key, idx)
-            params = sample_params(
-                subkey, self.lower[ctrl_key], self.upper[ctrl_key]
-            )
+            params = sample_params(subkey, self.lower[ctrl_key], self.upper[ctrl_key])
             params_dict[ctrl_key] = params
 
         return params_dict
@@ -151,6 +150,34 @@ class ControlSequence:
         return cls.from_dict(ctrl_loaded_dict, controls=controls)
 
 
+def get_waveform(
+    params: dict[str, ParametersDictType], control_seqeunce: ControlSequence
+) -> jnp.ndarray:
+    """
+    Samples the pulse sequence by generating random parameters for each pulse and computing the total waveform.
+
+    Parameters:
+        key (Key): The random key used for generating the parameters.
+
+    Returns:
+        tuple[list[ParametersDictType], Complex[Array, "time"]]: A tuple containing a list of parameter dictionaries for each pulse and the total waveform.
+
+    Example:
+        key = jax.random.PRNGKey(0)
+        params, total_waveform = sample(key)
+    """
+    # Create base waveform
+    total_waveform = jnp.zeros(control_seqeunce.total_dt, dtype=jnp.complex64)
+
+    for (param_key, param_val), (ctrl_key, control) in zip(
+        params.items(), control_seqeunce.controls.items()
+    ):
+        waveform = control.get_waveform(param_val)
+        total_waveform += waveform
+
+    return total_waveform
+
+
 def ravel_unravel_fn(control_sequence: ControlSequence):
     structure = control_sequence.get_structure()
 
@@ -235,6 +262,3 @@ def get_envelope_transformer(control_sequence: ControlSequence):
         return control_sequence.get_envelope(unravel_fn(params))
 
     return get_envelope
-
-
-

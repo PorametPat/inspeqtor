@@ -118,6 +118,98 @@ class BaseControl(ABC):
         return cls(**data)
 
 
+class ControlSequenceProtocol(typing.Protocol):
+    """Protocol defining the interface for control sequences."""
+
+    # Attributes
+    controls: dict[str, BaseControl]
+    total_dt: int
+
+    def get_structure(self) -> list[tuple[str, str]]:
+        """Get the structure/order of control parameters."""
+        ...
+
+    def sample_params(self, key: jax.Array) -> dict[str, ParametersDictType]:
+        """Sample control parameters using a random key.
+
+        Args:
+            key: Random key for sampling
+
+        Returns:
+            Dictionary of sampled control parameters
+        """
+        ...
+
+    def get_bounds(
+        self,
+    ) -> tuple[dict[str, ParametersDictType], dict[str, ParametersDictType]]:
+        """Get the bounds of the controls.
+
+        Returns:
+            Tuple of lower and upper bounds dictionaries
+        """
+        ...
+
+    def get_envelope(
+        self, params_dict: dict[str, ParametersDictType]
+    ) -> typing.Callable:
+        """Create envelope function with given control parameters.
+
+        Args:
+            params_dict: Control parameters to be used
+
+        Returns:
+            Envelope function
+        """
+        ...
+
+    def to_dict(self) -> dict[str, str | dict[str, str | float]]:
+        """Convert the control sequence to a dictionary representation."""
+        ...
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict[str, str | dict[str, str | float]],
+        controls: dict[str, type[BaseControl]],
+    ) -> typing.Self:
+        """Create a control sequence from dictionary data.
+
+        Args:
+            data: Dictionary containing control sequence data
+            controls: Dictionary mapping control names to control classes
+
+        Returns:
+            New control sequence instance
+        """
+        ...
+
+    def to_file(self, path: str | pathlib.Path) -> None:
+        """Save configuration to file.
+
+        Args:
+            path: Path to save the sequence configuration
+        """
+        ...
+
+    @classmethod
+    def from_file(
+        cls,
+        path: str | pathlib.Path,
+        controls: dict[str, type[BaseControl]],
+    ) -> typing.Self:
+        """Load control sequence from file.
+
+        Args:
+            path: Path to load the sequence configuration from
+            controls: Dictionary mapping control names to control classes
+
+        Returns:
+            New control sequence instance
+        """
+        ...
+
+
 @dataclass
 class ControlSequence:
     """Control sequence, expect to be sum of atomic control."""
