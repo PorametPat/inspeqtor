@@ -62,20 +62,20 @@ class BaseControl(ABC):
         assert all(
             [isinstance(k, str) for k in params.keys()]
         ), "All key of params dict must be string"
-        assert all(
-            [isinstance(v, float) for v in params.values()]
+        assert all([isinstance(v, float) for v in params.values()]) or all(
+            [isinstance(v, jnp.ndarray) for v in params.values()]
         ), "All value of params dict must be float"
         assert isinstance(waveform, jax.Array), "Waveform must be jax.Array"
 
-        # Validate that params is serializable and deserializable
-        try:
-            reread_params = json.loads(json.dumps(params))
-            assert params == reread_params
+        # # Validate that params is serializable and deserializable
+        # try:
+        #     reread_params = json.loads(json.dumps(params))
+        #     assert params == reread_params
 
-        except TypeError as e:
-            raise TypeError(
-                f"Cannot serialize params dict of {self.__class__.__name__} to json"
-            ) from e
+        # except TypeError as e:
+        #     raise TypeError(
+        #         f"Cannot serialize params dict of {self.__class__.__name__} to json"
+        #     ) from e
 
     @abstractmethod
     def get_bounds(
