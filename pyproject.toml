@@ -20,6 +20,7 @@ dependencies = [
     "funsor>=0.4.5",
     "deprecated>=1.2.18",
     "polars>=1.33.1",
+    "gpjax>=0.12.2",
 ]
 
 [project.optional-dependencies]
