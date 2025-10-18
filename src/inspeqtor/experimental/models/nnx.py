@@ -53,18 +53,20 @@ class WoModel(Blackbox):
         self.num_shared_layers = len(shared_layers) - 1
         self.num_pauli_layers = len(pauli_layers) - 1
 
-        self.pauli_layers = {}
-        self.unitary_layers = {}
-        self.diagonal_layers = {}
+        self.pauli_layers = nnx.Dict()
+        self.unitary_layers = nnx.Dict()
+        self.diagonal_layers = nnx.Dict()
         for pauli in ["X", "Y", "Z"]:
-            layers = {
-                f"pauli/{idx}": nnx.Linear(
-                    in_features=in_features, out_features=out_features, rngs=rngs
-                )
-                for idx, (in_features, out_features) in enumerate(
-                    zip(pauli_layers[:-1], pauli_layers[1:])
-                )
-            }
+            layers = nnx.Dict(
+                {
+                    f"pauli/{idx}": nnx.Linear(
+                        in_features=in_features, out_features=out_features, rngs=rngs
+                    )
+                    for idx, (in_features, out_features) in enumerate(
+                        zip(pauli_layers[:-1], pauli_layers[1:])
+                    )
+                }
+            )
 
             self.pauli_layers[pauli] = layers
 
@@ -130,12 +132,14 @@ class UnitaryModel(Blackbox):
         self.hidden_sizes = hidden_sizes
         self.NUM_UNITARY_PARAMS = 4
 
-        self.hidden_layers = {
-            f"hidden_layers/{idx}": nnx.Linear(
-                in_features=hidden_size, out_features=hidden_size, rngs=rngs
-            )
-            for idx, hidden_size in enumerate(self.hidden_sizes)
-        }
+        self.hidden_layers = nnx.Dict(
+            {
+                f"hidden_layers/{idx}": nnx.Linear(
+                    in_features=hidden_size, out_features=hidden_size, rngs=rngs
+                )
+                for idx, hidden_size in enumerate(self.hidden_sizes)
+            }
+        )
 
         # Initialize the final layer for unitary parameters
         self.final_layer = nnx.Linear(
@@ -231,13 +235,14 @@ def toggling_unitary_with_spam_predictive_fn(
     Returns:
         jnp.ndarray: Predicted expectation values.
     """
-    unitary_params = model(control_parameters)
+    params = model(control_parameters)
 
     return toggling_unitary_with_spam_to_expvals(
-        {
-            "model_params": unitary_params,
-            "spam_params": model.spam_params,
-        },
+        # {
+        #     "model_params": params['model_params'],
+        #     "spam_params": model.spam_params,
+        # },
+        params,
         unitaries,
     )
 
@@ -333,7 +338,7 @@ def create_step(
         grad_fn = nnx.value_and_grad(loss_fn, has_aux=True)
         (loss, aux), grads = grad_fn(model, data)
         metrics.update(loss=loss)  # In-place updates.
-        optimizer.update(grads)  # In-place updates.
+        optimizer.update(model, grads)  # In-place updates.
 
         return loss, aux
 
