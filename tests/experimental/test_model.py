@@ -9,8 +9,8 @@ def test_linen_model(load_dataset):
     loaded_data, train_data, test_data = load_dataset
 
     model = sq.models.linen.WoModel(
-        hidden_sizes_1=[10],
-        hidden_sizes_2=[10],
+        shared_layers=[10],
+        pauli_layers=[10],
     )
 
     # Working with adapter

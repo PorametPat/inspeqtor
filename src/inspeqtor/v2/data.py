@@ -127,6 +127,9 @@ class ExpectationValue:
     def from_dict(cls, data):
         return cls(**data)
 
+    def __str__(self) -> str:
+        return self.initial_state + "/" + self.observable
+
 
 # Helper function for tensor products
 def tensor_product(*operators) -> jnp.ndarray:
@@ -224,6 +227,34 @@ class ExperimentConfiguration:
 
         return cls.from_dict(dict_experiment_config)
 
+    def __str__(self):
+        lines = [
+            "=" * 60,
+            "EXPERIMENT CONFIGURATION",
+            "=" * 60,
+            f"Identifier: {self.EXPERIMENT_IDENTIFIER}",
+            f"Backend: {self.backend_name} (instance: {self.instance})",
+            f"Date: {self.date}",
+            f"Description: {self.description}",
+            "",
+            f"Shots: {self.shots:,}",
+            f"Sample Size: {self.sample_size}",
+            f"Device Cycle Time: {self.device_cycle_time_ns:.4f} ns",
+            f"Sequence Duration: {self.sequence_duration_dt} dt",
+            "",
+            f"Qubits: {len(self.qubits)}",
+            *[f"  - {qubit}" for qubit in self.qubits],
+            "",
+            f"Expectation Values: {len(self.expectation_values_order)}",
+            f"  (States: {set(e.initial_state for e in self.expectation_values_order)})",
+            f"  (Observables: {set(e.observable for e in self.expectation_values_order)})",
+            "",
+            f"Parameter Structure: {self.parameter_structure}",
+            f"Tags: {', '.join(self.EXPERIMENT_TAGS)}",
+            "=" * 60,
+        ]
+        return "\n".join(lines)
+
 
 @dataclass
 class ExperimentalData:
@@ -290,3 +321,18 @@ class ExperimentalData:
             and self.parameter_dataframe.equals(__value.parameter_dataframe)
             and self.observed_dataframe.equals(__value.observed_dataframe)
         )
+
+    def __str__(self):
+        lines = [
+            "=" * 60,
+            "EXPERIMENTAL DATA",
+            str(self.config),
+            "",
+            "Parameter DataFrame",
+            str(self.parameter_dataframe),
+            "",
+            "Observed DataFrame",
+            str(self.observed_dataframe),
+            "=" * 60,
+        ]
+        return "\n".join(lines)

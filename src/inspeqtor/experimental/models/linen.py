@@ -23,8 +23,8 @@ from ..utils import dataloader
 
 
 class WoModel(nn.Module):
-    hidden_sizes_1: typing.Sequence[int] = (20, 10)
-    hidden_sizes_2: typing.Sequence[int] = (20, 10)
+    shared_layers: typing.Sequence[int] = (20, 10)
+    pauli_layers: typing.Sequence[int] = (20, 10)
     pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
 
     NUM_UNITARY_PARAMS: int = 3
@@ -40,7 +40,7 @@ class WoModel(nn.Module):
     @nn.compact
     def __call__(self, x: jnp.ndarray) -> dict[str, jnp.ndarray]:
         # Apply a dense layer for each hidden size
-        for hidden_size in self.hidden_sizes_1:
+        for hidden_size in self.shared_layers:
             x = nn.Dense(features=hidden_size)(x)
             x = nn.relu(x)
 
@@ -50,7 +50,7 @@ class WoModel(nn.Module):
             # Sub hidden layer
             # Copy the input
             _x = jnp.copy(x)
-            for hidden_size in self.hidden_sizes_2:
+            for hidden_size in self.pauli_layers:
                 _x = nn.Dense(features=hidden_size)(_x)
                 _x = nn.relu(_x)
 
@@ -97,8 +97,8 @@ class UnitaryModel(nn.Module):
 
 class WoDropoutModel(nn.Module):
     dropout_rate: float = 0.2
-    hidden_sizes_1: typing.Sequence[int] = (20, 10)
-    hidden_sizes_2: typing.Sequence[int] = (20, 10)
+    shared_layers: typing.Sequence[int] = (20, 10)
+    shared_layers: typing.Sequence[int] = (20, 10)
     pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
 
     NUM_UNITARY_PARAMS: int = 3
@@ -116,7 +116,7 @@ class WoDropoutModel(nn.Module):
         self, x: jnp.ndarray, stochastic: bool = True
     ) -> dict[str, jnp.ndarray]:
         # Apply a dense layer for each hidden size
-        for hidden_size in self.hidden_sizes_1:
+        for hidden_size in self.shared_layers:
             x = nn.Dense(features=hidden_size)(x)
             x = nn.relu(x)
             x = nn.Dropout(rate=self.dropout_rate, deterministic=not stochastic)(x)
@@ -127,7 +127,7 @@ class WoDropoutModel(nn.Module):
             # Sub hidden layer
             # Copy the input
             _x = jnp.copy(x)
-            for hidden_size in self.hidden_sizes_2:
+            for hidden_size in self.shared_layers:
                 _x = nn.Dense(features=hidden_size)(_x)
                 _x = nn.relu(_x)
                 _x = nn.Dropout(rate=self.dropout_rate, deterministic=not stochastic)(

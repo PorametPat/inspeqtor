@@ -233,7 +233,7 @@ def make_probabilistic_model(
                             probs=expectation_value_to_prob_minus(
                                 jnp.expand_dims(expvals[..., idx], axis=-1)
                             )
-                        ).to_event(1),
+                        ).to_event(1),  # type: ignore
                         obs=(
                             observables[..., idx] if observables is not None else None
                         ),
@@ -246,7 +246,7 @@ def make_probabilistic_model(
                     "obs",
                     dist.BernoulliProbs(
                         probs=expectation_value_to_prob_minus(expvals)
-                    ).to_event(1),
+                    ).to_event(1),  # type: ignore
                     obs=observables,
                     infer={"enumerate": "parallel"},
                 )
@@ -381,8 +381,8 @@ def make_predictive_fn(
         )
 
         base_model = sq.models.linen.WoModel(
-            hidden_sizes_1=characterized_result.config["model_config"]["hidden_sizes"][0],
-            hidden_sizes_2=characterized_result.config["model_config"]["hidden_sizes"][1],
+            shared_layers=characterized_result.config["model_config"]["hidden_sizes"][0],
+            pauli_layers=characterized_result.config["model_config"]["hidden_sizes"][1],
         )
         graybox_model = sq.probabilistic.make_flax_probabilistic_graybox_model(
             name="graybox",

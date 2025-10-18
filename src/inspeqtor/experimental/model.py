@@ -360,6 +360,7 @@ def unitary(params: jnp.ndarray) -> jnp.ndarray:
 def get_spam(
     params: VariableDict,
 ) -> tuple[list[ExpectationValue], dict[str, jnp.ndarray]]:
+    # https://forest-benchmarking.readthedocs.io/en/latest/examples/readout_error_estimation.html
     pair_map = {"+": "-", "-": "+", "0": "1", "1": "0", "r": "l", "l": "r"}
     observables = {"X": X, "Y": Y, "Z": Z}
     for pauli, matrix in observables.items():

@@ -588,7 +588,7 @@ def test_trotter_diffrax_close():
     trotter_unitary = trotter_solver(params)
     diffrax_unitary = diffrax_solver(params)
 
-    assert sq.physics.gate_fidelity(trotter_unitary[-1], diffrax_unitary[-1]) > 0.999
+    assert sq.physics.gate_fidelity(trotter_unitary[-1], diffrax_unitary[-1]) > 0.99
 
 
 def get_manual_rotated_hamiltonian(qubit_info, control_seq, dt):

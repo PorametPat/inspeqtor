@@ -33,7 +33,6 @@ from inspeqtor.experimental.predefined import (
     MultiDragPulseV3,
     GaussianPulse,
     TwoAxisGaussianPulse,
-    auto_rotating_frame_hamiltonian,
     transmon_hamiltonian,
     HamiltonianSpec,
     SimulationStrategy,
@@ -45,6 +44,7 @@ from inspeqtor.experimental.physics import (
     signal_func_v5,
     make_trotterization_solver,
     solver,
+    auto_rotating_frame_hamiltonian,
 )
 from inspeqtor.experimental.visualization import format_expectation_values
 
@@ -110,8 +110,8 @@ def get_predefined_data_model_m1(
 
     control_seq = get_drag_pulse_v2_sequence(
         qubit_info_drive_strength=characterized_qubit_info.drive_strength,
-        min_beta=-5.0,
-        max_beta=5.0,
+        min_beta=-10.0,
+        max_beta=10.0,
         dt=dt,
     )
 

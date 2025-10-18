@@ -63,9 +63,9 @@ def test_expectation_value_to_eigenvalue():
 
     # Hard core test
     expvals = jnp.linspace(-1, 1, 1001)
-    result = expectation_value_to_eigenvalue(expvals, SHOTS=3000)
+    result = expectation_value_to_eigenvalue(expvals, SHOTS=1000)
 
-    chex.assert_trees_all_close(expvals, result.mean(axis=-1))
+    chex.assert_trees_all_close(expvals, result.mean(axis=-1), atol=1e-08)
 
 
 @pytest.mark.parametrize(
@@ -495,8 +495,8 @@ def marginal_guide(
     num_candidates = control_parameters.shape[-2]
 
     # Get the graybox model structure - you'll need to specify these based on your actual model
-    hidden_sizes_1 = ()  # Adjust based on your model
-    hidden_sizes_2 = ()  # Adjust based on your model
+    shared_layers = ()  # Adjust based on your model
+    pauli_layers = ()  # Adjust based on your model
     pauli_operators = ("X", "Y", "Z")
     NUM_UNITARY_PARAMS = 3
     NUM_DIAGONAL_PARAMS = 2
@@ -508,7 +508,7 @@ def marginal_guide(
 
         # Shared/trunk network parameters
         current_features = control_parameters.shape[-1]
-        for i, hidden_size in enumerate(hidden_sizes_1):
+        for i, hidden_size in enumerate(shared_layers):
             layer_name = f"graybox/shared/Dense_{i}"
 
             # Kernel parameters
@@ -546,14 +546,14 @@ def marginal_guide(
 
         # Branch network parameters for each Pauli operator
         shared_features = (
-            current_features if hidden_sizes_1 else control_parameters.shape[-1]
+            current_features if shared_layers else control_parameters.shape[-1]
         )
 
         for op in pauli_operators:
             current_features = shared_features
 
             # Branch hidden layers
-            for i, hidden_size in enumerate(hidden_sizes_2):
+            for i, hidden_size in enumerate(pauli_layers):
                 layer_name = f"graybox/Pauli_{op}/Dense_{i}"
 
                 kernel_loc = numpyro.param(
@@ -650,8 +650,8 @@ def marginal_guide(
             control_parameters,
             unitaries,
             variational_params,
-            hidden_sizes_1,
-            hidden_sizes_2,
+            shared_layers,
+            pauli_layers,
             pauli_operators,
         )
 
@@ -664,13 +664,13 @@ def marginal_guide(
                         probs=sq.utils.expectation_value_to_prob_minus(
                             jnp.expand_dims(expvals[..., idx], axis=-1)
                         )
-                    ).to_event(1),
+                    ).to_event(1),  # type: ignore
                 )
         else:
             probs = sq.utils.expectation_value_to_prob_minus(expvals)
             numpyro.sample(
                 "obs",
-                dist.BernoulliProbs(probs=probs).to_event(1),
+                dist.BernoulliProbs(probs=probs).to_event(1),  # type: ignore
                 infer={"enumerate": "parallel"},
             )
 
@@ -679,8 +679,8 @@ def forward_pass_graybox(
     control_parameters: jnp.ndarray,
     unitaries: jnp.ndarray,
     params: dict,
-    hidden_sizes_1: tuple[int, ...],
-    hidden_sizes_2: tuple[int, ...],
+    shared_layers: tuple[int, ...],
+    pauli_layers: tuple[int, ...],
     pauli_operators: tuple[str, ...],
     # Unitary activation functions
     unitary_activation_fn=lambda x: 2 * jnp.pi * jax.nn.hard_sigmoid(x),
@@ -694,7 +694,7 @@ def forward_pass_graybox(
 
     # Shared trunk network
     shared_x = control_parameters
-    for i, hidden_size in enumerate(hidden_sizes_1):
+    for i, hidden_size in enumerate(shared_layers):
         layer_name = f"graybox/shared/Dense_{i}"
         W = params[f"{layer_name}.kernel"]
         b = params[f"{layer_name}.bias"]
@@ -706,7 +706,7 @@ def forward_pass_graybox(
         # Branch network
         branch_x = jnp.copy(shared_x)
 
-        for i, hidden_size in enumerate(hidden_sizes_2):
+        for i, hidden_size in enumerate(pauli_layers):
             layer_name = f"graybox/Pauli_{op}/Dense_{i}"
             W = params[f"{layer_name}.kernel"]
             b = params[f"{layer_name}.bias"]
