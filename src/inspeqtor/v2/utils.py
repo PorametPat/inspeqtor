@@ -17,6 +17,8 @@ from inspeqtor.experimental.utils import calculate_shots_expectation_value
 
 @dataclass
 class LoadedData:
+    """A utility dataclass holding objects necessary for device characterization."""
+
     experiment_data: ExperimentalData
     control_parameters: jnp.ndarray
     unitaries: jnp.ndarray
@@ -29,6 +31,8 @@ class LoadedData:
 
 @dataclass
 class SyntheticDataModel:
+    """A utility dataclass holding objects necessary for simulating single qubit quantum device."""
+
     control_sequence: ControlSequence
     qubit_information: QubitInformation
     dt: float

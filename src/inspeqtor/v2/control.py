@@ -91,6 +91,11 @@ class ControlSequence:
         return envelope
 
     def to_dict(self) -> dict[str, str | dict[str, str | float]]:
+        """Convert self to dict
+
+        Returns:
+            dict[str, str | dict[str, str | float]]: dict contain argument necessary for re-initialization.
+        """
         return {
             **asdict(self),
             "classname": {k: v.__class__.__name__ for k, v in self.controls.items()},
@@ -101,7 +106,16 @@ class ControlSequence:
         cls,
         data: dict[str, str | dict[str, str | float]],
         controls: dict[str, type[BaseControl]],
-    ):
+    ) -> "ControlSequence":
+        """Construct self with the provided dictionary
+
+        Args:
+            data (dict[str, str  |  dict[str, str  |  float]]): The dictionary contain initialization arguments
+            controls (dict[str, type[BaseControl]]): The map of control name and class of the control
+
+        Returns:
+            ControlSequence: the instance of control sequence
+        """
         controls_data = data["controls"]
         assert isinstance(controls_data, dict)
 
@@ -140,6 +154,15 @@ class ControlSequence:
         path: typing.Union[str, pathlib.Path],
         controls: dict[str, type[BaseControl]],
     ):
+        """Initialize itself from a file.
+
+        Args:
+            path (typing.Union[str, pathlib.Path]): Path to file.
+            controls (dict[str, type[BaseControl]]): The map of control name and class of the control
+
+        Returns:
+            ControlSequence: the instance of control sequence
+        """
         if isinstance(path, str):
             path = pathlib.Path(path)
 
@@ -179,6 +202,14 @@ def get_waveform(
 
 
 def ravel_unravel_fn(control_sequence: ControlSequence):
+    """This function return the ravel and unravel functions for the provided control sequence
+
+    Args:
+        control_sequence (ControlSequence): The control sequence
+
+    Returns:
+        tuple[typing.Callable, typing.Callable]: The first element is the function that convert structured parameter to array, the second is a function that reverse the action of the first.
+    """
     structure = control_sequence.get_structure()
 
     def ravel_fn(param_dict: dict[str, ParametersDictType]) -> jnp.ndarray:
