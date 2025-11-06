@@ -258,6 +258,11 @@ class ExperimentConfiguration:
 
 @dataclass
 class ExperimentalData:
+    """Dataclass for processing of the characterization dataset.
+    A difference between preprocess and postprocess dataset is that postprocess group
+    expectation values same control parameter id within single row instead of multiple rows.
+    """
+
     config: ExperimentConfiguration
     parameter_dataframe: pl.DataFrame
     observed_dataframe: pl.DataFrame

@@ -89,6 +89,7 @@ nav:
     - Tutorials:
           - Overviews: tutorials/overviews.md
           - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
+          - Generate dataset v2: tutorials/tutorial_0001_dataset_v2.ipynb
           - C&C: tutorials/tutorial_0003_cc.ipynb
           - Control Action: tutorials/tutorial_0002_control.ipynb
     - explanation.md
@@ -99,16 +100,23 @@ nav:
 
     - API Reference:
           - Guide: api-reference.md
-          - utils: api/utils.md
-          - models:
-                - linen: api/linen.md
-                - nnx: api/nnx.md
-          - data: api/data.md
-          - constant: api/constant.md
-          - control: api/control.md
-          - optimize: api/optimize.md
-          - physics: api/physics.md
-          - predefined: api/predefined.md
-          - probabilistic: api/probabilistic.md
-          - visualization: api/visualization.md
+          - experimental:
+            - utils: api/experimental/utils.md
+            - models:
+                    - linen: api/experimental/linen.md
+                    - nnx: api/experimental/nnx.md
+            - data: api/experimental/data.md
+            - constant: api/experimental/constant.md
+            - control: api/experimental/control.md
+            - optimize: api/experimental/optimize.md
+            - physics: api/experimental/physics.md
+            - predefined: api/experimental/predefined.md
+            - probabilistic: api/experimental/probabilistic.md
+            - visualization: api/experimental/visualization.md
+          - v2:
+            - data: api/v2/data.md
+            - control: api/v2/control.md
+            - utils: api/v2/utils.md
+            - optimize: api/v2/optimize.md
+            - predefined: api/v2/predefined.md
     - Developer Guide: dev.md
