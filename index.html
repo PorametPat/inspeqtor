@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. Let squeeze every drop of information from the data.">
+        <meta name="description" content="Data-efficient Framework for Characterization and Calibration of Quantum Devices. Performing experiments and collecting data from quantum devices can be expensive. Let’s squeeze every drop of information from the data.">
       
       
       
@@ -61,7 +61,7 @@
       
         <meta  property="og:title"  content="inspeqtor" >
       
-        <meta  property="og:description"  content="Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. Let squeeze every drop of information from the data." >
+        <meta  property="og:description"  content="Data-efficient Framework for Characterization and Calibration of Quantum Devices. Performing experiments and collecting data from quantum devices can be expensive. Let’s squeeze every drop of information from the data." >
       
         <meta  property="og:image"  content="./assets/images/social/index.png" >
       
@@ -77,7 +77,7 @@
       
         <meta  name="twitter:title"  content="inspeqtor" >
       
-        <meta  name="twitter:description"  content="Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. Let squeeze every drop of information from the data." >
+        <meta  name="twitter:description"  content="Data-efficient Framework for Characterization and Calibration of Quantum Devices. Performing experiments and collecting data from quantum devices can be expensive. Let’s squeeze every drop of information from the data." >
       
         <meta  name="twitter:image"  content="./assets/images/social/index.png" >
       
@@ -360,9 +360,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-road-ahead" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Road Ahead
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-step" class="md-nav__link">
     <span class="md-ellipsis">
-      Next step
+      Next Step
     </span>
   </a>
   
@@ -664,6 +673,29 @@
   
   <span class="md-ellipsis">
     How to convert DNN into BNN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guides/bayesian_optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bayesian Optimization
     
   </span>
   
@@ -1322,9 +1354,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-road-ahead" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Road Ahead
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-step" class="md-nav__link">
     <span class="md-ellipsis">
-      Next step
+      Next Step
     </span>
   </a>
   
@@ -1359,24 +1400,42 @@
 
 
 <div style="text-align: center;">
+
     <img src="assets/inspeqtor_logo.svg" alt="Alt Text" style="width:15%; height:auto;">
+
     <p style="font-weight: bold; font-family: monospace;">
+
         inspeqtor
+
     </p>
+
 </div>
 
 <h1 id="greeting">Greeting 🖖</h1>
-<p>We aim to be a Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. We would like to squeeze every drop of information from the data.</p>
+<p>We aim to provide a data-efficient framework for the characterization and calibration of quantum devices. Since running experiments and obtaining data from quantum devices can be expensive, we strive to extract every bit of information from the data collected.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This package and document are still under development. Please proceed with caution.</p>
+<p>This package and its documentation are still under development. Please proceed with caution.</p>
 </div>
 <h2 id="installation">Installation</h2>
-<p>To install <code>inspeqtor</code>, you have to pull the repository locally via</p>
+<p>To install <code>inspeqtor</code> from the remote repository:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">uv</label><label for="__tabbed_1_2">pip</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>git+https://github.com/PorametPat/inspeqtor.git
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/PorametPat/inspeqtor.git
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>To install <code>inspeqtor</code> locally for development, clone the repository:</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PorametPat/inspeqtor.git
 </code></pre></div>
-<p>Then install it using</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">uv</label><label for="__tabbed_1_2">pip</label></div>
+<p>Then, install it using:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">uv</label><label for="__tabbed_2_2">pip</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>./&lt;PATH&gt;
@@ -1388,19 +1447,40 @@
 </div>
 </div>
 </div>
-<p>where the <code>&lt;PATH&gt;</code> is the path to the local <code>inspeqtor</code> repository that you cloned.</p>
-<!-- === "uv"
-    <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>inspeqtor
-</code></pre></div>
-=== "pip"
-    ``` bash
-    pip install inspeqtor
-    ``` -->
-
+<p>where <code>&lt;PATH&gt;</code> is the path to your local <code>inspeqtor</code> repository.</p>
 <h2 id="what-you-can-do-with-inspeqtor">What you can do with <code>inspeqtor</code></h2>
-<h2 id="next-step">Next step</h2>
+<p>Currently, the library fully supports:</p>
+<ul>
+<li>
+<p>Characterizing single-qubit devices using the Graybox characterization method.</p>
+</li>
+<li>
+<p>Open-loop and closed-loop control optimization with gradient-based optimization and Bayesian Optimization.</p>
+</li>
+<li>
+<p>For characterization, users can choose between a <code>statistical</code> or <code>probabilistic</code> model.</p>
+</li>
+<li>
+<p>With the <code>probabilistic</code> model, users can leverage <code>boed</code> to perform Bayesian Optimal Experiment Design for data-efficient characterization.</p>
+</li>
+</ul>
+<h2 id="the-road-ahead">The Road Ahead</h2>
+<p>The API is evolving to fully support general subsystem characterization methods. Future features will include:</p>
+<ul>
+<li>
+<p>Defining controls for selected characterization methods.</p>
+</li>
+<li>
+<p>Performing experiments and storing data using our unified local file system approach.</p>
+</li>
+<li>
+<p>Loading experimental data into memory and characterizing model parameters with our optimizers.</p>
+</li>
+</ul>
+<h2 id="next-step">Next Step</h2>
 <p><a href="tutorials/overviews/">Overviews</a> is a good place to start.</p>
 <h2 id="citation">Citation</h2>
+<p>We are working on this 😃</p>
 
 
 

@@ -439,15 +439,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#physics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Physics
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -675,6 +666,29 @@
   
   <span class="md-ellipsis">
     How to convert DNN into BNN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/bayesian_optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bayesian Optimization
     
   </span>
   
@@ -1350,15 +1364,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#physics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Physics
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1451,6 +1456,7 @@
 
     Note over User,Storage: Same data format regardless&lt;br/&gt;of real device or simulator</code></pre>
 <h2 id="characterization-phase">Characterization Phase</h2>
+<p>Now let us proceed with the characterization with the experimetal data at hand. The sequence diagram below hilight the overview of the interactions between entities. Basically, user will have to load the data from the file system into a memory and perform necessary operations to prepare a data. Then, user can use them to perform characterization using the selected model. Please check the <a href="./../tutorial_0003_cc">tutorial</a> for how we can use <code>inspeqtor</code> for these tasks.</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant User
     participant Data
@@ -1507,6 +1513,7 @@
 
     Strategy--&gt;&gt;User: Return Final Characterized Model</code></pre>
 <h2 id="control-calibration-phase">Control Calibration Phase</h2>
+<p>Together with the characterization phase, we bundle the <a href="./../tutorial_0003_cc">tutorial</a>, please check!.</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant User
     participant Optimizer
@@ -1534,7 +1541,8 @@
     Device--&gt;&gt;User: Return Measured Fidelity
     User-&gt;&gt;Model: Predict(Optimized Params)
     Model--&gt;&gt;User: Return Predicted Fidelity</code></pre>
-<h2 id="physics">Physics</h2>
+<p>Alternately, we can use closed-loop optmization (no need for the gradient) with Bayesian optimization. As of the current implementation, we demonstrate a minimal usage of Bayesian optimization inside the workflow of <code>inspeqtor</code> in <a href="./../../guides/bayesian_optimization">tutorial</a></p>
+<!-- ## Physics -->
 
 
 

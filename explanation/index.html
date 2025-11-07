@@ -647,6 +647,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/bayesian_optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bayesian Optimization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1306,10 +1329,17 @@
 
 <h1 id="design-decisions">Design Decisions</h1>
 <h2 id="the-import">The <code>import</code> 🧐</h2>
-<p>We currently recommend user to import the package using the following code snippet.</p>
+<p>Currently, we recommend importing the package with the following code:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">inspeqtor.experimental</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sq</span>
 </code></pre></div>
-<p>In the future, the <code>experimental</code> is likely to be removed once the <code>legacy</code> module is fully removed. We expect the migration to be as easy as removing <code>experimental</code> part.</p>
+<p>In the future, once the <code>legacy</code> module has been fully removed, the <code>experimental</code> submodule will likely be eliminated as well. Migrating should then be as simple as omitting <code>experimental</code> from your import statement.</p>
+<p>We are now developing a <code>v2</code> API. Although the name could be misleading, this is our current approach. The <code>v2</code> API will gradually take the place of the <code>experimental</code> API. Since both APIs use the same namespace, migration should be straightforward.</p>
+<p>For users wanting to try the new <code>v2</code> API, we recommend the following imports:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">inspeqtor.experimental</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sqe</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspeqtor</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sq</span>
+</code></pre></div>
+<p>This demonstrates that <code>v2</code> provides a stable way to interact with <code>inspeqtor</code>, eliminating the need to specifically import <code>inspeqtor.v2 as sq</code> as with the <code>experimental</code> API.</p>
 
 
 
