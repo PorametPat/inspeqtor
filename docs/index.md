@@ -1,54 +1,105 @@
 ---
+
 title: inspeqtor 🖖
-description: Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. Let squeeze every drop of information from the data.
+
+description: Data-efficient Framework for Characterization and Calibration of Quantum Devices. Performing experiments and collecting data from quantum devices can be expensive. Let’s squeeze every drop of information from the data.
+
 ---
 
 <div style="text-align: center;">
+
     <img src="assets/inspeqtor_logo.svg" alt="Alt Text" style="width:15%; height:auto;">
+
     <p style="font-weight: bold; font-family: monospace;">
+
         inspeqtor
+
     </p>
+
 </div>
 
 # Greeting 🖖
 
-We aim to be a Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. We would like to squeeze every drop of information from the data.
+We aim to provide a data-efficient framework for the characterization and calibration of quantum devices. Since running experiments and obtaining data from quantum devices can be expensive, we strive to extract every bit of information from the data collected.
 
 !!! warning
-    This package and document are still under development. Please proceed with caution.
+
+    This package and its documentation are still under development. Please proceed with caution.
 
 ## Installation
 
-To install `inspeqtor`, you have to pull the repository locally via
+To install `inspeqtor` from the remote repository:
 
-``` bash
+=== "uv"
+
+    ```bash
+
+    uv add git+https://github.com/PorametPat/inspeqtor.git
+
+    ```
+
+=== "pip"
+
+    ```bash
+
+    pip install git+https://github.com/PorametPat/inspeqtor.git
+
+    ```
+
+To install `inspeqtor` locally for development, clone the repository:
+
+```bash
+
 git clone https://github.com/PorametPat/inspeqtor.git
+
 ```
 
-Then install it using
-=== "uv"
-    ``` bash
-    uv add ./<PATH>
-    ```
-=== "pip"
-    ``` bash
-    pip install ./<PATH>
-    ```
-where the `<PATH>` is the path to the local `inspeqtor` repository that you cloned.
+Then, install it using:
 
-<!-- === "uv"
-    ``` bash
-    uv add inspeqtor
+=== "uv"
+
+    ```bash
+
+    uv add ./<PATH>
+
     ```
+
 === "pip"
-    ``` bash
-    pip install inspeqtor
-    ``` -->
+
+    ```bash
+
+    pip install ./<PATH>
+
+    ```
+
+where `<PATH>` is the path to your local `inspeqtor` repository.
 
 ## What you can do with `inspeqtor`
 
-## Next step
+Currently, the library fully supports:
+
+- Characterizing single-qubit devices using the Graybox characterization method.
+
+- Open-loop and closed-loop control optimization with gradient-based optimization and Bayesian Optimization.
+
+- For characterization, users can choose between a `statistical` or `probabilistic` model.
+
+- With the `probabilistic` model, users can leverage `boed` to perform Bayesian Optimal Experiment Design for data-efficient characterization.
+
+## The Road Ahead
+
+The API is evolving to fully support general subsystem characterization methods. Future features will include:
+
+- Defining controls for selected characterization methods.
+
+- Performing experiments and storing data using our unified local file system approach.
+
+- Loading experimental data into memory and characterizing model parameters with our optimizers.
+
+## Next Step
 
 [Overviews](./tutorials/overviews.md) is a good place to start.
 
 ## Citation
+
+We are working on this 😃
