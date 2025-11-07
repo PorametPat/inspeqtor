@@ -79,6 +79,8 @@ sequenceDiagram
 
 ## Characterization Phase
 
+Now let us proceed with the characterization with the experimetal data at hand. The sequence diagram below hilight the overview of the interactions between entities. Basically, user will have to load the data from the file system into a memory and perform necessary operations to prepare a data. Then, user can use them to perform characterization using the selected model. Please check the [tutorial](./../tutorial_0003_cc) for how we can use `inspeqtor` for these tasks.
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -143,6 +145,8 @@ sequenceDiagram
 
 ## Control Calibration Phase
 
+Together with the characterization phase, we bundle the [tutorial](./../tutorial_0003_cc), please check!.
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -173,4 +177,6 @@ sequenceDiagram
     Model-->>User: Return Predicted Fidelity
 ```
 
-## Physics
+Alternately, we can use closed-loop optmization (no need for the gradient) with Bayesian optimization. As of the current implementation, we demonstrate a minimal usage of Bayesian optimization inside the workflow of `inspeqtor` in [tutorial](./../../guides/bayesian_optimization)
+
+<!-- ## Physics -->

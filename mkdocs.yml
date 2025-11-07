@@ -97,6 +97,7 @@ nav:
           - Generate dataset: guides/generate-dataset.md
           - Working memory: guides/working_memory.ipynb
           - Converting DNN to BNN: guides/dnn_to_bnn.ipynb
+          - Bayesian Optimization: guides/bayesian_optimization.ipynb
 
     - API Reference:
           - Guide: api-reference.md
