@@ -1,19 +1,18 @@
 # mkdocs.yml
-site_name: "inspeqtor"
+site_name: "Inspeqtor"
 site_url: https://porametpat.github.io/inspeqtor/
 site_author: Poramet Pathumsoot
 site_description: >-
-  Data-efficient Framework for Characterization and Calibration of Quantum Devices. 
-  Performing experiments and collecting data from quantum devices can be expensive. 
-  Let’s squeeze every drop of information from the data.
+  A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices.
 
 watch:
-    - src/inspeqtor/experimental
+    - src/inspeqtor
+    - docs/
 
 theme:
     name: material
     logo: assets/inspeqtor_logo.svg
-    favicon: assets/inspeqtor_logo.svg
+    favicon: assets/inspeqtor_logo_square.svg
     palette:
         # Palette toggle for automatic mode
         - media: "(prefers-color-scheme)"
