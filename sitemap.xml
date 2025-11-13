@@ -2,126 +2,126 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://porametpat.github.io/inspeqtor/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api-reference/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/dev/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/explanation/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/boed/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/constant/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/control/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/data/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/linen/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/nnx/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/optimize/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/physics/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/predefined/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/probabilistic/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/utils/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/experimental/visualization/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/v2/control/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/v2/data/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/v2/optimize/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/v2/predefined/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/api/v2/utils/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/guides/bayesian_optimization/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/guides/dnn_to_bnn/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/guides/gen_data/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/guides/generate-dataset/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/guides/working_memory/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/tutorials/overviews/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/tutorials/tutorial_0001_dataset/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/tutorials/tutorial_0001_dataset_v2/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/tutorials/tutorial_0002_control/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
          <loc>https://porametpat.github.io/inspeqtor/tutorials/tutorial_0003_cc/</loc>
-         <lastmod>2025-11-08</lastmod>
+         <lastmod>2025-11-13</lastmod>
     </url>
 </urlset>
