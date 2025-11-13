@@ -1,8 +1,8 @@
 ---
 
-title: inspeqtor 🖖
+title: One Solid Step at a Time C&C for Quantum Device
 
-description: Data-efficient Framework for Characterization and Calibration of Quantum Devices. Performing experiments and collecting data from quantum devices can be expensive. Let’s squeeze every drop of information from the data.
+description: A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices.
 
 ---
 
