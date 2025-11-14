@@ -18,13 +18,15 @@
         <link rel="prev" href="../api/v2/predefined/">
       
       
+        <link rel="next" href="../developer/note_tempfile/">
+      
       
       <link rel="icon" href="../assets/inspeqtor_logo_square.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
     
     
       
-        <title>Developer Guide - Inspeqtor</title>
+        <title>Note - Inspeqtor</title>
       
     
     
@@ -63,7 +65,7 @@
       
         <meta  property="og:type"  content="website" >
       
-        <meta  property="og:title"  content="Developer Guide - Inspeqtor" >
+        <meta  property="og:title"  content="Note - Inspeqtor" >
       
         <meta  property="og:description"  content="A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices." >
       
@@ -79,7 +81,7 @@
       
         <meta  name="twitter:card"  content="summary_large_image" >
       
-        <meta  name="twitter:title"  content="Developer Guide - Inspeqtor" >
+        <meta  name="twitter:title"  content="Note - Inspeqtor" >
       
         <meta  name="twitter:description"  content="A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices." >
       
@@ -141,7 +143,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Developer Guide
+              Note
             
           </span>
         </div>
@@ -425,6 +427,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorials/tutorial_0002_control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Action
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../tutorials/tutorial_0003_cc/" class="md-nav__link">
         
   
@@ -448,12 +473,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/tutorial_0002_control/" class="md-nav__link">
+      <a href="../tutorials/tutorial_0004_t1_characterization/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Control Action
+    T1 Characterization
     
   </span>
   
@@ -1212,6 +1237,46 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -1225,7 +1290,7 @@
   
   
   <span class="md-ellipsis">
-    Developer Guide
+    Note
     
   </span>
   
@@ -1238,7 +1303,7 @@
   
   
   <span class="md-ellipsis">
-    Developer Guide
+    Note
     
   </span>
   
@@ -1392,6 +1457,37 @@
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/note_tempfile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporary directory for documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1632,6 +1728,10 @@
 <p>We use MkDocs Material and pymdown-extensions for documentation generation. Follow the <a href="https://realpython.com/python-project-documentation-with-mkdocs/#step-4-prepare-your-documentation-with-mkdocs">Real Python tutorial</a> for detailed setup instructions.</p>
 <div class="highlight"><span class="filename">Serve documentation locally</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mkdocs<span class="w"> </span>serve
 </code></pre></div>
+<p>If an error <code>"cairosvg" Python module is installed, but it crashed with:</code> occur, please check <a href="https://squidfunk.github.io/mkdocs-material/plugins/requirements/image-processing/#troubleshooting">this link</a> for more details of how to solve it. Otherwise, if you are using macOS and the issue persist after more than one resolved, the following command line might be useful:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">DYLD_FALLBACK_LIBRARY_PATH</span><span class="o">=</span>/opt/homebrew/lib
+</code></pre></div>
+<p>After execution of the above command, please run <code>serve</code> again.</p>
 <div class="highlight"><span class="filename">Deploy to GitHub Pages</span><pre><span></span><code>mkdocs<span class="w"> </span>gh-deploy
 </code></pre></div>
 <h2 id="performance-profiling">Performance Profiling</h2>

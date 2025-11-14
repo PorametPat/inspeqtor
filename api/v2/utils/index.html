@@ -427,6 +427,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../tutorials/tutorial_0002_control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Action
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../tutorials/tutorial_0003_cc/" class="md-nav__link">
         
   
@@ -450,12 +473,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../tutorials/tutorial_0002_control/" class="md-nav__link">
+      <a href="../../../tutorials/tutorial_0004_t1_characterization/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Control Action
+    T1 Characterization
     
   </span>
   
@@ -1224,6 +1247,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#src.inspeqtor.v2.utils.dictorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;dictorization
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1305,9 +1337,20 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../../dev/" class="md-nav__link">
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1316,7 +1359,65 @@
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Note
+    
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer/note_tempfile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporary directory for documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1386,6 +1487,15 @@
   <a href="#src.inspeqtor.v2.utils.shot_quantum_device" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;shot_quantum_device
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.inspeqtor.v2.utils.dictorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;dictorization
     </span>
   </a>
   
@@ -1995,6 +2105,119 @@
         <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">expectation_values</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">expectation_value</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">expectation_values</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="src.inspeqtor.v2.utils.dictorization" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">dictorization</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dictorization</span><span class="p">(</span><span class="n">expvals</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="inspeqtor.v2.data.ExpectationValue">ExpectationValue</span></span><span class="p">])</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>This function formats expectation values of shape (18, N) to a dictionary
+with the initial state as outer key and the observable as inner key.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expvals</code>
+            </td>
+            <td>
+                  <code><span title="jax.numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Expectation values of shape (18, N). Assumes that order is as in default_expectation_values_order.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>dict[str, dict[str, jnp.ndarray]]: A dictionary with the initial state as outer key and the observable as inner key.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/utils.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dictorization</span><span class="p">(</span><span class="n">expvals</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExpectationValue</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This function formats expectation values of shape (18, N) to a dictionary</span>
+<span class="sd">    with the initial state as outer key and the observable as inner key.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        expvals (jnp.ndarray): Expectation values of shape (18, N). Assumes that order is as in default_expectation_values_order.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict[str, dict[str, jnp.ndarray]]: A dictionary with the initial state as outer key and the observable as inner key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">expvals_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">exp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">exp</span><span class="o">.</span><span class="n">initial_state</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">expvals_dict</span><span class="p">:</span>
+            <span class="n">expvals_dict</span><span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">initial_state</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">expvals_dict</span><span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">initial_state</span><span class="p">][</span><span class="n">exp</span><span class="o">.</span><span class="n">observable</span><span class="p">]</span> <span class="o">=</span> <span class="n">expvals</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">expvals_dict</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
