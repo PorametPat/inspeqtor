@@ -50,6 +50,7 @@ dev = [
     "pytest>=8.3.3",
     "pytest-cov>=6.2.1",
     "typer>=0.15.2",
+    "zensical>=0.0.7",
 ]
 
 [tool.pyright]

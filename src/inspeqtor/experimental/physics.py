@@ -674,3 +674,72 @@ def make_trotterization_solver(
         return unitaries
 
     return whitebox
+
+
+def lindblad_solver(
+    args: HamiltonianArgs,
+    t_eval: jnp.ndarray,
+    hamiltonian: typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray],
+    lindblad_ops: list[jnp.ndarray],
+    rho0: jnp.ndarray,
+    t0: float,
+    t1: float,
+    rtol: float = 1e-7,
+    atol: float = 1e-7,
+    max_steps: int = int(2**16),
+) -> jnp.ndarray:
+    """Solve the Lindblad Master equation without flattening matrices"""
+
+    def commutator(A, B):
+        return A @ B - B @ A
+
+    def anti_commutator(A, B):
+        return A @ B + B @ A
+
+    # Direct matrix RHS function - no reshaping needed
+    def lindblad_rhs(t, rho, args: HamiltonianArgs):
+        H = hamiltonian(args, t)
+
+        # Coherent evolution term: -i[H, ρ]
+        coherent_term = -1j * commutator(H, rho)
+
+        # Dissipative terms from all Lindblad operators
+        dissipative_term = jnp.zeros_like(rho)
+
+        for L in lindblad_ops:
+            L_dag = jnp.conjugate(L.T)
+            term1 = L @ rho @ L_dag
+            term2 = anti_commutator(L_dag @ L, rho)
+            dissipative_term = dissipative_term + (term1 - 0.5 * term2)
+
+        return coherent_term + dissipative_term
+
+    term = diffrax.ODETerm(lindblad_rhs)
+    solver = diffrax.Tsit5()
+    # solver = diffrax.Dopri5()
+
+    solution = diffrax.diffeqsolve(
+        term,
+        solver,
+        t0=t0,
+        t1=t1,
+        dt0=None,
+        stepsize_controller=diffrax.PIDController(
+            rtol=rtol,
+            atol=atol,
+        ),
+        y0=rho0,  # Direct matrix input - no flattening
+        args=args,
+        saveat=diffrax.SaveAt(ts=t_eval),
+        max_steps=max_steps,
+    )
+
+    # Process the matrices to ensure hermiticity and unit trace
+    def process_density_matrix(rho):
+        # Ensure Hermiticity
+        rho = 0.5 * (rho + jnp.conjugate(rho.T))
+        # Normalize to trace = 1
+        return rho / jnp.trace(rho)
+
+    # Process all matrices
+    return jax.vmap(process_density_matrix)(solution.ys)

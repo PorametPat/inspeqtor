@@ -125,4 +125,6 @@ nav:
             - utils: api/v2/utils.md
             - optimize: api/v2/optimize.md
             - predefined: api/v2/predefined.md
-    - Developer Guide: dev.md
+    - Developer Guide: 
+        - Note: dev.md
+        - Temporary Directory: developer/note_tempfile.ipynb

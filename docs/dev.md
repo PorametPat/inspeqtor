@@ -112,6 +112,14 @@ We use MkDocs Material and pymdown-extensions for documentation generation. Foll
 uv run mkdocs serve
 ```
 
+If an error `"cairosvg" Python module is installed, but it crashed with:` occur, please check [this link](https://squidfunk.github.io/mkdocs-material/plugins/requirements/image-processing/#troubleshooting) for more details of how to solve it. Otherwise, if you are using macOS and the issue persist after more than one resolved, the following command line might be useful:
+
+```bash
+export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
+```
+
+After execution of the above command, please run `serve` again.
+
 ```bash title="Deploy to GitHub Pages"
 mkdocs gh-deploy
 ```

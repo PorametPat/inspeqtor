@@ -1,0 +1,88 @@
+[project]
+site_name = "Inspeqtor"
+site_url = "https://porametpat.github.io/inspeqtor/"
+site_author = "Poramet Pathumsoot"
+site_description = "A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices."
+repo_url= "https://github.com/PorametPat/inspeqtor"
+docs_dir = "docs"
+extra_css = ["stylesheets/extra.css"]
+extra_javascript = ["javascripts/mathjax.js", "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"]
+nav = [
+  {"Getting start" = "index.md"},
+  {"Tutorials" = [
+    {"Overviews" = "tutorials/overviews.md"},
+    {"Generate dataset" = "tutorials/tutorial_0001_dataset.ipynb"},
+    {"Generate dataset v2" = "tutorials/tutorial_0001_dataset_v2.ipynb"},
+    {"C&C" = "tutorials/tutorial_0003_cc.ipynb"},
+    {"Control Action" = "tutorials/tutorial_0002_control.ipynb"}
+  ]},
+  "explanation.md",
+  {"How-To Guides" = [
+    {"Generate dataset" = "guides/generate-dataset.md"},
+    {"Working memory" = "guides/working_memory.ipynb"},
+    {"Converting DNN to BNN" = "guides/dnn_to_bnn.ipynb"},
+    {"Bayesian Optimization" = "guides/bayesian_optimization.ipynb"}
+  ]},
+  {"API Reference" = [
+    {"Guide" = "api-reference.md"},
+    {"experimental" = [
+      {"utils" = "api/experimental/utils.md"},
+      {"models" = [
+        {"linen" = "api/experimental/linen.md"},
+        {"nnx" = "api/experimental/nnx.md"}
+      ]},
+      {"data" = "api/experimental/data.md"},
+      {"constant" = "api/experimental/constant.md"},
+      {"control" = "api/experimental/control.md"},
+      {"optimize" = "api/experimental/optimize.md"},
+      {"physics" = "api/experimental/physics.md"},
+      {"predefined" = "api/experimental/predefined.md"},
+      {"probabilistic" = "api/experimental/probabilistic.md"},
+      {"visualization" = "api/experimental/visualization.md"}
+    ]},
+    {"v2" = [
+      {"data" = "api/v2/data.md"},
+      {"control" = "api/v2/control.md"},
+      {"utils" = "api/v2/utils.md"},
+      {"optimize" = "api/v2/optimize.md"},
+      {"predefined" = "api/v2/predefined.md"}
+    ]}
+  ]},
+  {"Developer Guide" = "dev.md"}
+]
+
+[project.theme]
+logo = "assets/inspeqtor_logo.svg"
+favicon = "assets/inspeqtor_logo_square.svg"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]] 
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "white"
+accent = "pink"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "black"
+accent = "pink"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+
+
+# [project.extra.consent]
+# title = "Cookie consent"
+# description = """
+#     We use cookies to recognize your repeated visits and preferences, as well
+#     as to measure the effectiveness of our documentation and whether users
+#     find what they're searching for. With your consent, you're helping us to
+#     make our documentation better.
+# """

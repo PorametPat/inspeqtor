@@ -142,3 +142,23 @@ def shot_quantum_device(
         expectation_values = expectation_values.at[..., idx].set(expectation_value)
 
     return expectation_values
+
+
+def dictorization(expvals: jnp.ndarray, order: list[ExpectationValue]):
+    """This function formats expectation values of shape (18, N) to a dictionary
+    with the initial state as outer key and the observable as inner key.
+
+    Args:
+        expvals (jnp.ndarray): Expectation values of shape (18, N). Assumes that order is as in default_expectation_values_order.
+
+    Returns:
+        dict[str, dict[str, jnp.ndarray]]: A dictionary with the initial state as outer key and the observable as inner key.
+    """
+    expvals_dict: dict[str, dict[str, jnp.ndarray]] = {}
+    for idx, exp in enumerate(order):
+        if exp.initial_state not in expvals_dict:
+            expvals_dict[exp.initial_state] = {}
+
+        expvals_dict[exp.initial_state][exp.observable] = expvals[idx]
+
+    return expvals_dict
