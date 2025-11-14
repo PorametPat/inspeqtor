@@ -18,7 +18,7 @@ def gaussian_control(
 ):
     def envelope(param: ParametersDictType, t: float | jnp.ndarray) -> jnp.ndarray:
         sigma = 1 / (A_max * jnp.sqrt(2 * jnp.pi) * drive_str * dt)
-        return (A_max * param["theta"] / (2 * jnp.pi)) * jnp.exp(
+        return (A_max * param["theta"] / (2 * jnp.pi)) * jnp.exp(  # type: ignore
             -1 * ((t - (total_dt / 2)) ** 2 / (2 * (sigma) ** 2))
         )
 

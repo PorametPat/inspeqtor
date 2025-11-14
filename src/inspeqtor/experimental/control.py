@@ -67,16 +67,6 @@ class BaseControl(ABC):
         ), "All value of params dict must be float"
         assert isinstance(waveform, jax.Array), "Waveform must be jax.Array"
 
-        # # Validate that params is serializable and deserializable
-        # try:
-        #     reread_params = json.loads(json.dumps(params))
-        #     assert params == reread_params
-
-        # except TypeError as e:
-        #     raise TypeError(
-        #         f"Cannot serialize params dict of {self.__class__.__name__} to json"
-        #     ) from e
-
     @abstractmethod
     def get_bounds(
         self, *arg, **kwarg
