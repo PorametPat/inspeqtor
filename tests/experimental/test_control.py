@@ -8,10 +8,12 @@ def test_jax_DRAG_pulse():
 
     key = jax.random.key(0)
     params = control_sequence.sample_params(key)
-    waveform = control_sequence.get_waveform(params)
+    total_dt = 80
+    t_eval = jnp.linspace(0, total_dt, total_dt + 1)
+    waveform = jax.vmap(control_sequence.get_envelope(params))(t_eval)
 
     # Check that the waveform is of the correct length
-    assert waveform.shape == (control_sequence.total_dt,)
+    assert waveform.shape == (total_dt + 1,)
 
     # Check to_dict and from_dict
     control_sequence_dict = control_sequence.to_dict()
@@ -20,7 +22,9 @@ def test_jax_DRAG_pulse():
     )
 
     # Check that the waveform is the same after serialization and deserialization
-    waveform_from_dict = control_sequence_from_dict.get_waveform(params)
+    waveform_from_dict = jax.vmap(control_sequence_from_dict.get_envelope(params))(
+        t_eval
+    )
 
     assert isinstance(waveform_from_dict, jnp.ndarray)
 

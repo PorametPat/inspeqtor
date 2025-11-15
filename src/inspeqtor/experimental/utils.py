@@ -7,18 +7,11 @@ from inspeqtor.experimental.data import (
     ExpectationValue,
     ExperimentData,
     QubitInformation,
-    State,
 )
-from flax.typing import VariableDict
 from inspeqtor.experimental.model import mse
 from inspeqtor.experimental.constant import (
-    X,
-    Y,
     Z,
     default_expectation_values_order,
-    plus_projectors,
-    minus_projectors,
-    get_default_expectation_values_order,
 )
 from inspeqtor.experimental.decorator import warn_not_tested_function
 from inspeqtor.experimental.physics import calculate_exp, HamiltonianArgs
@@ -525,41 +518,6 @@ def shot_quantum_device(
         expectation_values = expectation_values.at[..., idx].set(expectation_value)
 
     return expectation_values
-
-
-def get_spam(params: VariableDict):
-    pair_map = {"+": "-", "-": "+", "0": "1", "1": "0", "r": "l", "l": "r"}
-    observables = {"X": X, "Y": Y, "Z": Z}
-    for pauli, matrix in observables.items():
-        p_10 = params["AM"][pauli]["prob_10"]
-        p_01 = params["AM"][pauli]["prob_01"]
-
-        observables[pauli] = (
-            matrix
-            + (-2 * p_10 * plus_projectors[pauli])
-            + (2 * p_01 * minus_projectors[pauli])
-        )
-
-    expvals = []
-    order_expvals = get_default_expectation_values_order()
-    for _expval in order_expvals:
-        expval = ExpectationValue(
-            initial_state=_expval.initial_state, observable=_expval.observable
-        )
-        # SP State Preparation error
-        SP_correct_prob = params["SP"][_expval.initial_state]
-        SP_incorrect_prob = 1 - SP_correct_prob
-        expval.initial_density_matrix = SP_correct_prob * State.from_label(
-            _expval.initial_state, dm=True
-        ) + SP_incorrect_prob * State.from_label(
-            pair_map[_expval.initial_state], dm=True
-        )
-        # AM, And Measurement error
-        expval.observable_matrix = observables[_expval.observable]
-
-        expvals.append(expval)
-
-    return expvals, observables
 
 
 def parse_expectation_values(
