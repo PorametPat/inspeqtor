@@ -11,6 +11,8 @@ from inspeqtor.v2.data import (
     ExpectationValue,
     ExperimentalData,
     get_complete_expectation_values,
+    get_initial_state,
+    get_observable_operator,
 )
 from inspeqtor.experimental.utils import calculate_shots_expectation_value
 
@@ -90,8 +92,8 @@ def calculate_expectation_values(
     for idx, exp in enumerate(expectation_value_order):
         expvals = calculate_exp(
             unitaries,
-            exp.observable_matrix,
-            exp.initial_density_matrix,
+            get_observable_operator(exp.observable),
+            get_initial_state(exp.initial_state, dm=True),
         )
         ideal_expectation_values = ideal_expectation_values.at[..., idx].set(expvals)
 
@@ -133,9 +135,9 @@ def shot_quantum_device(
             in_axes=(0, None, 0, None, None),
         )(
             sample_keys,
-            exp.initial_density_matrix,
+            get_initial_state(exp.initial_state, dm=True),
             unitaries,
-            exp.observable_matrix,
+            get_observable_operator(exp.observable),
             SHOTS,
         )
 

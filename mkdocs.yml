@@ -95,13 +95,16 @@ nav:
           - Overviews: tutorials/overviews.md
           - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
           - Generate dataset v2: tutorials/tutorial_0001_dataset_v2.ipynb
-          - C&C: tutorials/tutorial_0003_cc.ipynb
           - Control Action: tutorials/tutorial_0002_control.ipynb
+          - C&C: tutorials/tutorial_0003_cc.ipynb
+          - C&C v2: tutorials/tutorial_0003_cc_v2.ipynb
+          - T1 Characterization: tutorials/tutorial_0004_t1_characterization.ipynb
     - explanation.md
     - How-To Guides:
           - Generate dataset: guides/generate-dataset.md
           - Working memory: guides/working_memory.ipynb
           - Converting DNN to BNN: guides/dnn_to_bnn.ipynb
+          - Converting DNN to BNN v2: guides/dnn_to_bnn_v2.ipynb
           - Bayesian Optimization: guides/bayesian_optimization.ipynb
 
     - API Reference:

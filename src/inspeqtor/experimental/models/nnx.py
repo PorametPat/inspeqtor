@@ -41,14 +41,16 @@ class WoModel(Blackbox):
             rngs (nnx.Rngs): Random number generator of `nnx`.
         """
 
-        self.shared_layers = {
-            f"shared/{idx}": nnx.Linear(
-                in_features=in_features, out_features=out_features, rngs=rngs
-            )
-            for idx, (in_features, out_features) in enumerate(
-                zip(shared_layers[:-1], shared_layers[1:])
-            )
-        }
+        self.shared_layers = nnx.Dict(
+            {
+                f"shared/{idx}": nnx.Linear(
+                    in_features=in_features, out_features=out_features, rngs=rngs
+                )
+                for idx, (in_features, out_features) in enumerate(
+                    zip(shared_layers[:-1], shared_layers[1:])
+                )
+            }
+        )
 
         self.num_shared_layers = len(shared_layers) - 1
         self.num_pauli_layers = len(pauli_layers) - 1

@@ -5,7 +5,7 @@ from inspeqtor.experimental.ctyping import ParametersDictType
 from dataclasses import dataclass, asdict, field
 import pathlib
 
-from ..experimental.control import BaseControl, sample_params
+from ..experimental.control import sample_params, BaseControl
 from ..experimental.data import save_pytree_to_json, load_pytree_from_json
 
 
@@ -173,8 +173,18 @@ class ControlSequence:
         return cls.from_dict(ctrl_loaded_dict, controls=controls)
 
 
-def get_waveform(
-    params: dict[str, ParametersDictType], control_seqeunce: ControlSequence
+def control_waveform(
+    param: ParametersDictType,
+    t_eval: jnp.ndarray,
+    control: BaseControl,
+) -> jnp.ndarray:
+    return jax.vmap(control.get_envelope(param))(t_eval)
+
+
+def sequence_waveform(
+    params: dict[str, ParametersDictType],
+    t_eval: jnp.ndarray,
+    control_seqeunce: ControlSequence,
 ) -> jnp.ndarray:
     """
     Samples the pulse sequence by generating random parameters for each pulse and computing the total waveform.
@@ -190,12 +200,12 @@ def get_waveform(
         params, total_waveform = sample(key)
     """
     # Create base waveform
-    total_waveform = jnp.zeros(control_seqeunce.total_dt, dtype=jnp.complex64)
+    total_waveform = jnp.zeros_like(t_eval, dtype=jnp.complex64)
 
     for (param_key, param_val), (ctrl_key, control) in zip(
         params.items(), control_seqeunce.controls.items()
     ):
-        waveform = control.get_waveform(param_val)
+        waveform = control_waveform(param_val, t_eval, control)
         total_waveform += waveform
 
     return total_waveform
@@ -293,3 +303,31 @@ def get_envelope_transformer(control_sequence: ControlSequence):
         return control_sequence.get_envelope(unravel_fn(params))
 
     return get_envelope
+
+
+def ravel_transform(
+    fn: typing.Callable, control_sequence: ControlSequence
+) -> typing.Callable:
+    """Transform the first argument of the function `fn` with `unravel_fn` of the control sequence
+
+    Note:
+        ```python
+        signal_fn = sq.control.ravel_transform(
+            sq.physics.signal_func_v5(control_sequence.get_envelope, qubit_info.frequency, dt),
+            control_sequence,
+        )
+        ```
+
+    Args:
+        fn (typing.Callable): The function to be transformed
+        control_sequence (ControlSequence): The control sequence that will use to produce `unravel_fn`.
+
+    Returns:
+        typing.Callable: A function that its first argument is transformed by `unravel_fn`
+    """
+    _, unravel_fn = ravel_unravel_fn(control_sequence)
+
+    def wrapper(param, *args, **kwargs):
+        return fn(unravel_fn(param), *args, **kwargs)
+
+    return wrapper

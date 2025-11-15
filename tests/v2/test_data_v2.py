@@ -3,7 +3,7 @@ import polars as pl
 import numpy as np
 from flax.traverse_util import flatten_dict
 
-import inspeqtor.experimental as sq
+import inspeqtor as sq
 from inspeqtor.v2.data import (
     ExperimentConfiguration,
     ExperimentalData,
@@ -72,7 +72,7 @@ def test_ExperimentalData(tmp_path):
         device_cycle_time_ns=2 / 9,
         sequence_duration_dt=320,
         description="From the test of ExperimentalData",
-        sample_size=10,
+        sample_size=1000,
         instance="inspeqtor",
     )
 
@@ -124,7 +124,7 @@ def test_ExperimentalData(tmp_path):
         path,
         hamiltonian_spec=sq.predefined.HamiltonianSpec(
             method=sq.predefined.WhiteboxStrategy.TROTTER,
-            hamiltonian_enum=sq.predefined.HamiltonianEnum.rotating_transmon_hamiltonian,
+            hamiltonian_enum=sq.experimental.predefined.HamiltonianEnum.rotating_transmon_hamiltonian,
             trotter_steps=10_000,
         ),
     )

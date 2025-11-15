@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 import json
 import polars as pl
-from functools import cached_property
 import itertools
 
 from ..experimental.data import QubitInformation, Operator, State
@@ -24,7 +23,6 @@ class ExpectationValue:
     # String where each character represents an observable for one qubit
     observable: str
     # String where each character represents an initial state for one qubit
-    expectation_value: float | None = None
 
     def __post_init__(self):
         # Ensure both strings have the same length (number of qubits)
@@ -45,72 +43,10 @@ class ExpectationValue:
                 s in valid_states
             ), f"Invalid initial state '{s}'. Must be one of {valid_states}"
 
-    @cached_property
-    def num_qubits(self) -> int:
-        """Return the number of qubits in this experimental setting"""
-        return len(self.observable)
-
-    @cached_property
-    def observable_list(self) -> list[str]:
-        """Get the observable as a list of strings, one per qubit"""
-        return [o for o in self.observable]
-
-    @cached_property
-    def initial_state_list(self) -> list[str]:
-        """Get the initial state as a list of strings, one per qubit"""
-        return [s for s in self.initial_state]
-
-    @cached_property
-    def initial_statevector(self) -> jnp.ndarray:
-        return self.get_initial_state(dm=False)
-
-    @cached_property
-    def initial_density_matrix(self) -> jnp.ndarray:
-        return self.get_initial_state(dm=True)
-
-    @cached_property
-    def observable_matrix(self) -> jnp.ndarray:
-        return self.get_observable_operator()
-
-    def get_observable_operator(self) -> jnp.ndarray:
-        """Get the full observable operator as a tensor product"""
-        ops = [Operator.from_label(label) for label in self.observable_list]
-        if len(ops) == 1:
-            return ops[0]
-        return tensor_product(*ops)
-
-    def get_initial_state(self, dm: bool = True) -> jnp.ndarray:
-        """Get the initial state as state vector or density matrix"""
-        states = [
-            State.from_label(label, dm=False) for label in self.initial_state_list
-        ]
-
-        if len(states) == 1:
-            state = states[0]
-        else:
-            # For multi-qubit state, compute the tensor product
-            result = states[0]
-            for s in states[1:]:
-                result = jnp.kron(result, s)
-            state = result
-
-        # Convert to vector shape if needed
-        if state.shape == (2, 1) or state.shape == (2 ** len(states), 1):
-            # Already in correct shape
-            pass
-        elif state.shape == (2,) or state.shape == (2 ** len(states),):
-            # Reshape to column vector
-            state = state.reshape(-1, 1)
-
-        if dm:
-            return jnp.outer(state, state.conj())
-        return state
-
     def to_dict(self):
         return {
             "initial_state": self.initial_state,
             "observable": self.observable,
-            "expectation_value": self.expectation_value,
         }
 
     def __eq__(self, __value: object) -> bool:
@@ -120,7 +56,6 @@ class ExpectationValue:
         return (
             self.initial_state == __value.initial_state
             and self.observable == __value.observable
-            and self.expectation_value == __value.expectation_value
         )
 
     @classmethod
@@ -141,6 +76,70 @@ def tensor_product(*operators) -> jnp.ndarray:
     for op in operators[1:]:
         result = jnp.kron(result, op)
     return result
+
+
+operators_map = {
+    "X": jnp.array([[0, 1], [1, 0]], dtype=jnp.complex_),
+    "Y": jnp.array([[0, -1j], [1j, 0]], dtype=jnp.complex_),
+    "Z": jnp.array([[1, 0], [0, -1]], dtype=jnp.complex_),
+    "H": jnp.array([[1, 1], [1, -1]], dtype=jnp.complex_) / jnp.sqrt(2),
+    "S": jnp.array([[1, 0], [0, 1j]], dtype=jnp.complex_),
+    "Sdg": jnp.array([[1, 0], [0, -1j]], dtype=jnp.complex_),
+    "I": jnp.array([[1, 0], [0, 1]], dtype=jnp.complex_),
+}
+
+
+def operator_from_label(ops: str) -> jnp.ndarray:
+    return operators_map[ops]
+
+
+state_map = {
+    "0": jnp.array([1, 0], dtype=jnp.complex_),
+    "1": jnp.array([0, 1], dtype=jnp.complex_),
+    "+": jnp.array([1, 1], dtype=jnp.complex_) / jnp.sqrt(2),
+    "-": jnp.array([1, -1], dtype=jnp.complex_) / jnp.sqrt(2),
+    "r": jnp.array([1, 1j], dtype=jnp.complex_) / jnp.sqrt(2),
+    "l": jnp.array([1, -1j], dtype=jnp.complex_) / jnp.sqrt(2),
+}
+
+
+def state_from_label(state: str, dm: bool) -> jnp.ndarray:
+    vec = state_map[state].reshape(-1, 1)
+    return vec if not dm else jnp.outer(vec, vec.conj())
+
+
+def get_observable_operator(observable: str) -> jnp.ndarray:
+    """Get the full observable operator as a tensor product"""
+    ops = [Operator.from_label(label) for label in observable]
+    if len(ops) == 1:
+        return ops[0]
+    return tensor_product(*ops)
+
+
+def get_initial_state(initial_state: str, dm: bool = True) -> jnp.ndarray:
+    """Get the initial state as state vector or density matrix"""
+    states = [State.from_label(label, dm=False) for label in initial_state]
+
+    if len(states) == 1:
+        state = states[0]
+    else:
+        # For multi-qubit state, compute the tensor product
+        result = states[0]
+        for s in states[1:]:
+            result = jnp.kron(result, s)
+        state = result
+
+    # Convert to vector shape if needed
+    if state.shape == (2, 1) or state.shape == (2 ** len(states), 1):
+        # Already in correct shape
+        pass
+    elif state.shape == (2,) or state.shape == (2 ** len(states),):
+        # Reshape to column vector
+        state = state.reshape(-1, 1)
+
+    if dm:
+        return jnp.outer(state, state.conj())
+    return state
 
 
 def get_complete_expectation_values(num_qubits: int) -> list[ExpectationValue]:

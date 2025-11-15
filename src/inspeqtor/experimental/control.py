@@ -38,10 +38,10 @@ def sample_params(
 
 @dataclass
 class BaseControl(ABC):
-    duration: int
+    # duration: int
 
     def __post_init__(self):
-        self.t_eval = jnp.arange(0, self.duration, 1)
+        # self.t_eval = jnp.arange(0, self.duration, 1)
         self.validate()
 
     def validate(self):
@@ -57,7 +57,7 @@ class BaseControl(ABC):
         # Validate that the sampling function is working
         key = jax.random.key(0)
         params = sample_params(key, lower, upper)
-        waveform = self.get_waveform(params)
+        # waveform = self.get_waveform(params)
 
         assert all(
             [isinstance(k, str) for k in params.keys()]
@@ -65,7 +65,7 @@ class BaseControl(ABC):
         assert all([isinstance(v, float) for v in params.values()]) or all(
             [isinstance(v, jnp.ndarray) for v in params.values()]
         ), "All value of params dict must be float"
-        assert isinstance(waveform, jax.Array), "Waveform must be jax.Array"
+        # assert isinstance(waveform, jax.Array), "Waveform must be jax.Array"
 
     @abstractmethod
     def get_bounds(
@@ -76,16 +76,16 @@ class BaseControl(ABC):
     def get_envelope(self, params: ParametersDictType) -> typing.Callable:
         raise NotImplementedError("get_envelopes method is not implemented")
 
-    def get_waveform(self, params: ParametersDictType) -> jnp.ndarray:
-        """Get the discrete waveform of the pulse
+    # def get_waveform(self, params: ParametersDictType) -> jnp.ndarray:
+    #     """Get the discrete waveform of the pulse
 
-        Args:
-            params (ParametersDictType): Control parameter
+    #     Args:
+    #         params (ParametersDictType): Control parameter
 
-        Returns:
-            jnp.ndarray: Waveform of the control.
-        """
-        return jax.vmap(self.get_envelope(params), in_axes=(0,))((self.t_eval))
+    #     Returns:
+    #         jnp.ndarray: Waveform of the control.
+    #     """
+    #     return jax.vmap(self.get_envelope(params), in_axes=(0,))((self.t_eval))
 
     def to_dict(self) -> dict[str, typing.Union[int, float, str]]:
         """Convert the control configuration to dictionary
@@ -219,10 +219,10 @@ class ControlSequence:
         subkeys = jax.random.split(key, len(self.controls))
         for pulse_key, pulse in zip(subkeys, self.controls):
             params = sample_params(pulse_key, *pulse.get_bounds())
-            waveform = pulse.get_waveform(params)
-            assert isinstance(waveform, jax.Array)
+            # waveform = pulse.get_waveform(params)
+            # assert isinstance(waveform, jax.Array)
             # Assert the waveform is of the correct length
-            assert waveform.shape == (self.total_dt,)
+            # assert waveform.shape == (self.total_dt,)
             # Assert that all key of params dict is string and all value is jax.Array
             assert all(
                 [isinstance(k, str) for k in params.keys()]
@@ -258,28 +258,28 @@ class ControlSequence:
 
         return params_list
 
-    def get_waveform(self, params_list: list[ParametersDictType]) -> jnp.ndarray:
-        """
-        Samples the pulse sequence by generating random parameters for each pulse and computing the total waveform.
+    # def get_waveform(self, params_list: list[ParametersDictType]) -> jnp.ndarray:
+    #     """
+    #     Samples the pulse sequence by generating random parameters for each pulse and computing the total waveform.
 
-        Parameters:
-            key (Key): The random key used for generating the parameters.
+    #     Parameters:
+    #         key (Key): The random key used for generating the parameters.
 
-        Returns:
-            tuple[list[ParametersDictType], Complex[Array, "time"]]: A tuple containing a list of parameter dictionaries for each pulse and the total waveform.
+    #     Returns:
+    #         tuple[list[ParametersDictType], Complex[Array, "time"]]: A tuple containing a list of parameter dictionaries for each pulse and the total waveform.
 
-        Example:
-            key = jax.random.PRNGKey(0)
-            params_list, total_waveform = sample(key)
-        """
-        # Create base waveform
-        total_waveform = jnp.zeros(self.total_dt, dtype=jnp.complex64)
+    #     Example:
+    #         key = jax.random.PRNGKey(0)
+    #         params_list, total_waveform = sample(key)
+    #     """
+    #     # Create base waveform
+    #     total_waveform = jnp.zeros(self.total_dt, dtype=jnp.complex64)
 
-        for _params, _pulse in zip(params_list, self.controls):
-            waveform = _pulse.get_waveform(_params)
-            total_waveform += waveform
+    #     for _params, _pulse in zip(params_list, self.controls):
+    #         waveform = _pulse.get_waveform(_params)
+    #         total_waveform += waveform
 
-        return total_waveform
+    #     return total_waveform
 
     def get_envelope(self, params_list: list[ParametersDictType]) -> typing.Callable:
         """Create envelope function with given control parameters
