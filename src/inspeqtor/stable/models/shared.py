@@ -5,6 +5,7 @@ from inspeqtor.experimental.model import (
     get_spam as get_spam,
     model_parse_fn as model_parse_fn,
     ModelData as ModelData,
+    HistoryEntryV3 as HistoryEntryV3,
 )
 
 from inspeqtor.v2.models.shared import (

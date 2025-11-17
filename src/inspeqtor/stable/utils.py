@@ -28,3 +28,11 @@ from inspeqtor.v2.constant import (
     Y as Y,
     Z as Z,
 )
+
+from inspeqtor.experimental.visualization import (
+    plot_control_envelope as plot_control_envelope,
+    plot_expectation_values as plot_expectation_values,
+    assert_list_of_axes as assert_list_of_axes,
+    set_fontsize as set_fontsize,
+    plot_loss_with_moving_average as plot_loss_with_moving_average,
+)

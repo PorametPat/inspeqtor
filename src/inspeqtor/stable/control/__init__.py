@@ -7,6 +7,7 @@ from inspeqtor.v2.control import (
     sample_params as sample_params,
     construct_control_sequence_reader as construct_control_sequence_reader,
     ravel_transform as ravel_transform,
+    ParametersDictType as ParametersDictType,
 )
 
 from inspeqtor.stable.control import library as library
