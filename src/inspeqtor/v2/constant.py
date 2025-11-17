@@ -1,21 +1,21 @@
-from .data import Operator, ExpectationValue, State
+from .data import ExpectationValue, get_observable_operator, get_initial_state
 import jax.numpy as jnp
 
-X = Operator.from_label("X")
-Y = Operator.from_label("Y")
-Z = Operator.from_label("Z")
+X = get_observable_operator("X")
+Y = get_observable_operator("Y")
+Z = get_observable_operator("Z")
 
 
 plus_projectors = {
-    "X": State.from_label("+", dm=True),
-    "Y": State.from_label("r", dm=True),
-    "Z": State.from_label("0", dm=True),
+    "X": get_initial_state("+", dm=True),
+    "Y": get_initial_state("r", dm=True),
+    "Z": get_initial_state("0", dm=True),
 }
 
 minus_projectors = {
-    "X": State.from_label("-", dm=True),
-    "Y": State.from_label("l", dm=True),
-    "Z": State.from_label("1", dm=True),
+    "X": get_initial_state("-", dm=True),
+    "Y": get_initial_state("l", dm=True),
+    "Z": get_initial_state("1", dm=True),
 }
 
 

@@ -26,6 +26,7 @@ from inspeqtor.v2.utils import (
     LoadedData,
     calculate_expectation_values,
     shot_quantum_device,
+    dictorization,
 )
 from inspeqtor.experimental.predefined import (
     DragPulse,
@@ -38,15 +39,15 @@ from inspeqtor.experimental.predefined import (
     SimulationStrategy,
     get_mock_qubit_information,
     WhiteboxStrategy,
+    polynomial_feature_map,
 )
 from inspeqtor.experimental.constant import Z
 from inspeqtor.experimental.physics import (
-    signal_func_v5,
+    make_signal_fn,
     make_trotterization_solver,
     solver,
     auto_rotating_frame_hamiltonian,
 )
-from inspeqtor.experimental.visualization import format_expectation_values
 
 
 def get_drag_pulse_v2_sequence(
@@ -115,7 +116,7 @@ def get_predefined_data_model_m1(
         dt=dt,
     )
 
-    signal_fn = signal_func_v5(
+    signal_fn = make_signal_fn(
         get_envelope=get_envelope_transformer(control_seq),
         drive_frequency=characterized_qubit_info.frequency,
         dt=dt,
@@ -279,7 +280,6 @@ def generate_single_qubit_experimental_data(
         description="This is a test experiment",
         device_cycle_time_ns=2 / 9,
         sequence_duration_dt=control_sequence.total_dt,
-        instance="open",
     )
 
     # Generate mock expectation value
@@ -369,7 +369,12 @@ def generate_single_qubit_experimental_data(
     obs_df = pl.DataFrame(
         jax.tree.map(
             lambda x: np.array(x),
-            flatten_dict(format_expectation_values(expectation_values.T), sep="/"),
+            flatten_dict(
+                dictorization(
+                    expectation_values.T, order=get_complete_expectation_values(1)
+                ),
+                sep="/",
+            ),
         )
     ).with_row_index("parameter_id")
 
@@ -381,3 +386,14 @@ def generate_single_qubit_experimental_data(
         jnp.array(unitaries),
         noisy_simulator,
     )
+
+
+def drag_feature_map(
+    x: jnp.ndarray, degree: int = 4, correction: tuple[float, ...] = (2 * jnp.pi, 10)
+) -> jnp.ndarray:
+    # For angle, we normalize by 2 pi
+    x = x.at[..., 0].set(x[..., 0] / (correction[0]))
+    # For beta, we have to shift and normalize later
+    x = x.at[..., 1].set((x[..., 1] + 5) / correction[1])
+
+    return polynomial_feature_map(x, degree=degree)

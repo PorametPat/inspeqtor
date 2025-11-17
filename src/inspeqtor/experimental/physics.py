@@ -465,7 +465,7 @@ def signal_func_v4(get_envelope: typing.Callable, drive_frequency: float, dt: fl
 ControlParam = typing.TypeVar("ControlParam")
 
 
-def signal_func_v5(
+def make_signal_fn(
     get_envelope: typing.Callable[
         [ControlParam], typing.Callable[[jnp.ndarray], jnp.ndarray]
     ],

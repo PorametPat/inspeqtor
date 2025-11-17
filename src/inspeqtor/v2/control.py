@@ -306,9 +306,9 @@ def get_envelope_transformer(control_sequence: ControlSequence):
 
 
 def ravel_transform(
-    fn: typing.Callable, control_sequence: ControlSequence
+    fn: typing.Callable, control_sequence: ControlSequence, at: int = 0
 ) -> typing.Callable:
-    """Transform the first argument of the function `fn` with `unravel_fn` of the control sequence
+    """Transform the argument at index `at` of the function `fn` with `unravel_fn` of the control sequence
 
     Note:
         ```python
@@ -327,7 +327,10 @@ def ravel_transform(
     """
     _, unravel_fn = ravel_unravel_fn(control_sequence)
 
-    def wrapper(param, *args, **kwargs):
-        return fn(unravel_fn(param), *args, **kwargs)
+    def wrapper(*args, **kwargs):
+        list_args = list(args)
+        list_args[at] = unravel_fn(list_args[at])
+
+        return fn(*tuple(list_args), **kwargs)
 
     return wrapper

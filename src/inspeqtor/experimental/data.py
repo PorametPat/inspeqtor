@@ -13,6 +13,15 @@ from numpyro.contrib.module import ParamShape
 from .ctyping import ParametersDictType
 
 
+@jax.tree_util.register_dataclass
+@dataclass
+class DataBundled:
+    control_params: jnp.ndarray
+    unitaries: jnp.ndarray
+    observables: jnp.ndarray
+    aux: jnp.ndarray | None = None
+
+
 def add_hilbert_level(op: jnp.ndarray, x: jnp.ndarray) -> jnp.ndarray:
     """Add a level to the operator or state
 
@@ -568,7 +577,9 @@ class ExperimentData:
                     ignore_index=True
                 )
             )
-        ), "The preprocess_data and postprocessed_data does not have the same parameters."
+        ), (
+            "The preprocess_data and postprocessed_data does not have the same parameters."
+        )
         logging.info("Preprocess data and postprocess data have the same parameters")
 
     def __eq__(self, __value: object) -> bool:
@@ -591,9 +602,9 @@ class ExperimentData:
         """
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert (
-                    col.name in self.preprocess_data.columns
-                ), f"Column {col.name} is required but not found in the preprocess_data."
+                assert col.name in self.preprocess_data.columns, (
+                    f"Column {col.name} is required but not found in the preprocess_data."
+                )
 
         # Validate that the preprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
@@ -601,9 +612,9 @@ class ExperimentData:
         )
 
         for _col in required_parameters_columns:
-            assert (
-                _col in self.preprocess_data.columns
-            ), f"Column {_col} is required but not found in the preprocess_data."
+            assert _col in self.preprocess_data.columns, (
+                f"Column {_col} is required but not found in the preprocess_data."
+            )
 
     def validate_postprocess_data(self, post_data: pd.DataFrame):
         """Validate postprocess dataset, by check the requirements given by `PredefinedCol` instance of each column
@@ -616,25 +627,25 @@ class ExperimentData:
         # Validate that the postprocess_data have all the required columns
         for col in REQUIRED_COLUMNS:
             if col.required:
-                assert (
-                    col.name in post_data.columns
-                ), f"Column {col.name} is required but not found in the postprocess_data."
+                assert col.name in post_data.columns, (
+                    f"Column {col.name} is required but not found in the postprocess_data."
+                )
 
         # Validate the check functions
         for col in REQUIRED_COLUMNS:
             for check in col.checks:
-                assert all(
-                    [check(v) for v in post_data[col.name]]
-                ), f"Column {col.name} failed the check function {check}"
+                assert all([check(v) for v in post_data[col.name]]), (
+                    f"Column {col.name} failed the check function {check}"
+                )
 
         # Validate that the postprocess_data have all expected parameters columns
         required_parameters_columns = flatten_parameter_name_with_prefix(
             self.experiment_config.parameter_names
         )
         for _col in required_parameters_columns:
-            assert (
-                _col in post_data.columns
-            ), f"Column {_col} is required but not found in the postprocess_data."
+            assert _col in post_data.columns, (
+                f"Column {_col} is required but not found in the postprocess_data."
+            )
 
     def transform_preprocess_data_to_postprocess_data(self) -> pd.DataFrame:
         """Internal method to post process the dataset.

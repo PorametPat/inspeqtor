@@ -4,25 +4,14 @@ import numpy as np
 from flax.traverse_util import flatten_dict
 
 import inspeqtor as sq
-from inspeqtor.v2.data import (
-    ExperimentConfiguration,
-    ExperimentalData,
-    get_complete_expectation_values,
-)
-from inspeqtor.v2.predefined import (
-    get_predefined_data_model_m1,
-    save_data_to_path,
-    load_data_from_path,
-)
-from inspeqtor.v2.control import ravel_unravel_fn
 
 
 def test_ExperimentConfig(tmp_path):
-    qubit_info = sq.predefined.get_mock_qubit_information()
+    qubit_info = sq.data.library.get_mock_qubit_information()
 
-    experiment_config = ExperimentConfiguration(
+    experiment_config = sq.data.ExperimentConfiguration(
         qubits=[qubit_info],
-        expectation_values_order=get_complete_expectation_values(1),
+        expectation_values_order=sq.data.get_complete_expectation_values(1),
         parameter_structure=[("0", "param1"), ("1", "param2")],
         backend_name="qasm_simulator",
         sample_size=2,
@@ -32,14 +21,13 @@ def test_ExperimentConfig(tmp_path):
         description="This is a test experiment",
         device_cycle_time_ns=2 / 9,
         sequence_duration_dt=10,
-        instance="open",
     )
 
     # To dict
     dict_experiment_config = experiment_config.to_dict()
 
     # From dict to dataclass
-    experiment_config_from_dict = ExperimentConfiguration.from_dict(
+    experiment_config_from_dict = sq.data.ExperimentConfiguration.from_dict(
         dict_experiment_config
     )
 
@@ -52,18 +40,18 @@ def test_ExperimentConfig(tmp_path):
     experiment_config.to_file(path=d)
 
     # Test from_file()
-    experiment_config_from_file = ExperimentConfiguration.from_file(path=d)
+    experiment_config_from_file = sq.data.ExperimentConfiguration.from_file(path=d)
 
     assert experiment_config == experiment_config_from_file
 
 
 def test_ExperimentalData(tmp_path):
-    data_model = get_predefined_data_model_m1()
+    data_model = sq.data.library.get_predefined_data_model_m1()
     seq = data_model.control_sequence
 
-    config = ExperimentConfiguration(
+    config = sq.data.ExperimentConfiguration(
         qubits=[data_model.qubit_information],
-        expectation_values_order=get_complete_expectation_values(1),
+        expectation_values_order=sq.data.get_complete_expectation_values(1),
         parameter_structure=seq.get_structure(),
         backend_name="inspeqtor",
         shots=1000,
@@ -72,14 +60,13 @@ def test_ExperimentalData(tmp_path):
         device_cycle_time_ns=2 / 9,
         sequence_duration_dt=320,
         description="From the test of ExperimentalData",
-        sample_size=1000,
-        instance="inspeqtor",
+        sample_size=10,
     )
 
     key = jax.random.key(0)
     sample_key, device_key = jax.random.split(key)
 
-    ravel_fn, _ = ravel_unravel_fn(seq)
+    ravel_fn, _ = sq.control.ravel_unravel_fn(seq)
     # Sample the parameter by vectorization.
     params_dict = jax.vmap(seq.sample_params)(
         jax.random.split(sample_key, config.sample_size)
@@ -100,12 +87,15 @@ def test_ExperimentalData(tmp_path):
         jax.tree.map(
             lambda x: np.array(x),
             flatten_dict(
-                sq.visualization.format_expectation_values(expvals.T), sep="/"
+                sq.utils.dictorization(
+                    expvals.T, order=sq.utils.default_expectation_values_order
+                ),
+                sep="/",
             ),
         )
     ).with_row_index("parameter_id")
 
-    exp_data = ExperimentalData(config, param_df, obs_df)
+    exp_data = sq.data.ExperimentalData(config, param_df, obs_df)
 
     path = tmp_path / "test"
     path.mkdir()
@@ -118,13 +108,13 @@ def test_ExperimentalData(tmp_path):
     path = tmp_path / "data"
     path.mkdir()
 
-    save_data_to_path(path, experiment_data=exp_data, control_sequence=seq)
+    sq.data.save_data_to_path(path, experiment_data=exp_data, control_sequence=seq)
 
-    loaded_data = load_data_from_path(
+    loaded_data = sq.data.load_data_from_path(
         path,
-        hamiltonian_spec=sq.predefined.HamiltonianSpec(
-            method=sq.predefined.WhiteboxStrategy.TROTTER,
-            hamiltonian_enum=sq.experimental.predefined.HamiltonianEnum.rotating_transmon_hamiltonian,
+        hamiltonian_spec=sq.physics.library.HamiltonianSpec(
+            method=sq.physics.library.WhiteboxStrategy.TROTTER,
+            hamiltonian_enum=sq.physics.library.HamiltonianEnum.rotating_transmon_hamiltonian,
             trotter_steps=10_000,
         ),
     )

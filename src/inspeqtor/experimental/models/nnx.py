@@ -13,8 +13,9 @@ from ..model import (
     unitary_to_expvals,
     toggling_unitary_to_expvals,
     toggling_unitary_with_spam_to_expvals,
+    HistoryEntryV3,
 )
-from ..optimize import DataBundled, HistoryEntryV3
+from ..data import DataBundled
 from ..utils import dataloader
 
 
@@ -276,7 +277,8 @@ def make_loss_fn_old(
     return loss_fn
 
 
-def make_loss_fn(
+@deprecated.deprecated("Use new `make_loss_fn` instead")
+def make_loss_fn_oldv2(
     adapter_fn,
     calculate_metric_fn=calculate_metric,
     loss_metric: LossMetric = LossMetric.MSEE,
@@ -300,6 +302,26 @@ def make_loss_fn(
         loss = metrics[loss_metric]
 
         return loss, metrics
+
+    return loss_fn
+
+
+def make_loss_fn(adapter_fn, evaluate_fn):
+    """A function for preparing loss function to be used for model training.
+
+    Args:
+        predictive_fn (typing.Any): Adaptor function specifically for each model.
+        evaluate_fn (typing.Callable[[jnp.ndarray, jnp.ndarray], jnp.ndarray, jnp.ndarray]): Take in predicted and experimental expectation values and ideal unitary and return loss value
+    """
+
+    def loss_fn(model: Blackbox, data: DataBundled):
+        output = model(data.control_params)
+
+        expval = adapter_fn(output, data.unitaries)
+
+        loss = evaluate_fn(expval, data.observables, data.unitaries)
+
+        return jnp.mean(loss), {}
 
     return loss_fn
 

@@ -1,20 +1,8 @@
 import typing
 import jax
 import jax.numpy as jnp
-from dataclasses import dataclass
-import flax.traverse_util as traverse_util
 import optax  # type: ignore
-
 import chex
-
-
-@jax.tree_util.register_dataclass
-@dataclass
-class DataBundled:
-    control_params: jnp.ndarray
-    unitaries: jnp.ndarray
-    observables: jnp.ndarray
-    aux: jnp.ndarray | None = None
 
 
 def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
@@ -125,42 +113,3 @@ def stochastic_minimize(
             callback(step_idx, aux)
 
     return params, history
-
-
-@dataclass
-class HistoryEntryV3:
-    step: int
-    loss: float | jnp.ndarray
-    loop: str
-    aux: dict[str, jnp.ndarray]
-
-
-def transform_key(data):
-    return {
-        # Concanate the key by '/'
-        "/".join(key): value
-        for key, value in data.items()
-    }
-
-
-def clean_history_entries(
-    histories: list[HistoryEntryV3],
-):
-    clean_histories = [
-        {
-            "step": history.step,
-            "loss": history.loss,
-            "loop": history.loop,
-            **history.aux,
-        }
-        for history in histories
-    ]
-    # Move from device to host, i.e. from jax.Array to numpy.ndarray
-    clean_histories = jax.tree.map(
-        lambda x: x.item() if isinstance(x, jnp.ndarray) else x, clean_histories
-    )
-    # Flatten the nested dictionaries
-    clean_histories = list(map(traverse_util.flatten_dict, clean_histories))
-    # Transform the keys of the dictionary
-    clean_histories = list(map(transform_key, clean_histories))
-    return clean_histories

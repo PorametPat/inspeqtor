@@ -61,13 +61,13 @@ def load_dataset(generate_dataset):
         loaded_data.unitaries,
         loaded_data.observed_values,
     )
-    train_data = sq.optimize.DataBundled(
+    train_data = sq.data.DataBundled(
         control_params=sq.predefined.drag_feature_map(train_control_parameters),
         unitaries=train_unitaries,
         observables=train_expectation_values,
     )
 
-    test_data = sq.optimize.DataBundled(
+    test_data = sq.data.DataBundled(
         control_params=sq.predefined.drag_feature_map(test_control_paramaeters),
         unitaries=test_unitaries,
         observables=test_expectation_values,

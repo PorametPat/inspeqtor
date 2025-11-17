@@ -23,7 +23,7 @@ from .control import (
 from .ctyping import ParametersDictType
 from .physics import (
     solver,
-    signal_func_v5,
+    make_signal_fn,
     make_trotterization_solver,
     auto_rotating_frame_hamiltonian,
     HamiltonianArgs,
@@ -778,7 +778,7 @@ def get_single_qubit_whitebox(
     hamiltonian = partial(
         hamiltonian,
         qubit_info=qubit_info,
-        signal=signal_func_v5(
+        signal=make_signal_fn(
             get_envelope_transformer(control_sequence),
             qubit_info.frequency,
             dt,
@@ -874,7 +874,7 @@ class HamiltonianSpec:
             hamiltonian = partial(
                 self.get_hamiltonian_fn(),
                 qubit_info=qubit_info,
-                signal=signal_func_v5(
+                signal=make_signal_fn(
                     get_envelope=get_envelope_transformer(
                         control_sequence=control_sequence
                     ),
@@ -980,7 +980,7 @@ def get_predefined_data_model_m1(
         dt=dt,
     )
 
-    signal_fn = signal_func_v5(
+    signal_fn = make_signal_fn(
         get_envelope=get_envelope_transformer(control_seq),
         drive_frequency=characterized_qubit_info.frequency,
         dt=dt,

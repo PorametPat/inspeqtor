@@ -351,7 +351,7 @@ def solver_with_trotterization():
     hamiltonian = partial(
         sq.predefined.rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
-        signal=sq.physics.signal_func_v5(
+        signal=sq.physics.make_signal_fn(
             get_envelope=sq.predefined.get_envelope_transformer(
                 control_sequence=control_sequence
             ),
@@ -595,7 +595,7 @@ def get_manual_rotated_hamiltonian(qubit_info, control_seq, dt):
     hamiltonian = partial(
         sq.predefined.rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
-        signal=sq.physics.signal_func_v5(
+        signal=sq.physics.make_signal_fn(
             sq.control.get_envelope_transformer(control_seq), qubit_info.frequency, dt
         ),
     )
@@ -606,7 +606,7 @@ def get_auto_rotated_hamiltonian(qubit_info, control_seq, dt):
     hamiltonian = partial(
         sq.predefined.transmon_hamiltonian,
         qubit_info=qubit_info,
-        signal=sq.physics.signal_func_v5(
+        signal=sq.physics.make_signal_fn(
             sq.control.get_envelope_transformer(control_seq), qubit_info.frequency, dt
         ),
     )
