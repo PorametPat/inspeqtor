@@ -28,7 +28,7 @@ from inspeqtor.v2.utils import (
     shot_quantum_device,
     dictorization,
 )
-from inspeqtor.experimental.predefined import (
+from inspeqtor.v1.predefined import (
     DragPulse,
     DragPulseV2,
     MultiDragPulseV3,
@@ -41,8 +41,8 @@ from inspeqtor.experimental.predefined import (
     WhiteboxStrategy,
     polynomial_feature_map,
 )
-from inspeqtor.experimental.constant import Z
-from inspeqtor.experimental.physics import (
+from inspeqtor.v1.constant import Z
+from inspeqtor.v1.physics import (
     make_signal_fn,
     make_trotterization_solver,
     solver,

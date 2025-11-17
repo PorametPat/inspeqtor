@@ -1,4 +1,4 @@
-from inspeqtor.experimental.physics import (
+from inspeqtor.v1.physics import (
     solver as solver,
     auto_rotating_frame_hamiltonian as auto_rotating_frame_hamiltonian,
     explicit_auto_rotating_frame_hamiltonian as explicit_auto_rotating_frame_hamiltonian,

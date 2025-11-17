@@ -1,4 +1,4 @@
-from inspeqtor.experimental.models.nnx import (
+from inspeqtor.v1.models.nnx import (
     WoModel as WoModel,
     UnitaryModel as UnitaryModel,
     UnitarySPAMModel as UnitarySPAMModel,

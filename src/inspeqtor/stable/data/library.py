@@ -3,6 +3,6 @@ from inspeqtor.v2.predefined import (
     generate_single_qubit_experimental_data as generate_single_qubit_experimental_data,
 )
 
-from inspeqtor.experimental.predefined import (
+from inspeqtor.v1.predefined import (
     get_mock_qubit_information as get_mock_qubit_information,
 )

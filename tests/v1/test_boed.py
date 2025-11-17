@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from inspeqtor.experimental.boed import (
+from inspeqtor.v1.boed import (
     _safe_mean_terms,
 )
 

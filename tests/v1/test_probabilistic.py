@@ -2,17 +2,17 @@ import pytest
 import jax
 import jax.numpy as jnp
 import numpyro.distributions as dist  # type: ignore
-from inspeqtor.experimental.probabilistic import (
+from inspeqtor.v1.probabilistic import (
     binary_to_eigenvalue,
     batched_matmul,
     get_trace,
     dense_layer,
 )
-from inspeqtor.experimental.utils import (
+from inspeqtor.v1.utils import (
     eigenvalue_to_binary,
     expectation_value_to_eigenvalue,
 )
-import inspeqtor.experimental as sq
+import inspeqtor.v1 as sq
 import chex
 import typing
 import numpyro

@@ -1,4 +1,4 @@
-from inspeqtor.experimental.optimize import (
+from inspeqtor.v1.optimize import (
     get_default_optimizer as get_default_optimizer,
     minimize as minimize,
     stochastic_minimize as stochastic_minimize,

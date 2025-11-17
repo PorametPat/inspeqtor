@@ -1,4 +1,4 @@
-from inspeqtor.experimental.predefined import (
+from inspeqtor.v1.predefined import (
     transmon_hamiltonian as transmon_hamiltonian,
     rotating_transmon_hamiltonian as rotating_transmon_hamiltonian,
     detune_x_hamiltonian as detune_x_hamiltonian,

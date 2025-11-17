@@ -4,8 +4,8 @@ import typing
 import logging
 from dataclasses import dataclass
 
-from inspeqtor.experimental.data import QubitInformation
-from inspeqtor.experimental.physics import calculate_exp
+from inspeqtor.v1.data import QubitInformation
+from inspeqtor.v1.physics import calculate_exp
 from inspeqtor.v2.control import ControlSequence
 from inspeqtor.v2.data import (
     ExpectationValue,
@@ -14,7 +14,7 @@ from inspeqtor.v2.data import (
     get_initial_state,
     get_observable_operator,
 )
-from inspeqtor.experimental.utils import calculate_shots_expectation_value
+from inspeqtor.v1.utils import calculate_shots_expectation_value
 
 
 @dataclass

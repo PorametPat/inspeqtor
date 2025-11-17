@@ -7,7 +7,7 @@ import json
 import polars as pl
 import itertools
 
-from ..experimental.data import QubitInformation
+from ..v1.data import QubitInformation
 
 
 @dataclass

@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-import inspeqtor.experimental as sq
+import inspeqtor.v1 as sq
 import logging
 import pytest
 

@@ -1,4 +1,4 @@
-from inspeqtor.experimental.predefined import (
+from inspeqtor.v1.predefined import (
     DragPulse as DragPulse,
     DragPulseV2 as DragPulseV2,
     MultiDragPulseV3 as MultiDragPulseV3,

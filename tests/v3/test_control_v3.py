@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from inspeqtor.experimental.ctyping import ParametersDictType
+from inspeqtor.v1.ctyping import ParametersDictType
 import typing
 
 

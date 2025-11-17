@@ -1,5 +1,5 @@
 import jax
-import inspeqtor.experimental as sq
+import inspeqtor.v1 as sq
 from flax import nnx
 
 
