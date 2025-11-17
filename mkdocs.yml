@@ -3,7 +3,7 @@ site_name: "Inspeqtor"
 site_url: https://porametpat.github.io/inspeqtor/
 site_author: Poramet Pathumsoot
 site_description: >-
-  A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices.
+    A Data-Efficient Framework for Characterizing and Calibrating That Squeezes Every Bit of Information from Quantum Devices.
 
 watch:
     - src/inspeqtor
@@ -94,40 +94,40 @@ nav:
     - Tutorials:
           - Overviews: tutorials/overviews.md
           - Generate dataset: tutorials/tutorial_0001_dataset.ipynb
-          - Generate dataset v2: tutorials/tutorial_0001_dataset_v2.ipynb
           - Control Action: tutorials/tutorial_0002_control.ipynb
           - C&C: tutorials/tutorial_0003_cc.ipynb
-          - C&C v2: tutorials/tutorial_0003_cc_v2.ipynb
           - T1 Characterization: tutorials/tutorial_0004_t1_characterization.ipynb
+          - Ramsey Experiment: tutorials/tutorial_0005_ramsey_experiment.ipynb
+          - Legacy:
+                - Generate dataset: tutorials/legacy/tutorial_0001_dataset.ipynb
+                - C&C: tutorials/legacy/tutorial_0003_cc.ipynb
     - explanation.md
     - How-To Guides:
           - Generate dataset: guides/generate-dataset.md
           - Working memory: guides/working_memory.ipynb
           - Converting DNN to BNN: guides/dnn_to_bnn.ipynb
-          - Converting DNN to BNN v2: guides/dnn_to_bnn_v2.ipynb
           - Bayesian Optimization: guides/bayesian_optimization.ipynb
+          - Legacy:
+                - Converting DNN to BNN: guides/legacy/dnn_to_bnn.ipynb
 
     - API Reference:
           - Guide: api-reference.md
-          - experimental:
-            - utils: api/experimental/utils.md
-            - models:
-                    - linen: api/experimental/linen.md
-                    - nnx: api/experimental/nnx.md
-            - data: api/experimental/data.md
-            - constant: api/experimental/constant.md
-            - control: api/experimental/control.md
-            - optimize: api/experimental/optimize.md
-            - physics: api/experimental/physics.md
-            - predefined: api/experimental/predefined.md
-            - probabilistic: api/experimental/probabilistic.md
-            - visualization: api/experimental/visualization.md
-          - v2:
-            - data: api/v2/data.md
-            - control: api/v2/control.md
-            - utils: api/v2/utils.md
-            - optimize: api/v2/optimize.md
-            - predefined: api/v2/predefined.md
-    - Developer Guide: 
-        - Note: dev.md
-        - Temporary Directory: developer/note_tempfile.ipynb
+          - stable:
+                - data: api/stable/data.md
+                - control: api/stable/control.md
+                - models:
+                      - shared: api/stable/models-shared.md
+                      - adapter: api/stable/models-adapter.md
+                      - library:
+                            - linen: api/stable/models-library-linen.md
+                            - nnx: api/stable/models-library-nnx.md
+                      - probabilistic: api/stable/models-probabilistic.md
+                - optimize: api/stable/optimize.md
+                - physics: api/stable/physics.md
+                - utils: api/stable/utils.md
+                - boed: api/stable/boed.md
+          - v1: api/v1/all.md
+          - v2: api/v2/all.md
+    - Developer Guide:
+          - Note: dev.md
+          - Temporary Directory: developer/note_tempfile.ipynb
