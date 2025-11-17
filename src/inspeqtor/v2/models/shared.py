@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from inspeqtor.v2.data import ExpectationValue, get_initial_state
-from inspeqtor.experimental.physics import calculate_exp
+from inspeqtor.v1.physics import calculate_exp
 
 
 def get_predict_expectation_value(

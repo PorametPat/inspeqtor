@@ -5,7 +5,7 @@ from inspeqtor.v2.utils import (
     dictorization as dictorization,
 )
 
-from inspeqtor.experimental.utils import (
+from inspeqtor.v1.utils import (
     random_split as random_split,
     dataloader as dataloader,
     variance_of_observable as variance_of_observable,
@@ -29,7 +29,7 @@ from inspeqtor.v2.constant import (
     Z as Z,
 )
 
-from inspeqtor.experimental.visualization import (
+from inspeqtor.v1.visualization import (
     plot_control_envelope as plot_control_envelope,
     plot_expectation_values as plot_expectation_values,
     assert_list_of_axes as assert_list_of_axes,

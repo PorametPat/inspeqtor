@@ -1,4 +1,4 @@
-from inspeqtor.experimental.models.linen import (
+from inspeqtor.v1.models.linen import (
     WoModel as WoModel,
     UnitaryModel as UnitaryModel,
     UnitarySPAMModel as UnitarySPAMModel,

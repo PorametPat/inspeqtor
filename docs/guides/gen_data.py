@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-import inspeqtor.experimental as sq
+import inspeqtor.v1 as sq
 
 # --8<-- [start:qubit-info]
 qubit_info = sq.data.QubitInformation(

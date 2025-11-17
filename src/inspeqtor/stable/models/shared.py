@@ -1,4 +1,4 @@
-from inspeqtor.experimental.model import (
+from inspeqtor.v1.model import (
     mse as mse,
     hermitian as hermitian,
     unitary as unitary,

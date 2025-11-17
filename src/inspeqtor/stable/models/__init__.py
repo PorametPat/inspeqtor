@@ -4,4 +4,4 @@ from inspeqtor.stable.models import (
     library as library,
 )
 
-from inspeqtor.experimental import probabilistic as probabilistic
+from inspeqtor.v1 import probabilistic as probabilistic

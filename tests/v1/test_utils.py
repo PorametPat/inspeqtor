@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from inspeqtor.experimental.utils import dataloader
+from inspeqtor.v1.utils import dataloader
 
 
 def test_dataloader(DATA_SIZE: int = 100, BATCH_SIZE: int = 15, NUM_EPOCHS: int = 10):

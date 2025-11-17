@@ -1,4 +1,4 @@
-from inspeqtor.experimental.data import (
+from inspeqtor.v1.data import (
     QubitInformation as QubitInformation,
     DataBundled as DataBundled,
 )

@@ -1,5 +1,5 @@
 import pytest
-import inspeqtor.experimental as sq
+import inspeqtor.v1 as sq
 import jax.numpy as jnp
 import jax
 import pandas as pd  # type: ignore

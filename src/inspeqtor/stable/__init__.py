@@ -7,4 +7,4 @@ from inspeqtor.stable import (
     utils as utils,
 )
 
-from inspeqtor.experimental import boed as boed
+from inspeqtor.v1 import boed as boed

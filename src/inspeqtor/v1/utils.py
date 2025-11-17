@@ -2,19 +2,19 @@ import jax
 import jax.numpy as jnp
 import typing
 from dataclasses import dataclass
-from inspeqtor.experimental.control import ControlSequence
-from inspeqtor.experimental.data import (
+from inspeqtor.v1.control import ControlSequence
+from inspeqtor.v1.data import (
     ExpectationValue,
     ExperimentData,
     QubitInformation,
 )
-from inspeqtor.experimental.model import mse
-from inspeqtor.experimental.constant import (
+from inspeqtor.v1.model import mse
+from inspeqtor.v1.constant import (
     Z,
     default_expectation_values_order,
 )
-from inspeqtor.experimental.decorator import warn_not_tested_function
-from inspeqtor.experimental.physics import calculate_exp, HamiltonianArgs
+from inspeqtor.v1.decorator import warn_not_tested_function
+from inspeqtor.v1.physics import calculate_exp, HamiltonianArgs
 import logging
 
 

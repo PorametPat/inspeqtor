@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 from functools import partial
 
-import inspeqtor.experimental as sq
+import inspeqtor.v1 as sq
 from scipy.stats import unitary_group
 import chex
 import logging
