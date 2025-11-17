@@ -29,4 +29,3 @@ def get_predict_expectation_value(
             for exp in order
         ]
     ).transpose()
-

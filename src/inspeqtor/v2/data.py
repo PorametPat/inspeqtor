@@ -7,7 +7,7 @@ import json
 import polars as pl
 import itertools
 
-from ..experimental.data import QubitInformation, Operator, State
+from ..experimental.data import QubitInformation
 
 
 @dataclass
@@ -26,22 +26,22 @@ class ExpectationValue:
 
     def __post_init__(self):
         # Ensure both strings have the same length (number of qubits)
-        assert (
-            len(self.observable) == len(self.initial_state)
-        ), f"Observable and initial state must have same number of qubits: {len(self.observable)} != {len(self.initial_state)}"
+        assert len(self.observable) == len(self.initial_state), (
+            f"Observable and initial state must have same number of qubits: {len(self.observable)} != {len(self.initial_state)}"
+        )
 
         # Validate observable characters
         for o in self.observable:
-            assert (
-                o in "XYZ"
-            ), f"Invalid observable '{o}'. Must be one of 'X', 'Y', or 'Z'"
+            assert o in "XYZ", (
+                f"Invalid observable '{o}'. Must be one of 'X', 'Y', or 'Z'"
+            )
 
         # Validate initial state characters
         valid_states = "+-rl01"
         for s in self.initial_state:
-            assert (
-                s in valid_states
-            ), f"Invalid initial state '{s}'. Must be one of {valid_states}"
+            assert s in valid_states, (
+                f"Invalid initial state '{s}'. Must be one of {valid_states}"
+            )
 
     def to_dict(self):
         return {
@@ -110,7 +110,7 @@ def state_from_label(state: str, dm: bool) -> jnp.ndarray:
 
 def get_observable_operator(observable: str) -> jnp.ndarray:
     """Get the full observable operator as a tensor product"""
-    ops = [Operator.from_label(label) for label in observable]
+    ops = [operator_from_label(label) for label in observable]
     if len(ops) == 1:
         return ops[0]
     return tensor_product(*ops)
@@ -118,7 +118,7 @@ def get_observable_operator(observable: str) -> jnp.ndarray:
 
 def get_initial_state(initial_state: str, dm: bool = True) -> jnp.ndarray:
     """Get the initial state as state vector or density matrix"""
-    states = [State.from_label(label, dm=False) for label in initial_state]
+    states = [state_from_label(label, dm=False) for label in initial_state]
 
     if len(states) == 1:
         state = states[0]
@@ -176,7 +176,6 @@ class ExperimentConfiguration:
     description: str
     device_cycle_time_ns: float
     sequence_duration_dt: int
-    instance: str
     sample_size: int
     date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     additional_info: dict[str, str | int | float] = field(default_factory=dict)
@@ -232,7 +231,7 @@ class ExperimentConfiguration:
             "EXPERIMENT CONFIGURATION",
             "=" * 60,
             f"Identifier: {self.EXPERIMENT_IDENTIFIER}",
-            f"Backend: {self.backend_name} (instance: {self.instance})",
+            f"Backend: {self.backend_name}",
             f"Date: {self.date}",
             f"Description: {self.description}",
             "",

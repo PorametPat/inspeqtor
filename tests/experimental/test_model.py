@@ -17,8 +17,7 @@ def test_linen_model(load_dataset):
     loss_fn = sq.models.linen.make_loss_fn(
         adapter_fn=sq.models.observable_to_expvals,
         model=model,
-        calculate_metric_fn=sq.models.calculate_metric,
-        loss_metric=sq.models.LossMetric.MSEE,
+        evaluate_fn=lambda x, y, z: sq.models.mse(x, y),
     )
 
     key = jax.random.key(0)
@@ -36,6 +35,14 @@ def test_linen_model(load_dataset):
         callbacks=[],
         NUM_EPOCH=NUM_EPOCH,
     )
+
+    train_loss, _ = loss_fn(
+        model_params,  # type: ignore
+        train_data.control_params,
+        train_data.unitaries,
+        train_data.observables,
+    )
+    assert train_loss.shape == ()
 
     # Working prediction_fn
     predictive_fn = sq.models.linen.make_predictive_fn(
@@ -61,9 +68,11 @@ def test_nnx_model(load_dataset):
     # Working with adapter
     loss_fn = sq.models.nnx.make_loss_fn(
         adapter_fn=sq.models.observable_to_expvals,
-        calculate_metric_fn=sq.models.calculate_metric,
-        loss_metric=sq.models.LossMetric.MSEE,
+        evaluate_fn=lambda x, y, z: sq.models.mse(x, y),
     )
+
+    train_loss, _ = loss_fn(model, train_data)
+    assert train_loss.shape == ()
 
     key = jax.random.key(0)
     training_key, params_key = jax.random.split(key)

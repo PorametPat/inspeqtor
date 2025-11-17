@@ -6,7 +6,7 @@ from flax import struct
 from inspeqtor.v2.control import ControlSequence, ravel_unravel_fn
 
 
-def fit_gp(D: gpx.Dataset):
+def fit_gaussian_process(D: gpx.Dataset):
     """Fit the Gaussian process given an instance of Dataset
 
     Args:
@@ -33,7 +33,7 @@ def fit_gp(D: gpx.Dataset):
     return opt_posterior, history
 
 
-def gp_predict(
+def predict_with_gaussian_process(
     x, posterior: gpx.gps.ConjugatePosterior, D: gpx.Dataset
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
     latent_dist = posterior.predict(x, train_data=D)
@@ -44,7 +44,9 @@ def gp_predict(
     return predictive_mean, predictive_std
 
 
-def gaussian_process(x: jnp.ndarray, D: gpx.Dataset) -> tuple[jnp.ndarray, jnp.ndarray]:
+def predict_mean_and_std(
+    x: jnp.ndarray, D: gpx.Dataset
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Predict a Gaussian distribution to the given `x` using the dataset `D`
 
     Args:
@@ -54,9 +56,9 @@ def gaussian_process(x: jnp.ndarray, D: gpx.Dataset) -> tuple[jnp.ndarray, jnp.n
     Returns:
         tuple[jnp.ndarray, jnp.ndarray]: The array of mean and standard deviation of the Gaussian process at ponits `x`.
     """
-    opt_posterior, _ = fit_gp(D)
+    opt_posterior, _ = fit_gaussian_process(D)
 
-    return gp_predict(x, opt_posterior, D)
+    return predict_with_gaussian_process(x, opt_posterior, D)
 
 
 def expected_improvement(
@@ -76,7 +78,7 @@ def expected_improvement(
         exploration_factor (float): The factor that balance between exploration and exploitation. Set to 0. to maximize exploitation.
 
     Returns:
-        jnp.ndarray: The expeced improvement corresponding to the points given from array of the posterier.
+        jnp.ndarray: The expeced improvement corresponding to the points given from array of the posterior.
     """
     # https://github.com/alonfnt/bayex/blob/main/bayex/acq.py
     std = jnp.sqrt(posterior_var)
@@ -108,7 +110,7 @@ def init_opt_state(x, y, control) -> BayesOptState:
     return BayesOptState(dataset=gpx.Dataset(X=x, y=y), control=control)
 
 
-def sample(
+def suggest_next_candidates(
     key: jnp.ndarray,
     opt_state: BayesOptState,
     sample_size: int = 1000,
@@ -138,7 +140,7 @@ def sample(
     # In shape of (sample_size, ctrl_feature)
     ravel_param = jax.vmap(ravel_fn)(params)
 
-    mean, variance = gaussian_process(ravel_param, opt_state.dataset)
+    mean, variance = predict_mean_and_std(ravel_param, opt_state.dataset)
 
     ei = expected_improvement(
         y_best, mean, variance, exploration_factor=exploration_factor
@@ -149,7 +151,7 @@ def sample(
     return ravel_param[selected_indice]
 
 
-def update_gp(opt_state: BayesOptState, x, y) -> BayesOptState:
+def add_observations(opt_state: BayesOptState, x, y) -> BayesOptState:
     """Function to update the optimization state using new data points `x` and `y`
 
     Args:

@@ -5,4 +5,5 @@ from inspeqtor.experimental.models.linen import (
     train_model as train_model,
     make_predictive_fn as make_predictive_fn,
     create_step as create_step,
+    make_loss_fn as make_loss_fn,
 )

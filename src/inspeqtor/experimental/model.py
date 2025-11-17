@@ -3,6 +3,7 @@ import jax
 import jax.numpy as jnp
 import typing
 from flax.typing import VariableDict
+import flax.traverse_util as traverse_util
 
 from dataclasses import dataclass
 import pathlib
@@ -578,3 +579,42 @@ class ModelData:
             return False
 
         return True if value.config == self.config else False
+
+
+@dataclass
+class HistoryEntryV3:
+    step: int
+    loss: float | jnp.ndarray
+    loop: str
+    aux: dict[str, jnp.ndarray]
+
+
+def transform_key(data):
+    return {
+        # Concanate the key by '/'
+        "/".join(key): value
+        for key, value in data.items()
+    }
+
+
+def clean_history_entries(
+    histories: list[HistoryEntryV3],
+):
+    clean_histories = [
+        {
+            "step": history.step,
+            "loss": history.loss,
+            "loop": history.loop,
+            **history.aux,
+        }
+        for history in histories
+    ]
+    # Move from device to host, i.e. from jax.Array to numpy.ndarray
+    clean_histories = jax.tree.map(
+        lambda x: x.item() if isinstance(x, jnp.ndarray) else x, clean_histories
+    )
+    # Flatten the nested dictionaries
+    clean_histories = list(map(traverse_util.flatten_dict, clean_histories))
+    # Transform the keys of the dictionary
+    clean_histories = list(map(transform_key, clean_histories))
+    return clean_histories

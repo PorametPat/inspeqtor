@@ -413,7 +413,7 @@ def get_data_model(
     ideal_hamiltonian = partial(
         sq.predefined.rotating_transmon_hamiltonian,
         qubit_info=qubit_info,
-        signal=sq.physics.signal_func_v5(
+        signal=sq.physics.make_signal_fn(
             get_envelope=sq.control.get_envelope_transformer(
                 control_sequence=control_sequence
             ),
