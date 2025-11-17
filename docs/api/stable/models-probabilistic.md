@@ -1,0 +1,3 @@
+# Probabilistic
+
+::: inspeqtor.models.probabilistic
