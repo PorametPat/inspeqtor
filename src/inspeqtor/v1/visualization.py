@@ -103,7 +103,7 @@ def plot_loss_with_moving_average(
 
         ax.annotate(
             f"{loss_value:.3g}",
-            xy=(x[idx].item(), loss_value),
+            xy=(float(x[idx].item()), float(loss_value)),
             xytext=(-10, 10),  # Offset the text for better readability
             textcoords="offset points",
             ha="center",

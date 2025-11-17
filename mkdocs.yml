@@ -103,10 +103,9 @@ nav:
                 - C&C: tutorials/legacy/tutorial_0003_cc.ipynb
     - explanation.md
     - How-To Guides:
-          - Generate dataset: guides/generate-dataset.md
-          - Working memory: guides/working_memory.ipynb
           - Converting DNN to BNN: guides/dnn_to_bnn.ipynb
           - Bayesian Optimization: guides/bayesian_optimization.ipynb
+          - Working memory: guides/working_memory.ipynb
           - Legacy:
                 - Converting DNN to BNN: guides/legacy/dnn_to_bnn.ipynb
 

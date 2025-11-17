@@ -5,5 +5,8 @@ from inspeqtor.v1.predefined import (
     SimulationStrategy as SimulationStrategy,
     WhiteboxStrategy as WhiteboxStrategy,
     HamiltonianEnum as HamiltonianEnum,
+)
+
+from inspeqtor.v2.predefined import (
     HamiltonianSpec as HamiltonianSpec,
 )

@@ -6,6 +6,7 @@ import typing
 import polars as pl
 import numpy as np
 from flax.traverse_util import flatten_dict
+from dataclasses import dataclass
 
 from inspeqtor.v2.data import (
     ExperimentConfiguration,
@@ -18,6 +19,7 @@ from inspeqtor.v2.control import (
     ControlSequence,
     get_envelope_transformer,
     construct_control_sequence_reader,
+    ravel_transform,
     ravel_unravel_fn,
 )
 from inspeqtor.v2.utils import (
@@ -35,7 +37,8 @@ from inspeqtor.v1.predefined import (
     GaussianPulse,
     TwoAxisGaussianPulse,
     transmon_hamiltonian,
-    HamiltonianSpec,
+    rotating_transmon_hamiltonian,
+    HamiltonianEnum,
     SimulationStrategy,
     get_mock_qubit_information,
     WhiteboxStrategy,
@@ -175,6 +178,95 @@ predefined_controls = [
 default_control_reader = construct_control_sequence_reader(controls=predefined_controls)
 
 
+@dataclass
+class HamiltonianSpec:
+    method: WhiteboxStrategy
+    hamiltonian_enum: HamiltonianEnum = HamiltonianEnum.rotating_transmon_hamiltonian
+    # For Trotterization
+    trotter_steps: int = 1000
+    # For ODE sovler
+    max_steps = int(2**16)
+
+    def get_hamiltonian_fn(self):
+        if self.hamiltonian_enum == HamiltonianEnum.rotating_transmon_hamiltonian:
+            return rotating_transmon_hamiltonian
+        elif self.hamiltonian_enum == HamiltonianEnum.transmon_hamiltonian:
+            return transmon_hamiltonian
+        else:
+            raise ValueError(f"Unsupport Hamiltonian: {self.hamiltonian_enum}")
+
+    def get_solver(
+        self,
+        control_sequence: ControlSequence,
+        qubit_info: QubitInformation,
+        dt: float,
+    ):
+        """Return Unitary solver from the given specification of the Hamiltonian and solver
+
+        Args:
+            control_sequence (ControlSequence): The control sequence object
+            qubit_info (QubitInformation): The qubit information object
+            dt (float): The time step size of the device
+
+        Raises:
+            ValueError: Unsupport Solver method
+
+        Returns:
+            typing.Any: The unitary solver
+        """
+        if self.method == WhiteboxStrategy.TROTTER:
+            hamiltonian = partial(
+                self.get_hamiltonian_fn(),
+                qubit_info=qubit_info,
+                signal=make_signal_fn(
+                    get_envelope=control_sequence.get_envelope,
+                    drive_frequency=qubit_info.frequency,
+                    dt=dt,
+                ),
+            )
+
+            hamiltonian = ravel_transform(hamiltonian, control_sequence)
+
+            whitebox = make_trotterization_solver(
+                hamiltonian=hamiltonian,
+                total_dt=control_sequence.total_dt,
+                dt=dt,
+                trotter_steps=self.trotter_steps,
+                y0=jnp.eye(2, dtype=jnp.complex128),
+            )
+
+        elif self.method == WhiteboxStrategy.ODE:
+            t_eval = jnp.linspace(
+                0, control_sequence.total_dt * dt, control_sequence.total_dt
+            )
+
+            hamiltonian = partial(
+                self.get_hamiltonian_fn(),
+                qubit_info=qubit_info,
+                signal=make_signal_fn(
+                    control_sequence.get_envelope,
+                    qubit_info.frequency,
+                    dt,
+                ),
+            )
+
+            hamiltonian = ravel_transform(hamiltonian, control_sequence)
+
+            whitebox = partial(
+                solver,
+                t_eval=t_eval,
+                hamiltonian=hamiltonian,
+                y0=jnp.eye(2, dtype=jnp.complex_),
+                t0=0,
+                t1=control_sequence.total_dt * dt,
+                max_steps=self.max_steps,
+            )
+        else:
+            raise ValueError("Unsupport method")
+
+        return whitebox
+
+
 def load_data_from_path(
     path: str | pathlib.Path,
     hamiltonian_spec: HamiltonianSpec,
@@ -193,6 +285,8 @@ def load_data_from_path(
     exp_data = ExperimentalData.from_folder(path)
     control_sequence = control_reader(path)
 
+    assert isinstance(control_sequence, ControlSequence)
+
     qubit_info = exp_data.config.qubits[0]
     dt = exp_data.config.device_cycle_time_ns
 
@@ -200,7 +294,6 @@ def load_data_from_path(
         control_sequence,
         qubit_info,
         dt,
-        get_envelope_transformer=get_envelope_transformer,
     )
 
     return prepare_data(exp_data, control_sequence, whitebox)
