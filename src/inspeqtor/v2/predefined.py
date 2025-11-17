@@ -111,7 +111,7 @@ def get_predefined_data_model_m1(
 
     control_seq = get_drag_pulse_v2_sequence(
         qubit_info_drive_strength=characterized_qubit_info.drive_strength,
-        min_beta=-10.0,
+        min_beta=0.0,
         max_beta=10.0,
         dt=dt,
     )

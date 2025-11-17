@@ -1,12 +1,14 @@
 import jax
 import jax.numpy as jnp
 import typing
-from inspeqtor.experimental.ctyping import ParametersDictType
 from dataclasses import dataclass, asdict, field
 import pathlib
 
 from ..experimental.control import sample_params, BaseControl
 from ..experimental.data import save_pytree_to_json, load_pytree_from_json
+
+
+ParametersDictType = dict[str, typing.Union[float, jnp.ndarray]]
 
 
 @dataclass

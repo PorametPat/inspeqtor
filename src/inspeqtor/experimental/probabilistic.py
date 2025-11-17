@@ -380,7 +380,7 @@ def make_predictive_fn(
             PGM_model_path / "model.json"
         )
 
-        base_model = sq.models.linen.WoModel(
+        base_model = sq.models.library.linen.WoModel(
             shared_layers=characterized_result.config["model_config"]["hidden_sizes"][0],
             pauli_layers=characterized_result.config["model_config"]["hidden_sizes"][1],
         )
