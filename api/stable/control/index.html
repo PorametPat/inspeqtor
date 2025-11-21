@@ -1168,6 +1168,60 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#inspeqtor.control.nested_sample" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;nested_sample
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.check_bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;check_bounds
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.merge_lower_upper" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;merge_lower_upper
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.split_bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;split_bounds
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.get_envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_envelope
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.envelope_fn" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;envelope_fn
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#library" class="md-nav__link">
     <span class="md-ellipsis">
       Library
@@ -1957,6 +2011,60 @@
   <a href="#inspeqtor.control.ParametersDictType" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;ParametersDictType
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.nested_sample" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;nested_sample
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.check_bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;check_bounds
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.merge_lower_upper" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;merge_lower_upper
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.split_bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;split_bounds
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.get_envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_envelope
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.control.envelope_fn" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;envelope_fn
     </span>
   </a>
   
@@ -4692,6 +4800,783 @@ params, total_waveform = sample(key)</p>
 
     <div class="doc doc-contents first">
 
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.control.nested_sample" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.control.nested_sample</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">nested_sample</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">sample_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v2.control.uniform_sample">uniform_sample</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Sample from nested bounds with custom sampling function <code>sample_fn</code></p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>key</code>
+            </td>
+            <td>
+                  <code><span title="jax.numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Random key</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bounds</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Bound of the control parameter</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sample_fn</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Custom sampling function. Defaults to uniform_sample.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="inspeqtor.v2.control.uniform_sample">uniform_sample</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>_type_</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Control parameter sample from bound</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/control.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">nested_sample</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">sample_fn</span><span class="o">=</span><span class="n">uniform_sample</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample from nested bounds with custom sampling function `sample_fn`</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        key (jnp.ndarray): Random key</span>
+<span class="sd">        bounds (_type_): Bound of the control parameter</span>
+<span class="sd">        sample_fn (_type_, optional): Custom sampling function. Defaults to uniform_sample.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: Control parameter sample from bound</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">unflatten_dict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">sample_fn</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">idx</span><span class="p">),</span> <span class="n">bound</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">bound</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flatten_dict</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.control.check_bounds" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.control.check_bounds</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_bounds</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Check if the given control parameter violate the bound or not.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>param</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Control parameter</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bounds</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Bound of control parameter</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bool</code></td>            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if parameter do not violate the bound, otherwise <code>False</code></p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/control.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check_bounds</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the given control parameter violate the bound or not.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param (_type_): Control parameter</span>
+<span class="sd">        bounds (_type_): Bound of control parameter</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: `True` if parameter do not violate the bound, otherwise `False`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">valid_container</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">bound</span><span class="p">:</span> <span class="p">(</span><span class="n">bound</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">bound</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">param</span><span class="p">,</span> <span class="n">bounds</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">init</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">init</span> <span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="n">valid_container</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.control.merge_lower_upper" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.control.merge_lower_upper</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">merge_lower_upper</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Merge lower and upper bound into bounds</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>lower</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The lower bound</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>upper</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The upper bound</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>_type_</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Bound from the lower and upper.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/control.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">merge_lower_upper</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge lower and upper bound into bounds</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        lower (_type_): The lower bound</span>
+<span class="sd">        upper (_type_): The upper bound</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: Bound from the lower and upper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.control.split_bounds" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.control.split_bounds</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">split_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Create lower and upper bound from bounds</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>bounds</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The bounds to extract the lower and upper bound</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>_type_</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The lower and upper bound</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/control.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">split_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create lower and upper bound from bounds</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        bounds (_type_): The bounds to extract the lower and upper bound</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: The lower and upper bound</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">is_leaf</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+    <span class="p">),</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">is_leaf</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.control.get_envelope" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.control.get_envelope</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_envelope</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+
+
+  
+      dataclass
+   (inspeqtor.v2.control.ControlSequence)" href="#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Return an envelope function create from envelope of all controls in <code>seq</code> with control parameter <code>param</code></p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>param</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Control parameter</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seq</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+
+
+  
+      dataclass
+   (inspeqtor.v2.control.ControlSequence)" href="#inspeqtor.control.ControlSequence">ControlSequence</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Control Sequence</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>_type_</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A function of time which is a sum of all envelope of control in <code>seq</code> with parameter <code>param</code></p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/control.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_envelope</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="n">ControlSequence</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an envelope function create from envelope of all controls in `seq` with control parameter `param`</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param (_type_): Control parameter</span>
+<span class="sd">        seq (ControlSequence): Control Sequence</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: A function of time which is a sum of all envelope of control in `seq` with parameter `param`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">get_envelope</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+        <span class="n">seq</span><span class="o">.</span><span class="n">controls</span><span class="p">,</span>
+        <span class="n">param</span><span class="p">,</span>
+        <span class="n">is_leaf</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">BaseControl</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">envelope</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">value</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="n">value</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">envelope</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.control.envelope_fn" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.control.envelope_fn</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">envelope_fn</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+
+
+  
+      dataclass
+   (inspeqtor.v2.control.ControlSequence)" href="#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Return an envelope of all of the control in control sequence <code>seq</code> given paramter <code>param</code> at time <code>t</code></p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>param</code>
+            </td>
+            <td>
+                  <code><span title="_type_">_type_</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Control parameter</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t</code>
+            </td>
+            <td>
+                  <code><span title="jax.numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Time to evaluate the envelope</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>seq</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+
+
+  
+      dataclass
+   (inspeqtor.v2.control.ControlSequence)" href="#inspeqtor.control.ControlSequence">ControlSequence</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The control sequence to get the envelope</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>_type_</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Envelope of all control in <code>seq</code> evaluate at time <code>t</code> with parameter <code>param</code></p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/control.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">envelope_fn</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="n">ControlSequence</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an envelope of all of the control in control sequence `seq` given paramter `param` at time `t`</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param (_type_): Control parameter</span>
+<span class="sd">        t (jnp.ndarray): Time to evaluate the envelope</span>
+<span class="sd">        seq (ControlSequence): The control sequence to get the envelope</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: Envelope of all control in `seq` evaluate at time `t` with parameter `param`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">ctrl</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ctrl</span><span class="o">.</span><span class="n">get_envelope</span><span class="p">(</span><span class="n">x</span><span class="p">)(</span><span class="n">t</span><span class="p">),</span>
+        <span class="n">seq</span><span class="o">.</span><span class="n">controls</span><span class="p">,</span>
+        <span class="n">param</span><span class="p">,</span>
+        <span class="n">is_leaf</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">BaseControl</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">tree</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
     </div>
 
 </div><h2 id="library">Library</h2>

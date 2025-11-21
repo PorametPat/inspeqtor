@@ -1279,6 +1279,33 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#inspeqtor.utils.finite_shot_quantum_device" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;finite_shot_quantum_device
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.utils.get_measurement_probability" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_measurement_probability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.utils.finite_shot_expectation_value" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;finite_shot_expectation_value
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#inspeqtor.utils.calculate_expectation_values" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;calculate_expectation_values
@@ -1735,6 +1762,33 @@
   <a href="#inspeqtor.utils.single_qubit_shot_quantum_device" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;single_qubit_shot_quantum_device
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.utils.finite_shot_quantum_device" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;finite_shot_quantum_device
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.utils.get_measurement_probability" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_measurement_probability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspeqtor.utils.finite_shot_expectation_value" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;finite_shot_expectation_value
     </span>
   </a>
   
@@ -2315,6 +2369,228 @@
         <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">expectation_values</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">expectation_value</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">expectation_values</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.utils.finite_shot_quantum_device" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.utils.finite_shot_quantum_device</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">finite_shot_quantum_device</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v2.utils.Param">Param</span></span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v2.utils.Param">Param</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">expval</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+
+
+  
+      dataclass
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/utils.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">finite_shot_quantum_device</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">param</span><span class="p">:</span> <span class="n">Param</span><span class="p">,</span>
+    <span class="n">solver</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Param</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">expval</span><span class="p">:</span> <span class="n">ExpectationValue</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">initial_state</span> <span class="o">=</span> <span class="n">get_initial_state</span><span class="p">(</span><span class="n">expval</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">dm</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">get_measurement_probability</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">expval</span><span class="o">.</span><span class="n">observable</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">finite_shot_expectation_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">shots</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.utils.get_measurement_probability" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.utils.get_measurement_probability</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_measurement_probability</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Calculate the probability of measuring each projector of tensor product of Pauli operators</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>state</code>
+            </td>
+            <td>
+                  <code><span title="jax.numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The quantum state to measure</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>operator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The string representation of the measurement operator, e.g., 'XY'</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="jax.numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>jnp.ndarray: An array of probability where each index is a base 10 representation of base 2 measurement result.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/utils.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_measurement_probability</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the probability of measuring each projector of tensor product of Pauli operators</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state (jnp.ndarray): The quantum state to measure</span>
+<span class="sd">        operator (str): The string representation of the measurement operator, e.g., &#39;XY&#39;</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        jnp.ndarray: An array of probability where each index is a base 10 representation of base 2 measurement result.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">state</span> <span class="o">@</span> <span class="n">tensor_product</span><span class="p">(</span><span class="o">*</span><span class="n">g_projector</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">g_projector</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">[(</span><span class="n">projectors</span><span class="p">[</span><span class="n">op</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">projectors</span><span class="p">[</span><span class="n">op</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">operator</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">real</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="inspeqtor.utils.finite_shot_expectation_value" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">inspeqtor.utils.finite_shot_expectation_value</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">finite_shot_expectation_value</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/inspeqtor/v2/utils.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">finite_shot_expectation_value</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">key</span><span class="p">,</span>
+            <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">check_parity</span><span class="p">)(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int_</span><span class="p">)),</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">shots</span><span class="p">,),</span>
+            <span class="n">p</span><span class="o">=</span><span class="n">prob</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
