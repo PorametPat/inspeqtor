@@ -1,9 +1,16 @@
 from inspeqtor.v2.utils import (
     SyntheticDataModel as SyntheticDataModel,
-    shot_quantum_device as shot_quantum_device,
+    single_qubit_shot_quantum_device as single_qubit_shot_quantum_device,
     calculate_expectation_values as calculate_expectation_values,
     dictorization as dictorization,
+    count_bits as count_bits,
+    finite_shot_quantum_device as finite_shot_quantum_device,
+    get_measurement_probability as get_measurement_probability,
+    finite_shot_expectation_value as finite_shot_expectation_value,
+    tensor_product as tensor_product,
 )
+
+from inspeqtor.v2.data import check_parity as check_parity
 
 from inspeqtor.v1.utils import (
     random_split as random_split,
@@ -27,6 +34,8 @@ from inspeqtor.v2.constant import (
     X as X,
     Y as Y,
     Z as Z,
+    plus_projectors as plus_projectors,
+    minus_projectors as minus_projectors,
 )
 
 from inspeqtor.v1.visualization import (
@@ -36,3 +45,18 @@ from inspeqtor.v1.visualization import (
     set_fontsize as set_fontsize,
     plot_loss_with_moving_average as plot_loss_with_moving_average,
 )
+
+from dataclasses import dataclass
+
+
+@dataclass
+class Colors:
+    red: str = "#f43f5e"
+    blue: str = "#6366f1"
+    orange: str = "#f97316"
+    green: str = "#22c55e"
+    gray: str = "#a2a2a2"
+    yellow: str = "#ffe019"
+
+
+colors = Colors()

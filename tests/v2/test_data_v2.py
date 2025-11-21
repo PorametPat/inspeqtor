@@ -1,7 +1,9 @@
 import jax
+import jax.numpy as jnp
 import polars as pl
 import numpy as np
 from flax.traverse_util import flatten_dict
+import chex
 
 import inspeqtor as sq
 
@@ -46,7 +48,7 @@ def test_ExperimentConfig(tmp_path):
 
 
 def test_ExperimentalData(tmp_path):
-    data_model = sq.data.library.get_predefined_data_model_m1()
+    data_model = sq.data.library.get_predefined_data_model_m1(trotter_steps=1_000)
     seq = data_model.control_sequence
 
     config = sq.data.ExperimentConfiguration(
@@ -66,7 +68,7 @@ def test_ExperimentalData(tmp_path):
     key = jax.random.key(0)
     sample_key, device_key = jax.random.split(key)
 
-    ravel_fn, _ = sq.control.ravel_unravel_fn(seq)
+    ravel_fn, _ = sq.control.ravel_unravel_fn(seq.get_structure())
     # Sample the parameter by vectorization.
     params_dict = jax.vmap(seq.sample_params)(
         jax.random.split(sample_key, config.sample_size)
@@ -75,7 +77,7 @@ def test_ExperimentalData(tmp_path):
     params = jax.vmap(ravel_fn)(params_dict)
 
     # Perform experiment locally
-    expvals = sq.utils.shot_quantum_device(
+    expvals = sq.utils.single_qubit_shot_quantum_device(
         device_key, params, solver=data_model.solver, SHOTS=config.shots
     )
 
@@ -115,7 +117,7 @@ def test_ExperimentalData(tmp_path):
         hamiltonian_spec=sq.physics.library.HamiltonianSpec(
             method=sq.physics.library.WhiteboxStrategy.TROTTER,
             hamiltonian_enum=sq.physics.library.HamiltonianEnum.rotating_transmon_hamiltonian,
-            trotter_steps=10_000,
+            trotter_steps=1_000,
         ),
     )
 
@@ -123,3 +125,27 @@ def test_ExperimentalData(tmp_path):
     assert loaded_data.control_parameters.shape == (config.sample_size, 2)
     assert loaded_data.unitaries.shape == (config.sample_size, 2, 2)
     assert loaded_data.observed_values.shape == (config.sample_size, 18)
+
+    # Test the binary mode
+    binaries = sq.utils.eigenvalue_to_binary(
+        sq.utils.expectation_value_to_eigenvalue(expvals, config.shots)
+    )
+
+    example = sq.utils.dictorization(
+        jnp.swapaxes(binaries, 0, 1), order=sq.utils.default_expectation_values_order
+    )
+
+    binaray_obs_df = pl.DataFrame(
+        flatten_dict(
+            jax.tree.map(
+                lambda x: np.array(x),
+                jax.tree.map(lambda x: sq.utils.count_bits(x, 1), example),
+            ),
+            sep="/",
+        )
+    ).with_row_index("parameter_id")
+
+    binary_exp_data = sq.data.ExperimentalData(
+        config, param_df, binaray_obs_df, mode="binary"
+    )
+    chex.assert_trees_all_close(binary_exp_data.get_observed(), exp_data.get_observed())

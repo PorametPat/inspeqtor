@@ -18,6 +18,7 @@ from inspeqtor.v1.physics import (
     calculate_exp as calculate_exp,
     make_trotterization_solver as make_trotterization_solver,
     lindblad_solver as lindblad_solver,
+    unitaries_prod as unitaries_prod,
 )
 
 from inspeqtor.stable.physics import library as library

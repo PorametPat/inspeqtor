@@ -99,7 +99,7 @@ class UnitaryModel(nn.Module):
 class WoDropoutModel(nn.Module):
     dropout_rate: float = 0.2
     shared_layers: typing.Sequence[int] = (20, 10)
-    shared_layers: typing.Sequence[int] = (20, 10)
+    pauli_layers: typing.Sequence[int] = (20, 10)
     pauli_operators: typing.Sequence[str] = ("X", "Y", "Z")
 
     NUM_UNITARY_PARAMS: int = 3
@@ -128,7 +128,7 @@ class WoDropoutModel(nn.Module):
             # Sub hidden layer
             # Copy the input
             _x = jnp.copy(x)
-            for hidden_size in self.shared_layers:
+            for hidden_size in self.pauli_layers:
                 _x = nn.Dense(features=hidden_size)(_x)
                 _x = nn.relu(_x)
                 _x = nn.Dropout(rate=self.dropout_rate, deterministic=not stochastic)(

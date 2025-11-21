@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A library for characterization and calibration of quantum device"
 readme = "README.md"
 authors = [
-    { name = "PorametPat", email = "43396870+PorametPat@users.noreply.github.com" }
+    { name = "Poramet Pathumsoot", email = "poramet.path@gmail.com" }
 ]
 requires-python = ">=3.11"
 dependencies = [
@@ -23,18 +23,6 @@ dependencies = [
     "gpjax>=0.12.2",
 ]
 
-[project.optional-dependencies]
-docs = [
-    "alive-progress>=3.3.0",
-    "mkdocs>=1.6.1",
-    "mkdocs-jupyter>=0.25.1",
-    "mkdocs-material[imaging]>=9.6.18",
-    "mkdocstrings[python]>=0.30.0",
-    "pymdown-extensions>=10.16.1",
-    "seaborn>=0.13.2",
-    "treescope>=0.1.6",
-]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -50,11 +38,22 @@ dev = [
     "pytest>=8.3.3",
     "pytest-cov>=6.2.1",
     "typer>=0.15.2",
+]
+docs = [
+    "alive-progress>=3.3.0",
+    "arviz>=0.22.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-jupyter>=0.25.1",
+    "mkdocs-material[imaging]>=9.6.22",
+    "mkdocstrings[python]>=0.30.1",
+    "pymdown-extensions>=10.16.1",
+    "seaborn>=0.13.2",
+    "treescope>=0.1.10",
     "zensical>=0.0.7",
 ]
 
 [tool.pyright]
-exclude = [".venv", "./src/inspeqtor/legacy", "./tests/legacy", "./src/inspeqtor/legacy/external"]
+exclude = [".venv"]
 pythonVersion = "3.11"
 venvPath = "."
 venv = ".venv"

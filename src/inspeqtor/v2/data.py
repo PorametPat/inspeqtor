@@ -69,8 +69,6 @@ class ExpectationValue:
 # Helper function for tensor products
 def tensor_product(*operators) -> jnp.ndarray:
     """Create tensor product of multiple operators"""
-    if not operators:
-        raise ValueError("Need at least one operator")
 
     result = operators[0]
     for op in operators[1:]:
@@ -264,6 +262,7 @@ class ExperimentalData:
     config: ExperimentConfiguration
     parameter_dataframe: pl.DataFrame
     observed_dataframe: pl.DataFrame
+    mode: typing.Literal["expectation_value", "binary"] = "expectation_value"
 
     def __post_init__(self):
         self.validate()
@@ -284,10 +283,18 @@ class ExperimentalData:
         return self.parameter_dataframe[col_selector].to_jax("array")
 
     def get_observed(self) -> jnp.ndarray:
-        col_selector = [
-            f"{expval.initial_state}/{expval.observable}"
-            for expval in self.config.expectation_values_order
-        ]
+        col_selector = [str(expval) for expval in self.config.expectation_values_order]
+
+        if self.mode == "binary":
+            return jnp.array(
+                [
+                    calculate_expectation_value_from_binary_dataframe(
+                        str(exp), self.observed_dataframe
+                    )
+                    for exp in self.config.expectation_values_order
+                ]
+            ).transpose()
+
         return self.observed_dataframe[col_selector].to_jax("array")
 
     def save_to_folder(self, path: str | Path):
@@ -339,3 +346,71 @@ class ExperimentalData:
             "=" * 60,
         ]
         return "\n".join(lines)
+
+
+# def check_parity(n: int):
+#     """
+#     Determines the parity of a number.
+
+#     Args:
+#         n (int): The input integer.
+
+#     Returns:
+#         int: 0 if the number has even parity, 1 if it has odd parity.
+#     """
+#     parity = 0
+#     while n != 0:
+#         parity ^= n & 1  # XOR the current LSB with parity
+#         n >>= 1  # Right shift to process the next bit
+#     return parity
+
+
+def check_parity(n):
+    """
+    Determines the parity of a number using bitwise_count.
+
+    Efficiently computes parity by counting all 1 bits and taking modulo 2.
+    This is much faster than the iterative approach as it uses hardware
+    intrinsics for population count.
+
+    Args:
+        n: The input integer.
+
+    Returns:
+        0 if the number has even parity, 1 if it has odd parity.
+
+    Example:
+        >>> check_parity(7)  # 0b111 -> three 1s -> odd parity
+        1
+        >>> check_parity(6)  # 0b110 -> two 1s -> even parity
+        0
+    """
+    return jnp.bitwise_count(n) % 2
+
+
+def calculate_expectation_value_from_binary_dataframe(
+    expvals: str, dataframe: pl.DataFrame
+) -> jnp.ndarray:
+    matching_cols = [col for col in dataframe.columns if col.startswith(expvals)]
+
+    # +1 eigenvalue
+    even_parity = (
+        dataframe.select(
+            [col for col in matching_cols if check_parity(int(col.split("/")[-1])) == 0]
+        )
+        .to_jax("array")
+        .sum(-1)
+    )
+
+    # -1 eigenvalue
+    odd_parity = (
+        dataframe.select(
+            [col for col in matching_cols if check_parity(int(col.split("/")[-1])) == 1]
+        )
+        .to_jax("array")
+        .sum(-1)
+    )
+
+    expectation_value = (even_parity - odd_parity) / (even_parity + odd_parity)
+
+    return expectation_value
