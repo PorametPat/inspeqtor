@@ -2179,7 +2179,7 @@ from functools import partial</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -2215,7 +2215,7 @@ from functools import partial</div>
 <span class="n">ctrl_seq</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">control</span><span class="o">.</span><span class="n">ControlSequence</span><span class="p">(</span>
     <span class="n">controls</span><span class="o">=</span><span class="p">{</span><span class="s2">"idle"</span><span class="p">:</span> <span class="n">ZeroControl</span><span class="p">(</span><span class="n">total_dt</span><span class="p">)},</span> <span class="n">total_dt</span><span class="o">=</span><span class="n">total_dt</span>
 <span class="p">)</span>
-<span class="n">ravel_fn</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">control</span><span class="o">.</span><span class="n">ravel_unravel_fn</span><span class="p">(</span><span class="n">ctrl_seq</span><span class="p">)</span>
+<span class="n">ravel_fn</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">control</span><span class="o">.</span><span class="n">ravel_unravel_fn</span><span class="p">(</span><span class="n">ctrl_seq</span><span class="o">.</span><span class="n">get_structure</span><span class="p">())</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-3">from dataclasses import dataclass
 
@@ -2240,7 +2240,7 @@ total_dt = 100  # Does not matter in the example
 ctrl_seq = sq.control.ControlSequence(
     controls={"idle": ZeroControl(total_dt)}, total_dt=total_dt
 )
-ravel_fn, unravel_fn = sq.control.ravel_unravel_fn(ctrl_seq)</div>
+ravel_fn, unravel_fn = sq.control.ravel_unravel_fn(ctrl_seq.get_structure())</div>
 </div>
 </div>
 </div>

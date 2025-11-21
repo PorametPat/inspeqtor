@@ -2078,7 +2078,7 @@ ctrl_seq = sq.control.ControlSequence(
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
@@ -2094,14 +2094,14 @@ ctrl_seq = sq.control.ControlSequence(
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">key</span><span class="p">,</span> <span class="n">x_key</span><span class="p">,</span> <span class="n">y_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">ravel_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">control</span><span class="o">.</span><span class="n">ravel_unravel_fn</span><span class="p">(</span><span class="n">ctrl_seq</span><span class="p">)</span>
+<span class="n">ravel_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sq</span><span class="o">.</span><span class="n">control</span><span class="o">.</span><span class="n">ravel_unravel_fn</span><span class="p">(</span><span class="n">ctrl_seq</span><span class="o">.</span><span class="n">get_structure</span><span class="p">())</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">ravel_fn</span><span class="p">)(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">ctrl_seq</span><span class="o">.</span><span class="n">sample_params</span><span class="p">)(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x_key</span><span class="p">,</span> <span class="n">n</span><span class="p">)))</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">noisy_fn</span><span class="p">(</span><span class="n">y_key</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">n = 10
 key = jax.random.key(0)
 key, x_key, y_key = jax.random.split(key, 3)
-ravel_fn, _ = sq.control.ravel_unravel_fn(ctrl_seq)
+ravel_fn, _ = sq.control.ravel_unravel_fn(ctrl_seq.get_structure())
 x = jax.vmap(ravel_fn)(jax.vmap(ctrl_seq.sample_params)(jax.random.split(x_key, n)))
 y = noisy_fn(y_key, x)</div>
 </div>
