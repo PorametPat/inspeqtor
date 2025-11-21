@@ -1,6 +1,8 @@
 from inspeqtor.v1.data import (
     QubitInformation as QubitInformation,
     DataBundled as DataBundled,
+    read_from_json as read_from_json,
+    save_to_json as save_to_json,
 )
 
 from inspeqtor.v2.data import (

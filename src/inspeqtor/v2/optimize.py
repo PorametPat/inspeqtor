@@ -133,7 +133,7 @@ def suggest_next_candidates(
     assert isinstance(y, jnp.ndarray)
     y_best = jnp.max(y)
 
-    ravel_fn, unravel_fn = ravel_unravel_fn(opt_state.control)
+    ravel_fn, unravel_fn = ravel_unravel_fn(opt_state.control.get_structure())
     params = jax.vmap(opt_state.control.sample_params)(
         jax.random.split(key, sample_size)
     )

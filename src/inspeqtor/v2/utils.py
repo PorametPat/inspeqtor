@@ -3,6 +3,7 @@ import jax.numpy as jnp
 import typing
 import logging
 from dataclasses import dataclass
+from itertools import product
 
 from inspeqtor.v1.data import QubitInformation
 from inspeqtor.v1.physics import calculate_exp
@@ -13,8 +14,10 @@ from inspeqtor.v2.data import (
     get_complete_expectation_values,
     get_initial_state,
     get_observable_operator,
+    check_parity,
 )
 from inspeqtor.v1.utils import calculate_shots_expectation_value
+from inspeqtor.v2.constant import plus_projectors, minus_projectors
 
 
 @dataclass
@@ -100,7 +103,7 @@ def calculate_expectation_values(
     return ideal_expectation_values
 
 
-def shot_quantum_device(
+def single_qubit_shot_quantum_device(
     key: jnp.ndarray,
     control_parameters: jnp.ndarray,
     solver: typing.Callable[[jnp.ndarray], jnp.ndarray],
@@ -164,3 +167,83 @@ def dictorization(expvals: jnp.ndarray, order: list[ExpectationValue]):
         expvals_dict[exp.initial_state][exp.observable] = expvals[idx]
 
     return expvals_dict
+
+
+def count_bits(
+    binaries: jnp.ndarray, n_qubits: int, axis: int = 1
+) -> dict[str, jnp.ndarray]:
+    return {
+        str(integer): jnp.sum(binaries == integer, axis=axis)
+        for integer in range(int(2**n_qubits))
+    }
+
+
+Param = typing.TypeVar("Param")
+
+
+def tensor_product(*operators) -> jnp.ndarray:
+    """Create tensor product of multiple operators"""
+    return jax.tree.reduce(jnp.kron, operators)
+
+
+def finite_shot_expectation_value(key: jnp.ndarray, prob: jnp.ndarray, shots: int):
+    return jnp.mean(
+        jax.random.choice(
+            key,
+            jax.vmap(check_parity)(jnp.arange(0, prob.size, dtype=jnp.int_)),
+            shape=(shots,),
+            p=prob,
+        )
+    )
+
+
+def finite_shot_quantum_device(
+    key: jnp.ndarray,
+    param: Param,
+    solver: typing.Callable[[Param, jnp.ndarray], jnp.ndarray],
+    shots: int,
+    expval: ExpectationValue,
+):
+    initial_state = get_initial_state(expval.initial_state, dm=True)
+
+    state = solver(param, initial_state)
+    prob = get_measurement_probability(state, expval.observable)
+
+    return finite_shot_expectation_value(key, prob, shots)
+
+
+projectors = {
+    "X": {
+        0: plus_projectors["X"],
+        1: minus_projectors["X"],
+    },
+    "Y": {
+        0: plus_projectors["Y"],
+        1: minus_projectors["Y"],
+    },
+    "Z": {
+        0: plus_projectors["Z"],
+        1: minus_projectors["Z"],
+    },
+}
+
+
+def get_measurement_probability(state: jnp.ndarray, operator: str) -> jnp.ndarray:
+    """Calculate the probability of measuring each projector of tensor product of Pauli operators
+
+    Args:
+        state (jnp.ndarray): The quantum state to measure
+        operator (str): The string representation of the measurement operator, e.g., 'XY'
+
+    Returns:
+        jnp.ndarray: An array of probability where each index is a base 10 representation of base 2 measurement result.
+    """
+
+    return jnp.array(
+        [
+            jnp.trace(state @ tensor_product(*g_projector))
+            for g_projector in product(
+                *[(projectors[op][0], projectors[op][1]) for op in operator]
+            )
+        ]
+    ).real

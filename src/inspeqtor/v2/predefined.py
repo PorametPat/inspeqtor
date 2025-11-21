@@ -27,7 +27,7 @@ from inspeqtor.v2.utils import (
     prepare_data,
     LoadedData,
     calculate_expectation_values,
-    shot_quantum_device,
+    single_qubit_shot_quantum_device,
     dictorization,
 )
 from inspeqtor.v1.predefined import (
@@ -51,6 +51,39 @@ from inspeqtor.v1.physics import (
     solver,
     auto_rotating_frame_hamiltonian,
 )
+
+
+def get_gaussian_control_sequence(
+    qubit_info: QubitInformation,
+    max_amp: float = 0.5,  # NOTE: Choice of maximum amplitude is arbitrary
+):
+    """Get predefined Gaussian control sequence with single Gaussian pulse.
+
+    Args:
+        qubit_info (QubitInformation): Qubit information
+        max_amp (float, optional): The maximum amplitude. Defaults to 0.5.
+
+    Returns:
+        ControlSequence: Control sequence instance
+    """
+    total_length = 320
+    dt = 2 / 9
+
+    control_sequence = ControlSequence(
+        controls={
+            "gaussian": GaussianPulse(
+                duration=total_length,
+                qubit_drive_strength=qubit_info.drive_strength,
+                dt=dt,
+                max_amp=max_amp,
+                min_theta=0.0,
+                max_theta=2 * jnp.pi,
+            )
+        },
+        total_dt=total_length,
+    )
+
+    return control_sequence
 
 
 def get_drag_pulse_v2_sequence(
@@ -92,7 +125,10 @@ def get_drag_pulse_v2_sequence(
 
 
 def get_predefined_data_model_m1(
-    detune: float = 0.0001, get_envelope_transformer=get_envelope_transformer
+    detune: float = 0.0001,
+    get_envelope_transformer=get_envelope_transformer,
+    trotterization: bool = True,
+    trotter_steps: int = 10_000,
 ):
     dt = 2 / 9
     real_qubit_info = QubitInformation(
@@ -130,15 +166,24 @@ def get_predefined_data_model_m1(
     frame = (jnp.pi * characterized_qubit_info.frequency) * Z
     hamiltonian = auto_rotating_frame_hamiltonian(hamiltonian, frame=frame)
 
-    TROTTER_STEPS = 10_000
+    if trotterization:
+        _solver = make_trotterization_solver(
+            hamiltonian=hamiltonian,
+            total_dt=control_seq.total_dt,
+            dt=dt,
+            trotter_steps=trotter_steps,
+            y0=jnp.eye(2, dtype=jnp.complex128),
+        )
 
-    solver = make_trotterization_solver(
-        hamiltonian=hamiltonian,
-        total_dt=control_seq.total_dt,
-        dt=dt,
-        trotter_steps=TROTTER_STEPS,
-        y0=jnp.eye(2, dtype=jnp.complex128),
-    )
+    else:
+        _solver = partial(
+            solver,
+            t_eval=jnp.linspace(0, control_seq.total_dt * dt, 321),
+            hamiltonian=hamiltonian,
+            y0=jnp.eye(2, dtype=jnp.complex128),
+            t0=0,
+            t1=control_seq.total_dt * dt,
+        )
 
     ideal_hamiltonian = partial(
         transmon_hamiltonian,
@@ -147,13 +192,23 @@ def get_predefined_data_model_m1(
     )
     ideal_hamiltonian = auto_rotating_frame_hamiltonian(ideal_hamiltonian, frame=frame)
 
-    whitebox = make_trotterization_solver(
-        hamiltonian=ideal_hamiltonian,
-        total_dt=control_seq.total_dt,
-        dt=dt,
-        trotter_steps=TROTTER_STEPS,
-        y0=jnp.eye(2, dtype=jnp.complex128),
-    )
+    if trotterization:
+        whitebox = make_trotterization_solver(
+            hamiltonian=ideal_hamiltonian,
+            total_dt=control_seq.total_dt,
+            dt=dt,
+            trotter_steps=trotter_steps,
+            y0=jnp.eye(2, dtype=jnp.complex128),
+        )
+    else:
+        whitebox = partial(
+            solver,
+            t_eval=jnp.linspace(0, control_seq.total_dt * dt, 321),
+            hamiltonian=ideal_hamiltonian,
+            y0=jnp.eye(2, dtype=jnp.complex128),
+            t0=0,
+            t1=control_seq.total_dt * dt,
+        )
 
     return SyntheticDataModel(
         control_sequence=control_seq,
@@ -161,7 +216,7 @@ def get_predefined_data_model_m1(
         dt=dt,
         ideal_hamiltonian=ideal_hamiltonian,
         total_hamiltonian=hamiltonian,
-        solver=solver,
+        solver=_solver,
         quantum_device=None,
         whitebox=whitebox,
     )
@@ -354,6 +409,7 @@ def generate_single_qubit_experimental_data(
         get_control_sequence_fn (typing.Callable[ [], ControlSequence ], optional): Function that return control sequence. Defaults to get_multi_drag_control_sequence_v3.
         max_steps (int, optional): Maximum step of solver. Defaults to int(2**16).
         method (WhiteboxStrategy, optional): Unitary solver method. Defaults to WhiteboxStrategy.ODE.
+        trotter_steps (int): Trotterization step. Defualts to 1000
 
     Raises:
         NotImplementedError: Not support strategy
@@ -408,7 +464,7 @@ def generate_single_qubit_experimental_data(
 
     key, sample_key = jax.random.split(key)
 
-    ravel_fn, _ = ravel_unravel_fn(control_sequence)
+    ravel_fn, _ = ravel_unravel_fn(control_sequence.get_structure())
     # Sample the parameter by vectorization.
     params_dict = jax.vmap(control_sequence.sample_params)(
         jax.random.split(sample_key, experiment_config.sample_size)
@@ -440,7 +496,7 @@ def generate_single_qubit_experimental_data(
     elif strategy == SimulationStrategy.SHOT:
         key, sample_key = jax.random.split(key)
         # The `shot_quantum_device` function will re-calculate the unitary
-        expectation_values = shot_quantum_device(
+        expectation_values = single_qubit_shot_quantum_device(
             sample_key,
             control_params,
             noisy_simulator,
