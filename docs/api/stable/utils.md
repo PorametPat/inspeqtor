@@ -4,7 +4,13 @@
 
 ::: inspeqtor.utils.SyntheticDataModel
 
-::: inspeqtor.utils.shot_quantum_device
+::: inspeqtor.utils.single_qubit_shot_quantum_device
+
+::: inspeqtor.utils.finite_shot_quantum_device
+
+::: inspeqtor.utils.get_measurement_probability
+
+::: inspeqtor.utils.finite_shot_expectation_value
 
 ::: inspeqtor.utils.calculate_expectation_values
 

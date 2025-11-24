@@ -33,8 +33,8 @@ class ExpectationValue:
         # Validate observable characters
         for o in self.observable:
             assert (
-                o in "XYZ"
-            ), f"Invalid observable '{o}'. Must be one of 'X', 'Y', or 'Z'"
+                o in "IXYZ"
+            ), f"Invalid observable '{o}'. Must be one of 'I', 'X', 'Y', or 'Z'"
 
         # Validate initial state characters
         valid_states = "+-rl01"
@@ -140,13 +140,28 @@ def get_initial_state(initial_state: str, dm: bool = True) -> jnp.ndarray:
     return state
 
 
-def get_complete_expectation_values(num_qubits: int) -> list[ExpectationValue]:
+def get_complete_expectation_values(
+    num_qubits: int,
+    observables: typing.Iterable[typing.Literal["I", "X", "Y", "Z"]] = [
+        "I",
+        "X",
+        "Y",
+        "Z",
+    ],
+    states: typing.Iterable[typing.Literal["+", "-", "r", "l", "0", "1"]] = [
+        "+",
+        "-",
+        "r",
+        "l",
+        "0",
+        "1",
+    ],
+    exclude_all_identities: bool = True,
+) -> list[ExpectationValue]:
     """Generate a complete set of expectation values for characterizing a multi-qubit system"""
-    observables = ["X", "Y", "Z"]
-    states = ["+", "-", "r", "l", "0", "1"]
 
     # For n qubits, we need all combinations of observables and states
-    result = []
+    result: typing.Iterable[ExpectationValue] = []
 
     # Generate all combinations of observables
     for obs_combo in itertools.product(observables, repeat=num_qubits):
@@ -154,6 +169,9 @@ def get_complete_expectation_values(num_qubits: int) -> list[ExpectationValue]:
             obs_str = "".join(obs_combo)
             state_str = "".join(state_combo)
             result.append(ExpectationValue(observable=obs_str, initial_state=state_str))
+
+    if exclude_all_identities:
+        result = [exp for exp in result if exp.observable != "I" * num_qubits]
 
     return result
 
