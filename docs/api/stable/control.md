@@ -20,6 +20,18 @@
 
 ::: inspeqtor.control.ParametersDictType
 
+::: inspeqtor.control.nested_sample
+
+::: inspeqtor.control.check_bounds
+
+::: inspeqtor.control.merge_lower_upper
+
+::: inspeqtor.control.split_bounds
+
+::: inspeqtor.control.get_envelope
+
+::: inspeqtor.control.envelope_fn
+
 ## Library
 
 ::: inspeqtor.control.library

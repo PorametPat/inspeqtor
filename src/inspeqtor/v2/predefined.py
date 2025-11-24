@@ -21,6 +21,8 @@ from inspeqtor.v2.control import (
     construct_control_sequence_reader,
     ravel_transform,
     ravel_unravel_fn,
+    BaseControl,
+    ParametersDictType,
 )
 from inspeqtor.v2.utils import (
     SyntheticDataModel,
@@ -32,9 +34,7 @@ from inspeqtor.v2.utils import (
 )
 from inspeqtor.v1.predefined import (
     DragPulse,
-    DragPulseV2,
     MultiDragPulseV3,
-    GaussianPulse,
     TwoAxisGaussianPulse,
     transmon_hamiltonian,
     rotating_transmon_hamiltonian,
@@ -43,6 +43,7 @@ from inspeqtor.v1.predefined import (
     get_mock_qubit_information,
     WhiteboxStrategy,
     polynomial_feature_map,
+    gaussian_envelope,
 )
 from inspeqtor.v1.constant import Z
 from inspeqtor.v1.physics import (
@@ -51,6 +52,53 @@ from inspeqtor.v1.physics import (
     solver,
     auto_rotating_frame_hamiltonian,
 )
+
+
+@dataclass
+class GaussianPulse(BaseControl):
+    duration: int
+    # beta: float
+    qubit_drive_strength: float
+    dt: float
+    max_amp: float = 0.25
+
+    min_theta: float = 0.0
+    max_theta: float = 2 * jnp.pi
+
+    def __post_init__(self):
+        self.t_eval = jnp.arange(self.duration, dtype=jnp.float_)
+
+        # This is the correction factor that will cancel the factor in the front of hamiltonian
+        self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
+
+        # The standard derivation of Gaussian pulse is keep fixed for the given max_amp
+        self.sigma = jnp.sqrt(2 * jnp.pi) / (self.max_amp * self.correction)
+
+        # The center position is set at the center of the duration
+        self.center_position = self.duration // 2
+
+    def get_bounds(
+        self,
+    ) -> tuple[ParametersDictType, ParametersDictType]:
+        lower: ParametersDictType = {}
+        upper: ParametersDictType = {}
+
+        lower["theta"] = self.min_theta
+        upper["theta"] = self.max_theta
+
+        return lower, upper
+
+    def get_envelope(
+        self, params: ParametersDictType
+    ) -> typing.Callable[..., typing.Any]:
+        # The area of Gaussian to be rotate to,
+        area = (
+            params["theta"] / self.correction
+        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
+
+        return gaussian_envelope(
+            amp=area, center=self.center_position, sigma=self.sigma
+        )
 
 
 def get_gaussian_control_sequence(
@@ -84,6 +132,61 @@ def get_gaussian_control_sequence(
     )
 
     return control_sequence
+
+
+@dataclass
+class DragPulseV2(BaseControl):
+    duration: int
+    qubit_drive_strength: float
+    dt: float
+    max_amp: float = 0.25
+
+    min_theta: float = 0.0
+    max_theta: float = 2 * jnp.pi
+
+    min_beta: float = 0.0
+    max_beta: float = 2.0
+
+    def __post_init__(self):
+        self.gaussian_pulse = GaussianPulse(
+            duration=self.duration,
+            qubit_drive_strength=self.qubit_drive_strength,
+            dt=self.dt,
+            max_amp=self.max_amp,
+            min_theta=self.min_theta,
+            max_theta=self.max_theta,
+        )
+        self.t_eval = self.gaussian_pulse.t_eval
+
+    def get_bounds(
+        self,
+    ) -> tuple[ParametersDictType, ParametersDictType]:
+        lower, upper = self.gaussian_pulse.get_bounds()
+
+        lower["beta"] = self.min_beta
+        upper["beta"] = self.max_beta
+
+        return lower, upper
+
+    def get_envelope(
+        self, params: ParametersDictType
+    ) -> typing.Callable[..., typing.Any]:
+        # The area of Gaussian to be rotate to,
+        area = (
+            params["theta"] / self.gaussian_pulse.correction
+        )  # NOTE: Choice of area is arbitrary e.g. pi pulse
+
+        def real_component(t):
+            return gaussian_envelope(
+                amp=area,
+                center=self.gaussian_pulse.center_position,
+                sigma=self.gaussian_pulse.sigma,
+            )(t)
+
+        def envelope_fn(t):
+            return real_component(t) + 1j * params["beta"] * jax.grad(real_component)(t)
+
+        return envelope_fn
 
 
 def get_drag_pulse_v2_sequence(

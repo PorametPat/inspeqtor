@@ -11,7 +11,6 @@ from inspeqtor.v1.physics import (
     process_fidelity as process_fidelity,
     avg_gate_fidelity_from_superop as avg_gate_fidelity_from_superop,
     to_superop as to_superop,
-    state_tomography as state_tomography,
     check_valid_density_matrix as check_valid_density_matrix,
     check_hermitian as check_hermitian,
     direct_AGF_estimation_fn as direct_AGF_estimation_fn,
@@ -20,5 +19,7 @@ from inspeqtor.v1.physics import (
     lindblad_solver as lindblad_solver,
     unitaries_prod as unitaries_prod,
 )
+
+from inspeqtor.v2.physics import state_tomography as state_tomography
 
 from inspeqtor.stable.physics import library as library

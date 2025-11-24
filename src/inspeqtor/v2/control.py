@@ -5,13 +5,116 @@ import typing
 from dataclasses import dataclass, asdict, field
 import pathlib
 from flax.traverse_util import flatten_dict, unflatten_dict
+from abc import ABC, abstractmethod
+import json
+import jaxtyping
 
-from ..v1.control import sample_params, BaseControl
 from ..v1.data import save_pytree_to_json, load_pytree_from_json
 
 
-ParametersDictType = dict[str, typing.Union[float, jnp.ndarray]]
+# ParametersDictType = dict[str, typing.Union[float, jnp.ndarray]]
 # ParametersDictType = typing.Dict[str, typing.Union['ParametersDictType', float, jnp.ndarray]]
+ParametersDictType = jaxtyping.PyTree[typing.Union[jaxtyping.Float, jnp.ndarray]]
+
+ControlParam = jaxtyping.PyTree
+LowerBound = ControlParam
+UpperBound = ControlParam
+Bounds = jaxtyping.PyTree[tuple[float, float]]
+
+
+def sample_params(
+    key: jnp.ndarray, lower: ParametersDictType, upper: ParametersDictType
+) -> ParametersDictType:
+    """Sample parameters with the same shape with given lower and upper bounds
+
+    Args:
+        key (jnp.ndarray): Random key
+        lower (ParametersDictType): Lower bound
+        upper (ParametersDictType): Upper bound
+
+    Returns:
+        ParametersDictType: Dict of the sampled parameters
+    """
+    # This function is general because it is depend only on lower and upper structure
+    param: ParametersDictType = {}
+    param_names = lower.keys()
+    for name in param_names:
+        sample_key, key = jax.random.split(key)
+        param[name] = jax.random.uniform(
+            sample_key, shape=(), minval=lower[name], maxval=upper[name]
+        )
+
+    # return jax.tree.map(float, param)
+    return param
+
+
+@dataclass
+class BaseControl(ABC):
+    # duration: int
+
+    def __post_init__(self):
+        # self.t_eval = jnp.arange(0, self.duration, 1)
+        self.validate()
+
+    def validate(self):
+        # Validate that all attributes are json serializable
+        try:
+            json.dumps(self.to_dict())
+        except TypeError as e:
+            raise TypeError(
+                f"Cannot serialize {self.__class__.__name__} to json"
+            ) from e
+
+        lower, upper = self.get_bounds()
+        # Validate that the sampling function is working
+        key = jax.random.key(0)
+        params = sample_params(key, lower, upper)
+        # waveform = self.get_waveform(params)
+
+        assert all(
+            [isinstance(k, str) for k in params.keys()]
+        ), "All key of params dict must be string"
+        assert all([isinstance(v, float) for v in params.values()]) or all(
+            [isinstance(v, jnp.ndarray) for v in params.values()]
+        ), "All value of params dict must be float"
+        # assert isinstance(waveform, jnp.ndarray), "Waveform must be jnp.ndarray"
+
+    @abstractmethod
+    def get_bounds(
+        self, *arg, **kwarg
+    ) -> tuple[ParametersDictType, ParametersDictType]: ...
+
+    @abstractmethod
+    def get_envelope(self, params: ParametersDictType) -> typing.Callable:
+        raise NotImplementedError("get_envelopes method is not implemented")
+
+    def to_dict(self) -> dict[str, typing.Union[int, float, str]]:
+        """Convert the control configuration to dictionary
+
+        Returns:
+            dict[str, typing.Union[int, float, str]]: Configuration of the control
+        """
+        return asdict(self)
+
+    def to_dict_new(self) -> dict[str, typing.Union[int, float, str]]:
+        """Convert the control configuration to dictionary
+
+        Returns:
+            dict[str, typing.Union[int, float, str]]: Configuration of the control
+        """
+        return {**asdict(self), "classname": self.__class__.__name__}
+
+    @classmethod
+    def from_dict(cls, data):
+        """Construct the control instace from the dictionary.
+
+        Args:
+            data (dict): Dictionary for construction of the control instance.
+
+        Returns:
+            The instance of the control.
+        """
+        return cls(**data)
 
 
 @dataclass
@@ -42,11 +145,11 @@ class ControlSequence:
     def get_structure(self) -> typing.Sequence[typing.Sequence[str]]:
         return self.auto_order
 
-    def sample_params(self, key: jax.Array) -> dict[str, ParametersDictType]:
+    def sample_params_v1(self, key: jnp.ndarray) -> dict[str, ParametersDictType]:
         """Sample control parameter
 
         Args:
-            key (jax.Array): Random key
+            key (jnp.ndarray): Random key
 
         Returns:
             dict[str, ParametersDictType]: control parameters
@@ -59,11 +162,14 @@ class ControlSequence:
 
         return params_dict
 
-    def sample_params_v2(self, key: jax.Array) -> dict[str, ParametersDictType]:
+    def sample_params(self, key: jnp.ndarray) -> dict[str, ParametersDictType]:
+        return self.sample_params_v2(key)
+
+    def sample_params_v2(self, key: jnp.ndarray) -> dict[str, ParametersDictType]:
         """Sample control parameter
 
         Args:
-            key (jax.Array): Random key
+            key (jnp.ndarray): Random key
 
         Returns:
             dict[str, ParametersDictType]: control parameters
@@ -113,6 +219,22 @@ class ControlSequence:
 
         return envelope
 
+    def to_dict_new(self) -> dict[str, str | dict[str, str | float]]:
+        """Convert self to dict
+
+        Returns:
+            dict[str, str | dict[str, str | float]]: dict contain argument necessary for re-initialization.
+        """
+        return {
+            **asdict(self),
+            "classname": {k: v.__class__.__name__ for k, v in self.controls.items()},
+            "controls": jax.tree.map(
+                lambda x: x.to_dict(),
+                self.controls,
+                is_leaf=lambda x: isinstance(x, BaseControl),
+            ),
+        }
+
     def to_dict(self) -> dict[str, str | dict[str, str | float]]:
         """Convert self to dict
 
@@ -160,6 +282,43 @@ class ControlSequence:
 
         return cls(
             controls=instantiated_controls, total_dt=total_dt, structure=structure
+        )
+
+    @classmethod
+    def from_dict_new(
+        cls,
+        data: dict[str, str | dict[str, str | float]],
+        controls: dict[str, type[BaseControl]],
+    ) -> "ControlSequence":
+        controls_data = data["controls"]
+        assert isinstance(controls_data, dict)
+
+        def check_if_control_dict(leave) -> bool:
+            if isinstance(leave, dict):
+                if "classname" in leave:
+                    return True
+
+            return False
+
+        def initialize_control(control_data: dict) -> BaseControl:
+            cls_name = control_data["classname"]
+            clean_data = {k: v for k, v in control_data.items() if k != "classname"}
+            return controls[cls_name].from_dict(clean_data)
+
+        # Initialize contols
+        initialized_controls = jax.tree.map(
+            initialize_control, controls_data, is_leaf=check_if_control_dict
+        )
+
+        total_dt = data["total_dt"]
+        assert isinstance(total_dt, int)
+        structure = data["structure"]
+        assert isinstance(structure, list)
+        # Explicitly convert each item in the structure to be tuple.
+        structure = [tuple(item) for item in structure]
+
+        return cls(
+            controls=initialized_controls, total_dt=total_dt, structure=structure
         )
 
     def to_file(self, path: typing.Union[str, pathlib.Path]):
@@ -236,7 +395,7 @@ def sequence_waveform(
     return total_waveform
 
 
-def merge_lower_upper(lower, upper):
+def merge_lower_upper(lower: LowerBound, upper: UpperBound):
     """Merge lower and upper bound into bounds
 
     Args:
@@ -249,7 +408,7 @@ def merge_lower_upper(lower, upper):
     return jax.tree.map(lambda x, y: (x, y), lower, upper)
 
 
-def split_bounds(bounds):
+def split_bounds(bounds: Bounds) -> tuple[LowerBound, UpperBound]:
     """Create lower and upper bound from bounds
 
     Args:
@@ -286,7 +445,7 @@ def nested_sample(key: jnp.ndarray, bounds, sample_fn=uniform_sample):
     )
 
 
-def check_bounds(param, bounds) -> bool:
+def check_bounds(param: ParametersDictType, bounds: Bounds) -> bool:
     """Check if the given control parameter violate the bound or not.
 
     Args:
@@ -302,7 +461,7 @@ def check_bounds(param, bounds) -> bool:
     return jax.tree.reduce(lambda init, x: init & x, valid_container, initializer=True)
 
 
-def get_value_by_keys(param, dict_keys):
+def get_value_by_keys(param: ParametersDictType, dict_keys: typing.Iterable[str]):
     return jax.tree.reduce(lambda init, x: init[x], dict_keys, initializer=param)
 
 
@@ -316,7 +475,7 @@ def ravel_unravel_fn(structure: typing.Iterable[typing.Iterable[str]]):
         tuple[typing.Callable, typing.Callable]: The first element is the function that convert structured parameter to array, the second is a function that reverse the action of the first.
     """
 
-    def ravel_fn(param):
+    def ravel_fn(param: ParametersDictType):
         return jnp.array(
             [get_value_by_keys(param, dict_keys) for dict_keys in structure]
         )
@@ -455,7 +614,7 @@ def ravel_transform(
     return wrapper
 
 
-def get_envelope(param, seq: ControlSequence):
+def get_envelope(param: ParametersDictType, seq: ControlSequence):
     """Return an envelope function create from envelope of all controls in `seq` with control parameter `param`
 
     Args:
@@ -478,7 +637,7 @@ def get_envelope(param, seq: ControlSequence):
     return envelope
 
 
-def envelope_fn(param, t: jnp.ndarray, seq: ControlSequence):
+def envelope_fn(param: ParametersDictType, t: jnp.ndarray, seq: ControlSequence):
     """Return an envelope of all of the control in control sequence `seq` given paramter `param` at time `t`
 
     Args:
