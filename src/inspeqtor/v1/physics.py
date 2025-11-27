@@ -728,7 +728,7 @@ def lindblad_solver(
             rtol=rtol,
             atol=atol,
         ),
-        y0=rho0,  # Direct matrix input - no flattening
+        y0=rho0,
         args=args,
         saveat=diffrax.SaveAt(ts=t_eval),
         max_steps=max_steps,
