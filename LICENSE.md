@@ -1,6 +1,3 @@
-
-Source code in this repository is available under [the 3-Clause BSD License](https://opensource.org/license/BSD-3-clause).
-
 Copyright 2024-present https://github.com/PorametPat/inspeqtor contributors
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
