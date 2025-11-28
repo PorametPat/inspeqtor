@@ -36,3 +36,17 @@ pip install ./<PATH>
 ```
 
 where the `<PATH>` is the path to the local `inspeqtor` repository that you cloned.
+
+## Citation
+
+If you find our library to be useful and would like to cite our work, please use the following,
+
+```bibtex
+@software{Pathumsoot_inspeqtor,
+    author = {Pathumsoot, Poramet},
+    doi = {10.5281/zenodo.17748402},
+    license = {BSD-3-Clause},
+    title = {{inspeqtor}},
+    url = {https://github.com/PorametPat/inspeqtor}
+}
+```

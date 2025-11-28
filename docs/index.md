@@ -102,4 +102,14 @@ The API is evolving to fully support general subsystem characterization methods.
 
 ## Citation
 
-We are working on this 😃
+If you find our library to be useful and would like to cite our work, please use the following,
+
+```bibtex
+@software{Pathumsoot_inspeqtor,
+    author = {Pathumsoot, Poramet},
+    doi = {10.5281/zenodo.17748402},
+    license = {BSD-3-Clause},
+    title = {{inspeqtor}},
+    url = {https://github.com/PorametPat/inspeqtor}
+}
+```
