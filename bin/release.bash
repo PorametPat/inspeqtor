@@ -102,7 +102,7 @@ success "Version updated"
 
 # Update documentation with mike
 info "Updating documentation with mike..."
-uv run mike deploy --push "${updated_version}" --update-aliases latest || exit 1
+uv run mike deploy --push --update-aliases ${updated_version} latest || exit 1
 success "Documentation updated"
 
 # Set latest as the default version
