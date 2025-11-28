@@ -119,8 +119,7 @@ success "Branch created"
 
 # Commit the version change
 info "Committing version change..."
-git add pyproject.toml
-git commit -m "Release version: ${updated_version}" || exit 1
+git commit -am "Release version: ${updated_version}" || exit 1
 git push origin "${branch_name}" || exit 1
 success "Changes pushed"
 
