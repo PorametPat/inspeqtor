@@ -8,11 +8,10 @@ authors:
     - given-names: Poramet
       family-names: Pathumsoot
       orcid: "https://orcid.org/0000-0003-2996-480X"
-identifiers:
-    - type: doi
-      value: 10.5281/zenodo.17748402
 keywords:
     - physics
     - quantum
     - characterization
     - calibration
+doi: 10.5281/zenodo.17748402
+url: "https://github.com/PorametPat/inspeqtor"
