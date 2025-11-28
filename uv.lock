@@ -1026,6 +1026,18 @@ wheels = [
 ]
 
 [[package]]
+name = "importlib-metadata"
+version = "8.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl", hash = "sha256:e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd", size = 27656, upload-time = "2025-04-27T15:29:00.214Z" },
+]
+
+[[package]]
 name = "importlib-resources"
 version = "6.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1079,6 +1091,7 @@ dev = [
 docs = [
     { name = "alive-progress" },
     { name = "arviz" },
+    { name = "mike" },
     { name = "mkdocs" },
     { name = "mkdocs-jupyter" },
     { name = "mkdocs-material", extra = ["imaging"] },
@@ -1087,6 +1100,11 @@ docs = [
     { name = "seaborn" },
     { name = "treescope" },
     { name = "zensical" },
+]
+test = [
+    { name = "chex" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
 ]
 
 [package.metadata]
@@ -1122,6 +1140,7 @@ dev = [
 docs = [
     { name = "alive-progress", specifier = ">=3.3.0" },
     { name = "arviz", specifier = ">=0.22.0" },
+    { name = "mike", specifier = ">=2.1.3" },
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "mkdocs-jupyter", specifier = ">=0.25.1" },
     { name = "mkdocs-material", extras = ["imaging"], specifier = ">=9.6.22" },
@@ -1130,6 +1149,11 @@ docs = [
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "treescope", specifier = ">=0.1.10" },
     { name = "zensical", specifier = ">=0.0.7" },
+]
+test = [
+    { name = "chex", specifier = ">=0.1.91" },
+    { name = "pytest", specifier = ">=9.0.1" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
 ]
 
 [[package]]
@@ -1743,6 +1767,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3a/41/580bb4006e3ed0361b8151a01d324fb03f420815446c7def45d02f74c270/mergedeep-1.3.4.tar.gz", hash = "sha256:0096d52e9dad9939c3d975a774666af186eda617e6ca84df4c94dec30004f2a8", size = 4661, upload-time = "2021-02-05T18:55:30.623Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/19/04f9b178c2d8a15b076c8b5140708fa6ffc5601fb6f1e975537072df5b2a/mergedeep-1.3.4-py3-none-any.whl", hash = "sha256:70775750742b25c0d8f36c55aed03d24c3384d17c951b3175d898bd778ef0307", size = 6354, upload-time = "2021-02-05T18:55:29.583Z" },
+]
+
+[[package]]
+name = "mike"
+version = "2.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "importlib-metadata" },
+    { name = "importlib-resources" },
+    { name = "jinja2" },
+    { name = "mkdocs" },
+    { name = "pyparsing" },
+    { name = "pyyaml" },
+    { name = "pyyaml-env-tag" },
+    { name = "verspec" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/f7/2933f1a1fb0e0f077d5d6a92c6c7f8a54e6128241f116dff4df8b6050bbf/mike-2.1.3.tar.gz", hash = "sha256:abd79b8ea483fb0275b7972825d3082e5ae67a41820f8d8a0dc7a3f49944e810", size = 38119, upload-time = "2024-08-13T05:02:14.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/1a/31b7cd6e4e7a02df4e076162e9783620777592bea9e4bb036389389af99d/mike-2.1.3-py3-none-any.whl", hash = "sha256:d90c64077e84f06272437b464735130d380703a76a5738b152932884c60c062a", size = 33754, upload-time = "2024-08-13T05:02:12.515Z" },
 ]
 
 [[package]]
@@ -3433,6 +3476,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/4d/bfd41bf087522601c724d712c3727aeb62f51b1f67c4ab86a078c3947525/uv-0.9.11-py3-none-win32.whl", hash = "sha256:af5fd91eecaa04b4799f553c726307200f45da844d5c7c5880d64db4debdd5dc", size = 19639246, upload-time = "2025-11-20T23:19:50.254Z" },
     { url = "https://files.pythonhosted.org/packages/2c/2f/d51c02627de68a7ca5b82f0a5d61d753beee3fe696366d1a1c5d5e40cd58/uv-0.9.11-py3-none-win_amd64.whl", hash = "sha256:c65a024ad98547e32168f3a52360fe73ff39cd609a8fb9dd2509aac91483cfc8", size = 21626822, upload-time = "2025-11-20T23:19:54.424Z" },
     { url = "https://files.pythonhosted.org/packages/af/d8/e07e866ee328d3c9f27a6d57a018d8330f47be95ef4654a178779c968a66/uv-0.9.11-py3-none-win_arm64.whl", hash = "sha256:4907a696c745703542ed2559bdf5380b92c8b1d4bf290ebfed45bf9a2a2c6690", size = 20046856, upload-time = "2025-11-20T23:19:58.517Z" },
+]
+
+[[package]]
+name = "verspec"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/44/8126f9f0c44319b2efc65feaad589cadef4d77ece200ae3c9133d58464d0/verspec-0.1.0.tar.gz", hash = "sha256:c4504ca697b2056cdb4bfa7121461f5a0e81809255b41c03dda4ba823637c01e", size = 27123, upload-time = "2020-11-30T02:24:09.646Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a4/ce/3b6fee91c85626eaf769d617f1be9d2e15c1cca027bbdeb2e0d751469355/verspec-0.1.0-py3-none-any.whl", hash = "sha256:741877d5633cc9464c45a469ae2a31e801e6dbbaa85b9675d481cda100f11c31", size = 19640, upload-time = "2020-11-30T02:24:08.387Z" },
 ]
 
 [[package]]

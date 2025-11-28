@@ -26,22 +26,22 @@ class ExpectationValue:
 
     def __post_init__(self):
         # Ensure both strings have the same length (number of qubits)
-        assert (
-            len(self.observable) == len(self.initial_state)
-        ), f"Observable and initial state must have same number of qubits: {len(self.observable)} != {len(self.initial_state)}"
+        assert len(self.observable) == len(self.initial_state), (
+            f"Observable and initial state must have same number of qubits: {len(self.observable)} != {len(self.initial_state)}"
+        )
 
         # Validate observable characters
         for o in self.observable:
-            assert (
-                o in "IXYZ"
-            ), f"Invalid observable '{o}'. Must be one of 'I', 'X', 'Y', or 'Z'"
+            assert o in "IXYZ", (
+                f"Invalid observable '{o}'. Must be one of 'I', 'X', 'Y', or 'Z'"
+            )
 
         # Validate initial state characters
         valid_states = "+-rl01"
         for s in self.initial_state:
-            assert (
-                s in valid_states
-            ), f"Invalid initial state '{s}'. Must be one of {valid_states}"
+            assert s in valid_states, (
+                f"Invalid initial state '{s}'. Must be one of {valid_states}"
+            )
 
     def to_dict(self):
         return {

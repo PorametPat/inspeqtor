@@ -71,9 +71,9 @@ class BaseControl(ABC):
         params = sample_params(key, lower, upper)
         # waveform = self.get_waveform(params)
 
-        assert all(
-            [isinstance(k, str) for k in params.keys()]
-        ), "All key of params dict must be string"
+        assert all([isinstance(k, str) for k in params.keys()]), (
+            "All key of params dict must be string"
+        )
         assert all([isinstance(v, float) for v in params.values()]) or all(
             [isinstance(v, jnp.ndarray) for v in params.values()]
         ), "All value of params dict must be float"

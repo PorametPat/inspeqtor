@@ -124,6 +124,38 @@ After execution of the above command, please run `serve` again.
 mkdocs gh-deploy
 ```
 
+### Versioning
+
+!!! note
+    The versioning process should be automated. But we document the process here for explanation.
+
+We use mike to manage documentation versioning. See the following references for more details:
+
+- [Example Git repo](https://github.com/mkdocs-material/example-versioning)
+- [Official Mkdocs about versioning](https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/)
+
+Here are the commands related to the versioning.
+
+To list all of the versions of the documentation use
+
+```bash
+uv run mike list
+```
+
+After making change, and you want to change the documentation's version, use the following command to update the version number and set the aliases to `latest`. In the below snippet, we use version of `0.2`,
+
+```bash
+uv run mike deploy --push --update-aliases 0.2 latest
+```
+
+To make the defualt version of the documentation to `latest` use
+
+```bash
+uv run mike set-default --push latest
+```
+
+Note that the `--push` option will push the change to `gh-pages` branch directly. Furthermore, mike will deploy the documentation built from the latest branch of the main branch.
+
 ## Performance Profiling
 
 ```bash title="Generate import profile"
