@@ -64,9 +64,8 @@ success "No uncommitted changes"
 info "Reading current version from pyproject.toml..."
 current_version=$(grep '^version = ' pyproject.toml | grep -oP '(?<=")[^"]*(?=")')
 
-# Remove `.dev0` from the version if present
+# Remove `.dev0` from the version
 updated_version=${current_version%.dev0}
-updated_version=${updated_version%.dev}
 
 # Check format of updated_version
 if [[ ! ${updated_version} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
