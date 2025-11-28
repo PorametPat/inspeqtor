@@ -136,8 +136,7 @@ success "Version updated to dev"
 
 # Commit the next version change
 info "Committing next version change..."
-git add pyproject.toml
-git commit -m "Start next version: ${new_version}.dev0" || exit 1
+git commit -am "Start next version: ${new_version}.dev0" || exit 1
 git push origin "${branch_name}" || exit 1
 success "Next version committed"
 
