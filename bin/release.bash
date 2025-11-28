@@ -102,6 +102,7 @@ success "Version updated"
 
 # Update documentation with mike
 info "Updating documentation with mike..."
+export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 uv run mike deploy --push --update-aliases ${updated_version} latest || exit 1
 success "Documentation updated"
 
