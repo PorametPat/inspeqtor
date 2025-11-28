@@ -6,6 +6,8 @@
     </p>
 </div>
 
+[![DOI](https://zenodo.org/badge/894394996.svg)](https://doi.org/10.5281/zenodo.17748401)
+
 # Greeting 🖖
 
 We aim to be a Data-efficient Framework for Characterization and Calibration of Quantum Device. As performing experiment and take data from the quantum device could be expensive. We would like to squeeze every drop of information from the data.
