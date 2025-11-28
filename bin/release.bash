@@ -97,9 +97,18 @@ info "Running checks before starting release process..."
 
 # Update version in pyproject.toml
 info "Updating version in pyproject.toml to ${updated_version}..."
-sed -i.bak "s/^version = .*/version = \"${updated_version}\"/" pyproject.toml
-rm -f pyproject.toml.bak
+uv version "${updated_version}" || exit 1
 success "Version updated"
+
+# Update documentation with mike
+info "Updating documentation with mike..."
+uv run mike deploy --push "${updated_version}" --update-aliases latest || exit 1
+success "Documentation updated"
+
+# Set latest as the default version
+info "Setting 'latest' as the default documentation version..."
+uv run mike set-default --push latest || exit 1
+success "Default documentation version set"
 
 # Create release branch
 branch_name="release-${updated_version}"
@@ -120,20 +129,9 @@ git tag -am "Release version: ${updated_version}" "v${updated_version}" || exit 
 git push origin "v${updated_version}" || exit 1
 success "Tag created and pushed"
 
-# Update documentation with mike
-info "Updating documentation with mike..."
-uv run mike deploy --push "${updated_version}" --update-aliases latest || exit 1
-success "Documentation updated"
-
-# Set latest as the default version
-info "Setting 'latest' as the default documentation version..."
-uv run mike set-default --push latest || exit 1
-success "Default documentation version set"
-
 # Update the version to the next dev version
 info "Starting next version: ${new_version}.dev0..."
-sed -i.bak "s/^version = .*/version = \"${new_version}.dev0\"/" pyproject.toml
-rm -f pyproject.toml.bak
+uv version "${new_version}.dev0" || exit 1
 success "Version updated to dev"
 
 # Commit the next version change
@@ -155,3 +153,4 @@ if command -v xdg-open &>/dev/null; then
 elif command -v open &>/dev/null; then
     open "${pull_request_url}" 2>/dev/null || true
 fi
+
