@@ -1845,6 +1845,9 @@
 <p>To make the defualt version of the documentation to <code>latest</code> use</p>
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mike<span class="w"> </span>set-default<span class="w"> </span>--push<span class="w"> </span>latest
 </code></pre></div>
+<p>If you want to simply update the documentation with the current version (e.g. <code>0.1</code>) use,</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mike<span class="w"> </span>deploy<span class="w"> </span>--push<span class="w"> </span><span class="m">0</span>.1
+</code></pre></div>
 <p>Note that the <code>--push</code> option will push the change to <code>gh-pages</code> branch directly. Furthermore, mike will deploy the documentation built from the latest branch of the main branch.</p>
 <h2 id="performance-profiling">Performance Profiling</h2>
 <div class="highlight"><span class="filename">Generate import profile</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-X<span class="w"> </span>importtime<span class="w"> </span>profile.py<span class="w"> </span>&gt;<span class="w"> </span>import.log
