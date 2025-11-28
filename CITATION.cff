@@ -1,15 +1,18 @@
-cff-version: 0.1.0
+cff-version: 1.2.0
 title: "inspeqtor"
 license: "BSD-3-Clause"
 type: software
 abstract: "Python library for characterization and calibration of quantum device."
 message: "If our software significantly contributed to your research, we ask that you cite it either with the concept DOI in this file, which represents all versions, or with the version-specific DOI matching the version you used."
 authors:
-  - given-names: Poramet
-    family-names: Pathumsoot
-    orcid: "https://orcid.org/0000-0003-2996-480X"
+    - given-names: Poramet
+      family-names: Pathumsoot
+      orcid: "https://orcid.org/0000-0003-2996-480X"
+identifiers:
+    - type: doi
+      value: 10.5281/zenodo.17748402
 keywords:
-  - physics
-  - quantum
-  - characterization
-  - calibration
+    - physics
+    - quantum
+    - characterization
+    - calibration
