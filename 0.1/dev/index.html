@@ -1504,6 +1504,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1698,6 +1707,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1807,6 +1825,27 @@
 <p>After execution of the above command, please run <code>serve</code> again.</p>
 <div class="highlight"><span class="filename">Deploy to GitHub Pages</span><pre><span></span><code>mkdocs<span class="w"> </span>gh-deploy
 </code></pre></div>
+<h3 id="versioning">Versioning</h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The versioning process should be automated. But we document the process here for explanation.</p>
+</div>
+<p>We use mike to manage documentation versioning. See the following references for more details:</p>
+<ul>
+<li><a href="https://github.com/mkdocs-material/example-versioning">Example Git repo</a></li>
+<li><a href="https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/">Official Mkdocs about versioning</a></li>
+</ul>
+<p>Here are the commands related to the versioning.</p>
+<p>To list all of the versions of the documentation use</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mike<span class="w"> </span>list
+</code></pre></div>
+<p>After making change, and you want to change the documentation's version, use the following command to update the version number and set the aliases to <code>latest</code>. In the below snippet, we use version of <code>0.2</code>,</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mike<span class="w"> </span>deploy<span class="w"> </span>--push<span class="w"> </span>--update-aliases<span class="w"> </span><span class="m">0</span>.2<span class="w"> </span>latest
+</code></pre></div>
+<p>To make the defualt version of the documentation to <code>latest</code> use</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>mike<span class="w"> </span>set-default<span class="w"> </span>--push<span class="w"> </span>latest
+</code></pre></div>
+<p>Note that the <code>--push</code> option will push the change to <code>gh-pages</code> branch directly.</p>
 <h2 id="performance-profiling">Performance Profiling</h2>
 <div class="highlight"><span class="filename">Generate import profile</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-X<span class="w"> </span>importtime<span class="w"> </span>profile.py<span class="w"> </span>&gt;<span class="w"> </span>import.log
 </code></pre></div>
