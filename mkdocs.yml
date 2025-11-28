@@ -9,6 +9,10 @@ watch:
     - src/inspeqtor
     - docs/
 
+extra:
+    version:
+        provider: mike
+
 theme:
     name: material
     logo: assets/inspeqtor_logo.svg

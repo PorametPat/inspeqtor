@@ -22,7 +22,9 @@ def test_state_from_expectation_values():
 
     assert expvals.shape == (len(expectation_values_req),)
 
-    reconstruct_state = sq.physics.state_tomography(expvals, 1, order=expectation_values_req)
+    reconstruct_state = sq.physics.state_tomography(
+        expvals, 1, order=expectation_values_req
+    )
 
     chex.assert_trees_all_close(initial_state, reconstruct_state)
 
@@ -49,6 +51,8 @@ def test_state_from_expectation_values():
 
     assert expvals.shape == (len(expectation_values_req),)
 
-    reconstruct_state = sq.physics.state_tomography(expvals, 2, order=expectation_values_req)
+    reconstruct_state = sq.physics.state_tomography(
+        expvals, 2, order=expectation_values_req
+    )
 
     chex.assert_trees_all_close(initial_state, reconstruct_state)
