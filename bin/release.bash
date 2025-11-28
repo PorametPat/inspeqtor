@@ -60,9 +60,9 @@ if ! git diff-index --quiet HEAD --; then
 fi
 success "No uncommitted changes"
 
-# Get current version from pyproject.toml
-info "Reading current version from pyproject.toml..."
-current_version=$(grep '^version = ' pyproject.toml | grep -oP '(?<=")[^"]*(?=")')
+# Get current version
+uv_version_str=$(uv version)
+current_version=$(stdmsg "${uv_version_str}" | awk '{print $2}')
 
 # Remove `.dev0` from the version
 updated_version=${current_version%.dev0}
