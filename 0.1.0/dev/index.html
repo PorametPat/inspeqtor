@@ -1408,6 +1408,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-to-contribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to contribute?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-setup" class="md-nav__link">
     <span class="md-ellipsis">
       Project Setup
@@ -1611,6 +1620,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-to-contribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to contribute?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-setup" class="md-nav__link">
     <span class="md-ellipsis">
       Project Setup
@@ -1761,7 +1779,43 @@
 <h1 id="developer-guide-for-inspeqtor">Developer Guide for Inspeqtor</h1>
 <h2 id="getting-started">Getting Started</h2>
 <p>This guide provides the necessary steps and commands for developing the Inspeqtor package. We use the <code>uv</code> package manager for dependency management and various tools for testing, linting, and documentation.</p>
+<h2 id="how-to-contribute">How to contribute?</h2>
+<p>First of all, thank you for interested in contributing to <code>inspeqtor</code> 😊</p>
+<p>By contributing your work to this repository, you agree to license it in perpetuity under the terms described in <a href="https://github.com/PorametPat/inspeqtor/blob/main/LICENSE.md">LICENSE.md</a>. You are also asserting that the work is your own, and that you have the right to license it to us.</p>
+<p>If you wish to integrate our work into your own projects, please follow the attribution guidelines in <a href="https://github.com/PorametPat/inspeqtor/blob/main/LICENSE.md">LICENSE.md</a>.</p>
+<p>We use git for our library developement. The following steps will guide you to setup everthing necessary for developement. If you encount any problem, please do not hesitate to reach out to us by creating github issue at our github repository.</p>
+<p>Clone the project from remote to your local machine and <code>cd</code> into the directory.</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PorametPat/inspeqtor.git<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>inspeqtor
+</code></pre></div>
+<p>We recommend using <code>uv</code> for environment and dependencies manangement. To learn more about <code>uv</code>, please see their <a href="https://docs.astral.sh/uv/">official documentation</a>. You can create the virtual environment along with installing dependencies using the following commands. Use the appropiate command corresponding to what you want to do, .e.g, <code>docs</code> for documentation contribution.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Minimal</label><label for="__tabbed_1_2">dev</label><label for="__tabbed_1_3">docs</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><span class="filename">Minimal requirement</span><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><span class="filename">With developement dependencies</span><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><span class="filename">With documentation dependencies</span><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>docs
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>After modification, please use the following command to check the code quality to make the development life cycle faster. Note that we also use workflow to run the automate test, but it take a longer time than local testing.</p>
+<div class="highlight"><span class="filename">Using pre-commit hooks</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</code></pre></div>
+<p>Or using script, we may need to make the script executable first by using</p>
+<div class="highlight"><pre><span></span><code>chmod<span class="w"> </span>+x<span class="w"> </span>./bin/check.bash
+</code></pre></div>
+<p>then execute it using,</p>
+<div class="highlight"><span class="filename">Using script</span><pre><span></span><code>./bin/check.bash
+</code></pre></div>
+<p>Please read the following for more details.</p>
 <h2 id="project-setup">Project Setup</h2>
+<p>The following is the instruction used for project initialization.</p>
 <h3 id="creating-a-new-project">Creating a New Project</h3>
 <div class="highlight"><span class="filename">Create a library project</span><pre><span></span><code>uv<span class="w"> </span>init<span class="w"> </span>inspeqtor<span class="w"> </span>--lib
 </code></pre></div>
@@ -1797,13 +1851,13 @@
 <h2 id="testing">Testing</h2>
 <div class="highlight"><span class="filename">Basic test run</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
 </code></pre></div>
-<div class="highlight"><span class="filename">Test experimental module with detailed output</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/experimental/.<span class="w"> </span>-vv<span class="w"> </span>--durations<span class="o">=</span><span class="m">0</span>
+<div class="highlight"><span class="filename">Test experimental module with detailed output</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/.<span class="w"> </span>-vv<span class="w"> </span>--durations<span class="o">=</span><span class="m">0</span>
 </code></pre></div>
-<div class="highlight"><span class="filename">Test with specific Python version</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12<span class="w"> </span>--with<span class="w"> </span><span class="s1">&#39;.[test]&#39;</span><span class="w"> </span>pytest<span class="w"> </span>tests/experimental/.
+<div class="highlight"><span class="filename">Test with specific Python version</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12<span class="w"> </span>--with<span class="w"> </span><span class="s1">&#39;.[test]&#39;</span><span class="w"> </span>pytest<span class="w"> </span>tests/.
 </code></pre></div>
-<div class="highlight"><span class="filename">Test docstrings</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>doctest<span class="w"> </span>src/inspeqtor/experimental/utils.py
+<div class="highlight"><span class="filename">Test docstrings</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>doctest<span class="w"> </span>src/inspeqtor/v1/utils.py
 </code></pre></div>
-<div class="highlight"><span class="filename">Test with live logging</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>doctest<span class="w"> </span>src/inspeqtor/experimental/utils.py<span class="w"> </span>--log-cli-level<span class="o">=</span>INFO
+<div class="highlight"><span class="filename">Test with live logging</span><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>doctest<span class="w"> </span>src/inspeqtor/v1/utils.py<span class="w"> </span>--log-cli-level<span class="o">=</span>INFO
 </code></pre></div>
 <h2 id="code-quality">Code Quality</h2>
 <div class="highlight"><span class="filename">Run linting with Ruff</span><pre><span></span><code>uvx<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>.
@@ -1823,7 +1877,8 @@
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">DYLD_FALLBACK_LIBRARY_PATH</span><span class="o">=</span>/opt/homebrew/lib
 </code></pre></div>
 <p>After execution of the above command, please run <code>serve</code> again.</p>
-<div class="highlight"><span class="filename">Deploy to GitHub Pages</span><pre><span></span><code>mkdocs<span class="w"> </span>gh-deploy
+<p>The following command will deploy the document to the github page. However, since we are using <code>mike</code> for documentaion versioning please see command in <a href="#versioning">Versioning</a> for deployment instead. </p>
+<div class="highlight"><span class="filename">Deploy to GitHub Pages using mkdocs</span><pre><span></span><code>mkdocs<span class="w"> </span>gh-deploy
 </code></pre></div>
 <h3 id="versioning">Versioning</h3>
 <div class="admonition note">
