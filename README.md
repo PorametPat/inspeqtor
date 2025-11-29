@@ -16,7 +16,7 @@ We aim to be a Data-efficient Framework for Characterization and Calibration of 
 
 ## Installation
 
-To install `inspeqtor`, you have to pull the repository locally via
+To install `inspeqtor` for local devlopement, you have to pull the repository locally via
 
 ```bash
 git clone https://github.com/PorametPat/inspeqtor.git
@@ -26,7 +26,7 @@ Using `uv`,
 Then install it using
 
 ``` bash
-uv add ./<PATH>
+uv sync
 ```
 
 Or `pip` via

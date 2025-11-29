@@ -49,18 +49,22 @@ To install `inspeqtor` from the remote repository:
 To install `inspeqtor` locally for development, clone the repository:
 
 ```bash
-
 git clone https://github.com/PorametPat/inspeqtor.git
-
 ```
 
-Then, install it using:
+Then, enter the cloned directory
+
+```bash
+cd inspeqtor
+```
+
+and install it using:
 
 === "uv"
 
     ```bash
 
-    uv add ./<PATH>
+    uv sync
 
     ```
 

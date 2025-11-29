@@ -4,7 +4,65 @@
 
 This guide provides the necessary steps and commands for developing the Inspeqtor package. We use the `uv` package manager for dependency management and various tools for testing, linting, and documentation.
 
+## How to contribute?
+
+First of all, thank you for interested in contributing to `inspeqtor` 😊
+
+By contributing your work to this repository, you agree to license it in perpetuity under the terms described in [LICENSE.md](https://github.com/PorametPat/inspeqtor/blob/main/LICENSE.md). You are also asserting that the work is your own, and that you have the right to license it to us.
+
+If you wish to integrate our work into your own projects, please follow the attribution guidelines in [LICENSE.md](https://github.com/PorametPat/inspeqtor/blob/main/LICENSE.md).
+
+We use git for our library developement. The following steps will guide you to setup everthing necessary for developement. If you encount any problem, please do not hesitate to reach out to us by creating github issue at our github repository.
+
+Clone the project from remote to your local machine and `cd` into the directory.
+
+```bash
+git clone https://github.com/PorametPat/inspeqtor.git && cd inspeqtor
+```
+
+We recommend using `uv` for environment and dependencies manangement. To learn more about `uv`, please see their [official documentation](https://docs.astral.sh/uv/). You can create the virtual environment along with installing dependencies using the following commands. Use the appropiate command corresponding to what you want to do, .e.g, `docs` for documentation contribution.
+
+=== "Minimal"
+
+    ```bash title="Minimal requirement"
+    uv sync 
+    ```
+
+=== "dev"
+
+    ```bash title="With developement dependencies"
+    uv sync --group dev
+    ```
+
+=== "docs"
+
+    ```bash title="With documentation dependencies"
+    uv sync --group docs
+    ```
+
+After modification, please use the following command to check the code quality to make the development life cycle faster. Note that we also use workflow to run the automate test, but it take a longer time than local testing.
+
+```bash title="Using pre-commit hooks"
+uv run pre-commit run --all-files
+```
+
+Or using script, we may need to make the script executable first by using
+
+```bash
+chmod +x ./bin/check.bash
+```
+
+then execute it using,
+
+```bash title="Using script"
+./bin/check.bash
+```
+
+Please read the following for more details.
+
 ## Project Setup
+
+The following is the instruction used for project initialization.
 
 ### Creating a New Project
 
@@ -69,19 +127,19 @@ uv run pytest tests/ -v
 ```
 
 ```bash title="Test experimental module with detailed output"
-uv run pytest tests/experimental/. -vv --durations=0
+uv run pytest tests/. -vv --durations=0
 ```
 
 ```bash title="Test with specific Python version"
-uv run --python 3.12 --with '.[test]' pytest tests/experimental/.
+uv run --python 3.12 --with '.[test]' pytest tests/.
 ```
 
 ```bash title="Test docstrings"
-uv run -m doctest src/inspeqtor/experimental/utils.py
+uv run -m doctest src/inspeqtor/v1/utils.py
 ```
 
 ```bash title="Test with live logging"
-uv run -m doctest src/inspeqtor/experimental/utils.py --log-cli-level=INFO
+uv run -m doctest src/inspeqtor/v1/utils.py --log-cli-level=INFO
 ```
 
 ## Code Quality
@@ -120,7 +178,9 @@ export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 
 After execution of the above command, please run `serve` again.
 
-```bash title="Deploy to GitHub Pages"
+The following command will deploy the document to the github page. However, since we are using `mike` for documentaion versioning please see command in [Versioning](#versioning) for deployment instead. 
+
+```bash title="Deploy to GitHub Pages using mkdocs"
 mkdocs gh-deploy
 ```
 
@@ -152,6 +212,12 @@ To make the defualt version of the documentation to `latest` use
 
 ```bash
 uv run mike set-default --push latest
+```
+
+If you want to simply update the documentation with the current version (e.g. `0.1`) use,
+
+```bash
+uv run mike deploy --push 0.1
 ```
 
 Note that the `--push` option will push the change to `gh-pages` branch directly. Furthermore, mike will deploy the documentation built from the latest branch of the main branch.
