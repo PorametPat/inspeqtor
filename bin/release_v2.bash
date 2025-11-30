@@ -101,15 +101,15 @@ stdmsg "Removing '.dev0' from version in pyproject.toml..."
 uv version "${updated_version}"
 
 # Update documentation with mike
-info "Updating documentation with mike..."
+stdmsg "Updating documentation with mike..."
 export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 uv run mike deploy --push --update-aliases ${updated_version} latest || exit 1
-success "Documentation updated"
+stdmsg "Documentation updated"
 
 # Set latest as the default version
-info "Setting 'latest' as the default documentation version..."
+stdmsg "Setting 'latest' as the default documentation version..."
 uv run mike set-default --push latest || exit 1
-success "Default documentation version set"
+stdmsg "Default documentation version set"
 
 stdmsg "Releasing version: ${updated_version}"
 
