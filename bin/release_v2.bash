@@ -102,6 +102,7 @@ uv version "${updated_version}"
 
 # Update documentation with mike
 stdmsg "Updating documentation with mike..."
+uv sync --group docs
 export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 uv run mike deploy --push --update-aliases ${updated_version} latest || exit 1
 stdmsg "Documentation updated"
