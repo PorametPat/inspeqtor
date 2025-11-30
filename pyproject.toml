@@ -64,6 +64,7 @@ dev = [
     "pyright>=1.1.404",
     "pytest>=8.3.3",
     "pytest-cov>=6.2.1",
+    "ruff>=0.14.7",
     "typer>=0.15.2",
 ]
 docs = [
