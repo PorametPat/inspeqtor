@@ -93,7 +93,7 @@ stdmsg "Next version will be: ${new_version}"
 
 # Run the checks script
 stdmsg "Run checks with --skip-tests before starting the release process..."
-"${base_dir}/check.bash --skip-tests"
+"${base_dir}/check_v2.bash --skip-tests"
 
 stdmsg "Starting release process..."
 
