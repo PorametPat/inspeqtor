@@ -894,7 +894,7 @@ wheels = [
 
 [[package]]
 name = "gpjax"
-version = "0.13.2"
+version = "0.13.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beartype" },
@@ -907,9 +907,9 @@ dependencies = [
     { name = "optax" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/8c/7460ae72160c980fcce41fc14b471272ed88dcf2f7df579b0a37d9a392c4/gpjax-0.13.2.tar.gz", hash = "sha256:1de889f927bd2581048ef77672fd0dc5f37284312a54e56c3cc0fe6706adff4c", size = 4797856, upload-time = "2025-10-30T09:29:04.924Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/69/4c/391273628c92e7c3579b5f9faf7b5f74ba15e5764f4fa46221d2357f4c29/gpjax-0.13.4.tar.gz", hash = "sha256:0005fd5e2cff00bcf03efef9eb2282454202c02b6664f9a61ea9eead75fd5bc3", size = 4810571, upload-time = "2025-11-23T21:37:36.33Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/f5/e5b47107fb147a28e0e112a8dcffd1aa8312371a979e75f6787773da5919/gpjax-0.13.2-py3-none-any.whl", hash = "sha256:83a5ac0aa31e6d62557354f8d37386544eb6f17b0e225d242c770b519349ae99", size = 87307, upload-time = "2025-10-30T09:29:01.535Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/a7/f38ed82f6d07ee76b9c82b0c39856ac63f7a2b81aa12bff89370017dd1f3/gpjax-0.13.4-py3-none-any.whl", hash = "sha256:6625514c27837ef88de8bb544b2e553465fb60178f31596cf968f369bfbef639", size = 91047, upload-time = "2025-11-23T21:37:34.4Z" },
 ]
 
 [[package]]
