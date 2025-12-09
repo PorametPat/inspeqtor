@@ -35,6 +35,14 @@ pip install ./<PATH>
 
 where the `<PATH>` is the path to the local `inspeqtor` repository that you cloned.
 
+## How to contribute?
+
+Thank you for your interest in contributing to `inspeqtor`! Please refer to our [developer note](https://porametpat.github.io/inspeqtor/latest/dev/#how-to-contribute) for guidelines.
+
+## Documentation
+
+Check the [documentation](https://porametpat.github.io/inspeqtor/latest/) for published materials. To generate documentation locally, follow this [guide](https://porametpat.github.io/inspeqtor/latest/dev/#documentation).
+
 ## Citation
 
 If you find our library to be useful and would like to cite our work, please use the following,

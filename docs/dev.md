@@ -20,12 +20,12 @@ Clone the project from remote to your local machine and `cd` into the directory.
 git clone https://github.com/PorametPat/inspeqtor.git && cd inspeqtor
 ```
 
-We recommend using `uv` for environment and dependencies manangement. To learn more about `uv`, please see their [official documentation](https://docs.astral.sh/uv/). You can create the virtual environment along with installing dependencies using the following commands. Use the appropiate command corresponding to what you want to do, .e.g, `docs` for documentation contribution.
+We recommend using `uv` for environment and dependencies manangement. To learn more about `uv`, please see their [official documentation](https://docs.astral.sh/uv/). You can create the virtual environment along with installing dependencies using the following commands. Use the appropiate command corresponding to what you want to do, e.g., `docs` for documentation contribution.
 
 === "Minimal"
 
     ```bash title="Minimal requirement"
-    uv sync 
+    uv sync
     ```
 
 === "dev"
@@ -178,7 +178,7 @@ export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 
 After execution of the above command, please run `serve` again.
 
-The following command will deploy the document to the github page. However, since we are using `mike` for documentaion versioning please see command in [Versioning](#versioning) for deployment instead. 
+The following command will deploy the document to the github page. However, since we are using `mike` for documentaion versioning please see command in [Versioning](#versioning) for deployment instead.
 
 ```bash title="Deploy to GitHub Pages using mkdocs"
 mkdocs gh-deploy
