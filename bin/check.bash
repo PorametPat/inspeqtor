@@ -1,130 +1,95 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
 
-# Script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
+# Print functions
+stdmsg() {
+  local IFS=' '
+  printf '%s\n' "$*"
+}
+
+errmsg() {
+  stdmsg "$*" 1>&2
+}
+
+# Trap exit handler
+trap_exit() {
+  # It is critical that the first line capture the exit code. Nothing
+  # else can come before this. The exit code recorded here comes from
+  # the command that caused the script to exit.
+  local exit_status="$?"
+
+  if [[ ${exit_status} -ne 0 ]]; then
+    errmsg 'The script did not complete successfully.'
+    errmsg 'The exit code was '"${exit_status}"
+  fi
+}
+trap trap_exit EXIT
+
+base_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd -P)"
+project_dir="$(cd "${base_dir}/.." >/dev/null && pwd -P)"
 
 # Parse command line arguments
-SKIP_TESTS=false
+INSPEQTOR_SKIP_TESTS=${INSPEQTOR_SKIP_TESTS:-false}
+if [[ ${INSPEQTOR_SKIP_TESTS} != 'true' ]] && [[ ${INSPEQTOR_SKIP_TESTS} != 'false' ]]; then
+  errmsg "The environment variable INSPEQTOR_SKIP_TESTS was set to the invalid value '${INSPEQTOR_SKIP_TESTS}'. Valid values are 'true' and 'false'."
+  exit 64
+fi
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        --skip-tests)
-            SKIP_TESTS=true
-            shift
-            ;;
-        --help|-h)
-            echo "Usage: $0 [OPTIONS]"
-            echo ""
-            echo "Options:"
-            echo "  --skip-tests    Skip all test checks"
-            echo "  --help          Show this help message"
-            exit 0
-            ;;
-        *)
-            echo "Unknown option: $1"
-            echo "Run with --help for usage information"
-            exit 1
-            ;;
-    esac
+  case $1 in
+  --skip-tests)
+    INSPEQTOR_SKIP_TESTS=true
+    shift
+    ;;
+  --help | -h)
+    stdmsg "Usage: $0 [OPTIONS]"
+    stdmsg ""
+    stdmsg "Options:"
+    stdmsg "  --skip-tests    Skip all test checks. Tests can also be skipped by setting the INSPEQTOR_SKIP_TESTS environment variable to 'true'. The command-line option overrides the environment variable."
+    stdmsg "  --help          Show this help message and exit."
+    exit 0
+    ;;
+  *)
+    errmsg "Unknown option: $1"
+    errmsg "Run with --help for usage information"
+    exit 64
+    ;;
+  esac
 done
 
-# Colors for output
-readonly RED=$'\e[38;5;196m'
-readonly GREEN=$'\e[38;5;76m'
-readonly YELLOW=$'\e[38;5;226m'
-readonly BLUE=$'\e[38;5;33m'
-readonly NC=$'\e[0m'
+stdmsg "${project_dir}"
+stdmsg "${base_dir}"
 
-# Counters
-declare -i total_checks=0
-declare -i passed_checks=0
-declare -i failed_checks=0
+# cd to the project directory before running any other operations
+cd "${project_dir}"
 
-# Function to print section headers
-print_header() {
-    echo ""
-    echo "${BLUE}$1${NC}"
-}
+stdmsg "Running uv sync with dev dependencies..."
+uv sync --dev
 
-# Function to print success
-print_success() {
-    ((passed_checks++))
-    echo "${GREEN}✓${NC} $1"
-}
+stdmsg "Checking uv.lock"
+uv lock --check
 
-# Function to print error
-print_error() {
-    ((failed_checks++))
-    echo "${RED}✗${NC} $1"
-}
+stdmsg "Checking Lint and Format"
+uv run ruff check .
+uv run ruff format --check .
 
-# Function to print info
-print_info() {
-    echo "${BLUE}·${NC} $1"
-}
+stdmsg "Type checking with pyright"
+uv run pyright src/inspeqtor
 
-# Function to print skipped
-print_skipped() {
-    echo "${YELLOW}⊘${NC} $1"
-}
-
-# Function to run a check with timing
-run_check() {
-    local check_name="$1"
-    shift
-    local start_time
-    start_time=$(date +%s%N)
-    
-    ((total_checks++))
-    
-    if "$@" &> /dev/null; then
-        local end_time
-        end_time=$(date +%s%N)
-        local duration=$(( (end_time - start_time) / 1000000 ))
-        print_success "$check_name (${duration}ms)"
-    else
-        print_error "$check_name"
-        return 1
-    fi
-}
-
-# Cleanup on exit
-cleanup() {
-    echo ""
-    if [[ $failed_checks -eq 0 ]]; then
-        echo "${GREEN}✓ All checks passed${NC} ($passed_checks/$total_checks)"
-    else
-        echo "${RED}✗ Some checks failed${NC} (${GREEN}$passed_checks${NC}/${RED}$failed_checks${NC}/$total_checks)"
-    fi
-}
-
-trap cleanup EXIT
-trap 'print_error "Check failed!"; exit 1' ERR
-
-print_header "Code Quality Checks"
-
-# 1. Lock file check
-run_check "Lock file" uv lock --locked
-
-# 2. Linting
-run_check "Linting" uvx ruff check .
-run_check "Formatting" uvx ruff format --check .
-run_check "Type checking" uv run pyright src/inspeqtor/.
-
-# 3. Testing
-if [[ $SKIP_TESTS == false ]]; then
-    run_check "Tests (Python 3.13)" uv run --python 3.13 --isolated --with-editable '.[test]' pytest tests/.
-    run_check "Tests (Python 3.12)" uv run --python 3.12 --isolated --with-editable '.[test]' pytest tests/.
-    run_check "Tests (Python 3.11)" uv run --python 3.11 --isolated --with-editable '.[test]' pytest tests/.
+if [[ ${INSPEQTOR_SKIP_TESTS} == false ]]; then
+  stdmsg "Running test suite for all supported Python versions"
+  while IFS='' read -r version; do
+    uv run --python "${version}" --isolated --with-editable '.[test]' pytest tests/.
+  done <<EOF
+3.13
+3.12
+3.11
+EOF
 else
-    print_skipped "Tests (Python 3.13)"
-    print_skipped "Tests (Python 3.12)"
-    print_skipped "Tests (Python 3.11)"
+  stdmsg "Skipping tests"
 fi
 
-# 4. Build
-run_check "Build" uv build
-
+stdmsg "Building distribution package"
+uv build
