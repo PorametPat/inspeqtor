@@ -27,7 +27,7 @@ def add_hilbert_level(op: jnp.ndarray, x: jnp.ndarray) -> jnp.ndarray:
 
     Args:
         op (jnp.ndarray): The qubit operator or state
-        is_state (bool): True if the operator is a state, False if the operator is an operator
+        x (jnp.ndarray): The value to add as a new level
 
     Returns:
         jnp.ndarray: The qutrit operator or state
