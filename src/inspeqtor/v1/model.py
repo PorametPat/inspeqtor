@@ -40,7 +40,7 @@ def mse(x1: jnp.ndarray, x2: jnp.ndarray):
     return jnp.mean((x1 - x2) ** 2)
 
 
-def AEF_loss(
+def absolute_error_fidelity_loss(
     y_true: jnp.ndarray, y_pred: jnp.ndarray, target_unitary: jnp.ndarray
 ) -> jnp.ndarray:
     """Calculate the absolute error between AGF with respect to given unitary.
@@ -62,7 +62,11 @@ def AEF_loss(
     )
 
 
-def WAEE_loss(
+# Deprecated alias for backward compatibility
+AEF_loss = absolute_error_fidelity_loss
+
+
+def weighted_absolute_error_expectation_loss(
     expectation_values_true: jnp.ndarray,
     expectation_values_pred: jnp.ndarray,
     target_unitary: jnp.ndarray,
@@ -84,7 +88,11 @@ def WAEE_loss(
     return jnp.sum(jnp.abs(coefficients) * diff)
 
 
-def calculate_Pauli_AGF(
+# Deprecated alias for backward compatibility
+WAEE_loss = weighted_absolute_error_expectation_loss
+
+
+def calculate_pauli_average_gate_fidelity(
     Wos: Wos,
 ) -> dict[str, jnp.ndarray]:
     """Calculate AGF of Wo with respect to Pauli observable
@@ -110,6 +118,10 @@ def calculate_Pauli_AGF(
         AGF_paulis[pauli_str] = fidelity
 
     return AGF_paulis
+
+
+# Deprecated alias for backward compatibility
+calculate_Pauli_AGF = calculate_pauli_average_gate_fidelity
 
 
 def get_predict_expectation_value(
@@ -202,12 +214,12 @@ def calculate_metric(
     )
 
     # Calculate the AGF loss
-    AEF = jax.vmap(AEF_loss, in_axes=(0, 0, 0))(
+    AEF = jax.vmap(absolute_error_fidelity_loss, in_axes=(0, 0, 0))(
         expectation_values, predicted_expectation_values, unitaries
     )
 
     # Calculate WAEE loss
-    WAEE = jax.vmap(WAEE_loss, in_axes=(0, 0, 0))(
+    WAEE = jax.vmap(weighted_absolute_error_expectation_loss, in_axes=(0, 0, 0))(
         expectation_values, predicted_expectation_values, unitaries
     )
 
