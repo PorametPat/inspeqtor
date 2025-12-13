@@ -67,16 +67,16 @@ def drag_envelope_v2(
         typing.Callable: DRAG envelope function
     """
 
-    def g(t):
+    def gaussian(t):
         return jnp.exp(-((t - center) ** 2) / (2 * sigma**2))
 
-    def g_prime(t):
-        return amp * (g(t) - g(-1)) / (1 - g(-1))
+    def normalized_gaussian(t):
+        return amp * (gaussian(t) - gaussian(-1)) / (1 - gaussian(-1))
 
-    def envelop(t):
-        return final_amp * g_prime(t) * (1 + 1j * beta * (t - center) / sigma**2)
+    def envelope(t):
+        return final_amp * normalized_gaussian(t) * (1 + 1j * beta * (t - center) / sigma**2)
 
-    return envelop
+    return envelope
 
 
 @warn_not_tested_function

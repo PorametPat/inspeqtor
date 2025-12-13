@@ -239,7 +239,7 @@ def explicit_auto_rotating_frame_hamiltonian(
     return rotating_frame_hamiltonian_v0
 
 
-def a(dims: int) -> jnp.ndarray:
+def annihilation_operator(dims: int) -> jnp.ndarray:
     """Annihilation operator of given dims
 
     Args:
@@ -251,7 +251,7 @@ def a(dims: int) -> jnp.ndarray:
     return jnp.diag(jnp.sqrt(jnp.arange(1, dims)), 1)
 
 
-def a_dag(dims: int) -> jnp.ndarray:
+def creation_operator(dims: int) -> jnp.ndarray:
     """Creation operator of given dims
 
     Args:
@@ -263,7 +263,7 @@ def a_dag(dims: int) -> jnp.ndarray:
     return jnp.diag(jnp.sqrt(jnp.arange(1, dims)), -1)
 
 
-def N(dims: int) -> jnp.ndarray:
+def number_operator(dims: int) -> jnp.ndarray:
     """Number operator of given dims
 
     Args:
@@ -303,7 +303,7 @@ def gen_hamiltonian_from(
 
     for idx, qubit in enumerate(qubit_informations):
         # The static Hamiltonian terms
-        static_i = 2 * jnp.pi * qubit.frequency * (jnp.eye(dims) - 2 * N(dims)) / 2
+        static_i = 2 * jnp.pi * qubit.frequency * (jnp.eye(dims) - 2 * number_operator(dims)) / 2
 
         operators[ChannelID(qubit_idx=qubit.qubit_idx, type=TermType.STATIC).hash()] = (
             HamiltonianTerm(
@@ -315,7 +315,7 @@ def gen_hamiltonian_from(
         )
 
         # The anharmonicity term
-        anhar_i = 2 * jnp.pi * qubit.anharmonicity * (N(dims) @ N(dims) - N(dims)) / 2
+        anhar_i = 2 * jnp.pi * qubit.anharmonicity * (number_operator(dims) @ number_operator(dims) - number_operator(dims)) / 2
 
         operators[
             ChannelID(qubit_idx=qubit.qubit_idx, type=TermType.ANHAMONIC).hash()
@@ -327,7 +327,7 @@ def gen_hamiltonian_from(
         )
 
         # The drive terms
-        drive_i = 2 * jnp.pi * qubit.drive_strength * (a(dims) + a_dag(dims))
+        drive_i = 2 * jnp.pi * qubit.drive_strength * (annihilation_operator(dims) + creation_operator(dims))
 
         operators[ChannelID(qubit_idx=qubit.qubit_idx, type=TermType.DRIVE).hash()] = (
             HamiltonianTerm(
@@ -339,7 +339,7 @@ def gen_hamiltonian_from(
         )
 
         # The control terms that drive with another qubit frequency
-        control_i = 2 * jnp.pi * qubit.drive_strength * (a(dims) + a_dag(dims))
+        control_i = 2 * jnp.pi * qubit.drive_strength * (annihilation_operator(dims) + creation_operator(dims))
 
         operators[
             ChannelID(qubit_idx=qubit.qubit_idx, type=TermType.CONTROL).hash()
@@ -352,11 +352,11 @@ def gen_hamiltonian_from(
 
     for coupling in coupling_constants:
         # Add the coupling constant to the Hamiltonian
-        c_1 = tensor(a(dims), coupling.qubit_indices[0], num_qubits) @ tensor(
-            a_dag(dims), coupling.qubit_indices[1], num_qubits
+        c_1 = tensor(annihilation_operator(dims), coupling.qubit_indices[0], num_qubits) @ tensor(
+            creation_operator(dims), coupling.qubit_indices[1], num_qubits
         )
-        c_2 = tensor(a_dag(dims), coupling.qubit_indices[0], num_qubits) @ tensor(
-            a(dims), coupling.qubit_indices[1], num_qubits
+        c_2 = tensor(creation_operator(dims), coupling.qubit_indices[0], num_qubits) @ tensor(
+            annihilation_operator(dims), coupling.qubit_indices[1], num_qubits
         )
         coupling_ij = 2 * jnp.pi * coupling.coupling_strength * (c_1 + c_2)
 
