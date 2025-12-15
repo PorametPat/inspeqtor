@@ -2169,12 +2169,20 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">single_qubit_shot_quantum_device</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">control_parameters</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">SHOTS</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">expectation_value_receipt</span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">single_qubit_shot_quantum_device</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">control_parameters</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">solver</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">SHOTS</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">expectation_value_receipt</span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span>
+        <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.get_complete_expectation_values (inspeqtor.v2.data.get_complete_expectation_values)" href="../data/#inspeqtor.data.get_complete_expectation_values">get_complete_expectation_values</a></span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.get_complete_expectation_values (inspeqtor.v2.data.get_complete_expectation_values)" href="../data/#inspeqtor.data.get_complete_expectation_values">get_complete_expectation_values</a></span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2387,12 +2395,18 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">finite_shot_quantum_device</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v2.utils.Param">Param</span></span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v2.utils.Param">Param</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">expval</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">finite_shot_quantum_device</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">param</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v2.utils.Param">Param</span></span><span class="p">,</span>
+    <span class="n">solver</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v2.utils.Param">Param</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">expval</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">)</span>
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2439,7 +2453,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_measurement_probability</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_measurement_probability</span><span class="p">(</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2570,7 +2586,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">finite_shot_expectation_value</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">finite_shot_expectation_value</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2609,12 +2627,17 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">calculate_expectation_values</span><span class="p">(</span><span class="n">unitaries</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">expectation_value_order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">calculate_expectation_values</span><span class="p">(</span>
+    <span class="n">unitaries</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">expectation_value_order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span>
+        <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.get_complete_expectation_values (inspeqtor.v2.data.get_complete_expectation_values)" href="../data/#inspeqtor.data.get_complete_expectation_values">get_complete_expectation_values</a></span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.get_complete_expectation_values (inspeqtor.v2.data.get_complete_expectation_values)" href="../data/#inspeqtor.data.get_complete_expectation_values">get_complete_expectation_values</a></span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2669,12 +2692,14 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dictorization</span><span class="p">(</span><span class="n">expvals</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dictorization</span><span class="p">(</span>
+    <span class="n">expvals</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">])</span>
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">]</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2787,7 +2812,9 @@ with the initial state as outer key and the observable as inner key.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">random_split</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">test_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">*</span><span class="n">data_arrays</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">random_split</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">test_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">*</span><span class="n">data_arrays</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2945,7 +2972,13 @@ with the initial state as outer key and the observable as inner key.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dataloader</span><span class="p">(</span><span class="n">arrays</span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">batch_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">num_epochs</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dataloader</span><span class="p">(</span>
+    <span class="n">arrays</span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">num_epochs</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3220,7 +3253,9 @@ with the initial state as outer key and the observable as inner key.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expectation_value_to_prob_plus</span><span class="p">(</span><span class="n">expectation_value</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expectation_value_to_prob_plus</span><span class="p">(</span>
+    <span class="n">expectation_value</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3299,7 +3334,9 @@ Args:
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expectation_value_to_prob_minus</span><span class="p">(</span><span class="n">expectation_value</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expectation_value_to_prob_minus</span><span class="p">(</span>
+    <span class="n">expectation_value</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3444,7 +3481,9 @@ must be in range [-1, 1].</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expectation_value_to_eigenvalue</span><span class="p">(</span><span class="n">expectation_value</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">SHOTS</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expectation_value_to_eigenvalue</span><span class="p">(</span>
+    <span class="n">expectation_value</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">SHOTS</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3980,7 +4019,13 @@ This implementation should be differentiable</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">calculate_shots_expectation_value</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">unitary</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">calculate_shots_expectation_value</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">initial_state</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">unitary</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4226,7 +4271,9 @@ This implementation should be differentiable</p>
   </span>
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">default_expectation_values_order</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.utils.get_default_expectation_values_order (inspeqtor.v2.constant.get_default_expectation_values_order)" href="#inspeqtor.utils.get_default_expectation_values_order">get_default_expectation_values_order</a></span><span class="p">()</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">default_expectation_values_order</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.utils.get_default_expectation_values_order (inspeqtor.v2.constant.get_default_expectation_values_order)" href="#inspeqtor.utils.get_default_expectation_values_order">get_default_expectation_values_order</a></span><span class="p">()</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4311,7 +4358,9 @@ This implementation should be differentiable</p>
   </span>
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">SX</span> <span class="o">=</span> <span class="n"><span title="jax.numpy.exp">exp</span></span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n"><span title="jax.numpy.pi">pi</span></span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="n"><span title="jax.numpy.sqrt">sqrt</span></span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n"><span title="jax.numpy.array">array</span></span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">SX</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n"><span title="jax.numpy.exp">exp</span></span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n"><span title="jax.numpy.pi">pi</span></span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="n"><span title="jax.numpy.sqrt">sqrt</span></span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n"><span title="jax.numpy.array">array</span></span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4394,7 +4443,12 @@ This implementation should be differentiable</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_control_envelope</span><span class="p">(</span><span class="n">waveform</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">x_axis</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n"><span title="matplotlib.axes.Axes">Axes</span></span><span class="p">,</span> <span class="n">font_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">12</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_control_envelope</span><span class="p">(</span>
+    <span class="n">waveform</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">x_axis</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="n"><span title="matplotlib.axes.Axes">Axes</span></span><span class="p">,</span>
+    <span class="n">font_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4455,7 +4509,9 @@ This implementation should be differentiable</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_expectation_values</span><span class="p">(</span><span class="n">expvals_dict</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]],</span> <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_expectation_values</span><span class="p">(</span>
+    <span class="n">expvals_dict</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]],</span> <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4753,7 +4809,14 @@ This implementation should be differentiable</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_loss_with_moving_average</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n"><span title="matplotlib.axes.Axes">Axes</span></span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">annotate_at</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="matplotlib.axes.Axes">Axes</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">plot_loss_with_moving_average</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="n"><span title="matplotlib.axes.Axes">Axes</span></span><span class="p">,</span>
+    <span class="n">window</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">annotate_at</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="matplotlib.axes.Axes">Axes</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">

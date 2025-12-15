@@ -1994,22 +1994,34 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">train_model</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">train_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">train_model</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">train_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span> <span class="n">val_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span>
+    <span class="n">val_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span> <span class="n">test_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span>
+    <span class="n">test_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">NUM_EPOCH</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">model_params</span><span class="p">:</span> <span class="n"><span title="flax.typing.VariableDict">VariableDict</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">opt_state</span><span class="p">:</span> <span class="n"><span title="optax.OptState">OptState</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span>
+    <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+    <span class="n">NUM_EPOCH</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">model_params</span><span class="p">:</span> <span class="n"><span title="flax.typing.VariableDict">VariableDict</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">opt_state</span><span class="p">:</span> <span class="n"><span title="optax.OptState">OptState</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2420,7 +2432,11 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_fn</span><span class="p">(</span><span class="n">adapter_fn</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.models.linen.adapter_fn_type">adapter_fn_type</span></span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span> <span class="n">model_params</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_fn</span><span class="p">(</span>
+    <span class="n">adapter_fn</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.models.linen.adapter_fn_type">adapter_fn_type</span></span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span>
+    <span class="n">model_params</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2463,7 +2479,12 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_step</span><span class="p">(</span><span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">|</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span> <span class="n">has_aux</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_step</span><span class="p">(</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span>
+    <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+    <span class="o">|</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span>
+    <span class="n">has_aux</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2681,7 +2702,13 @@ where <code>params</code> is the parameters to be optimized, and <code>args</cod
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_loss_fn</span><span class="p">(</span><span class="n">adapter_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span> <span class="n">evaluate_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">])</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_loss_fn</span><span class="p">(</span>
+    <span class="n">adapter_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span>
+    <span class="n">evaluate_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+    <span class="p">],</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">

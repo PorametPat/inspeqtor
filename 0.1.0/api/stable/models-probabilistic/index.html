@@ -2139,7 +2139,13 @@
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_probabilistic_model</span><span class="p">(</span><span class="n">predictive_model</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">block_graybox</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">separate_observables</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">log_expectation_values</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_probabilistic_model</span><span class="p">(</span>
+    <span class="n">predictive_model</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">block_graybox</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">separate_observables</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">log_expectation_values</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2700,7 +2706,9 @@ So that the function can be used with <code>jax.tree.map</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">construct_normal_prior_from_samples</span><span class="p">(</span><span class="n">posterior_samples</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">construct_normal_prior_from_samples</span><span class="p">(</span>
+    <span class="n">posterior_samples</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2817,7 +2825,13 @@ So that the function can be used with <code>jax.tree.map</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_normal_posterior_dist_fn_from_svi_result</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">guide</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">num_samples</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_normal_posterior_dist_fn_from_svi_result</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">guide</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3047,7 +3061,9 @@ So that the function can be used with <code>jax.tree.map</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_fn</span><span class="p">(</span><span class="n">posterior_model</span><span class="p">,</span> <span class="n">learning_model</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            LearningModel (inspeqtor.v1.probabilistic.LearningModel)" href="#inspeqtor.models.probabilistic.LearningModel">LearningModel</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_fn</span><span class="p">(</span>
+    <span class="n">posterior_model</span><span class="p">,</span> <span class="n">learning_model</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            LearningModel (inspeqtor.v1.probabilistic.LearningModel)" href="#inspeqtor.models.probabilistic.LearningModel">LearningModel</a></span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4011,7 +4027,9 @@ Implement following: https://docs.scipy.org/doc/scipy/reference/generated/scipy.
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">jensenshannon_divergence_from_sample</span><span class="p">(</span><span class="n">sample_1</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">sample_2</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">jensenshannon_divergence_from_sample</span><span class="p">(</span>
+    <span class="n">sample_1</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">sample_2</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4373,7 +4391,9 @@ This function is intended to be used in <code>dense_layer</code></p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">default_priors_fn</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">default_priors_fn</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4479,7 +4499,15 @@ This function is intended to be used in <code>dense_layer</code></p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dense_layer</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">in_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">out_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">priors_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            default_priors_fn (inspeqtor.v1.probabilistic.default_priors_fn)" href="#inspeqtor.models.probabilistic.default_priors_fn">default_priors_fn</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dense_layer</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+    <span class="n">in_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">out_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">priors_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="n"><span title="numpyro.distributions.Distribution">Distribution</span></span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            default_priors_fn (inspeqtor.v1.probabilistic.default_priors_fn)" href="#inspeqtor.models.probabilistic.default_priors_fn">default_priors_fn</a></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4821,7 +4849,14 @@ This function intended to be used with <code>numpyro</code></p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dense_deterministic_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">in_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">out_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">init_fn</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="            init_default (inspeqtor.v1.probabilistic.init_default)" href="#inspeqtor.models.probabilistic.init_default">init_default</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dense_deterministic_layer</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+    <span class="n">in_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">out_features</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">batch_shape</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">init_fn</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="            init_default (inspeqtor.v1.probabilistic.init_default)" href="#inspeqtor.models.probabilistic.init_default">init_default</a></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5047,7 +5082,9 @@ This function intended to be used with <code>numpyro</code></p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_posteriors_fn</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">guide</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_posteriors_fn</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">guide</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">10000</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5202,7 +5239,13 @@ return the posterior of parameter of the given name, from guide and parameters.<
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_diagonal_normal_guide</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">block_sample</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">init_loc_fn</span><span class="o">=</span><span class="n"><span title="jax.numpy.zeros">zeros</span></span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">=</span> <span class="n"><span title="jax.random.key">key</span></span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_diagonal_normal_guide</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">block_sample</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">init_loc_fn</span><span class="o">=</span><span class="n"><span title="jax.numpy.zeros">zeros</span></span><span class="p">,</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">=</span> <span class="n"><span title="jax.random.key">key</span></span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5465,7 +5508,14 @@ This is the avoid site name duplication, while allows for model to use newly sam
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_diagonal_normal_guide_v2</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">init_dist_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.init_normal_dist_fn">init_normal_dist_fn</span></span><span class="p">,</span> <span class="n">init_params_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.init_params_fn">init_params_fn</span></span><span class="p">,</span> <span class="n">block_sample</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">=</span> <span class="n"><span title="jax.random.key">key</span></span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_diagonal_normal_guide_v2</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">init_dist_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.init_normal_dist_fn">init_normal_dist_fn</span></span><span class="p">,</span>
+    <span class="n">init_params_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.init_params_fn">init_params_fn</span></span><span class="p">,</span>
+    <span class="n">block_sample</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">=</span> <span class="n"><span title="jax.random.key">key</span></span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5891,7 +5941,12 @@ This version relied explicitly on the guide and variational parameters. It might
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_SGM_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span> <span class="n">model_params</span><span class="p">,</span> <span class="n">output_to_expectation_values_fn</span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_SGM_model</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="flax.linen.Module">Module</span></span><span class="p">,</span>
+    <span class="n">model_params</span><span class="p">,</span>
+    <span class="n">output_to_expectation_values_fn</span><span class="p">,</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6151,7 +6206,10 @@ This version relied explicitly on the guide and variational parameters. It might
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_resampling_model</span><span class="p">(</span><span class="n">predictive_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_predictive_resampling_model</span><span class="p">(</span>
+    <span class="n">predictive_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6412,7 +6470,15 @@ This version relied explicitly on the guide and variational parameters. It might
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_diagonal_normal_guide_v3</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">init_dist_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.bnn_init_dist_fn">bnn_init_dist_fn</span></span><span class="p">,</span> <span class="n">init_params_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.bnn_init_params_fn">bnn_init_params_fn</span></span><span class="p">,</span> <span class="n">dist_transform_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.default_transform_dist_fn">default_transform_dist_fn</span></span><span class="p">,</span> <span class="n">block_sample</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">=</span> <span class="n"><span title="jax.random.key">key</span></span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_diagonal_normal_guide_v3</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">init_dist_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.bnn_init_dist_fn">bnn_init_dist_fn</span></span><span class="p">,</span>
+    <span class="n">init_params_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.bnn_init_params_fn">bnn_init_params_fn</span></span><span class="p">,</span>
+    <span class="n">dist_transform_fn</span><span class="o">=</span><span class="n"><span title="inspeqtor.v1.probabilistic.default_transform_dist_fn">default_transform_dist_fn</span></span><span class="p">,</span>
+    <span class="n">block_sample</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">=</span> <span class="n"><span title="jax.random.key">key</span></span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6671,7 +6737,9 @@ This function intended to be able to be compatible with auto marginal guide.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_posterior_fn</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">get_dist_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="str">str</span></span><span class="p">],</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">])</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_posterior_fn</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">,</span> <span class="n">get_dist_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="str">str</span></span><span class="p">],</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

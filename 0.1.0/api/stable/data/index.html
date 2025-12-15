@@ -3009,7 +3009,9 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_initial_state</span><span class="p">(</span><span class="n">initial_state</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">dm</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_initial_state</span><span class="p">(</span>
+    <span class="n">initial_state</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">dm</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3080,7 +3082,19 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_complete_expectation_values</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">observables</span><span class="p">:</span> <span class="n"><span title="typing.Iterable">Iterable</span></span><span class="p">[</span><span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">],</span> <span class="n">states</span><span class="p">:</span> <span class="n"><span title="typing.Iterable">Iterable</span></span><span class="p">[</span><span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">],</span> <span class="n">exclude_all_identities</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_complete_expectation_values</span><span class="p">(</span>
+    <span class="n">num_qubits</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">observables</span><span class="p">:</span> <span class="n"><span title="typing.Iterable">Iterable</span></span><span class="p">[</span><span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;I&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;X&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Y&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Z&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">states</span><span class="p">:</span> <span class="n"><span title="typing.Iterable">Iterable</span></span><span class="p">[</span>
+        <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;l&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">],</span>
+    <span class="n">exclude_all_identities</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
@@ -3176,17 +3190,21 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">load_data_from_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">,</span> <span class="n">hamiltonian_spec</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.physics.library.HamiltonianSpec
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">load_data_from_path</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">,</span>
+    <span class="n">hamiltonian_spec</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.physics.library.HamiltonianSpec
 
 
   
       dataclass
-   (inspeqtor.v2.predefined.HamiltonianSpec)" href="../physics/#inspeqtor.physics.library.HamiltonianSpec">HamiltonianSpec</a></span><span class="p">,</span> <span class="n">control_reader</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.library.default_control_reader
+   (inspeqtor.v2.predefined.HamiltonianSpec)" href="../physics/#inspeqtor.physics.library.HamiltonianSpec">HamiltonianSpec</a></span><span class="p">,</span>
+    <span class="n">control_reader</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.library.default_control_reader
 
 
   
       module-attribute
-   (inspeqtor.v2.predefined.default_control_reader)" href="../control/#inspeqtor.control.library.default_control_reader">default_control_reader</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.LoadedData
+   (inspeqtor.v2.predefined.default_control_reader)" href="../control/#inspeqtor.control.library.default_control_reader">default_control_reader</a></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.LoadedData
 
 
   
@@ -3375,17 +3393,21 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">save_data_to_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">,</span> <span class="n">experiment_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExperimentalData
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">save_data_to_path</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">,</span>
+    <span class="n">experiment_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExperimentalData
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExperimentalData)" href="#inspeqtor.data.ExperimentalData">ExperimentalData</a></span><span class="p">,</span> <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+   (inspeqtor.v2.data.ExperimentalData)" href="#inspeqtor.data.ExperimentalData">ExperimentalData</a></span><span class="p">,</span>
+    <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
 
 
   
       dataclass
-   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">)</span>
+   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3612,17 +3634,21 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_data</span><span class="p">(</span><span class="n">exp_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExperimentalData
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_data</span><span class="p">(</span>
+    <span class="n">exp_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExperimentalData
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExperimentalData)" href="#inspeqtor.data.ExperimentalData">ExperimentalData</a></span><span class="p">,</span> <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+   (inspeqtor.v2.data.ExperimentalData)" href="#inspeqtor.data.ExperimentalData">ExperimentalData</a></span><span class="p">,</span>
+    <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
 
 
   
       dataclass
-   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span> <span class="n">whitebox</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.LoadedData
+   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span>
+    <span class="n">whitebox</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.LoadedData
 
 
   
@@ -3855,7 +3881,12 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_predefined_data_model_m1</span><span class="p">(</span><span class="n">detune</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span> <span class="n">get_envelope_transformer</span><span class="o">=</span><span class="n"><span title="inspeqtor.v2.control.get_envelope_transformer">get_envelope_transformer</span></span><span class="p">,</span> <span class="n">trotterization</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">trotter_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10000</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_predefined_data_model_m1</span><span class="p">(</span>
+    <span class="n">detune</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span>
+    <span class="n">get_envelope_transformer</span><span class="o">=</span><span class="n"><span title="inspeqtor.v2.control.get_envelope_transformer">get_envelope_transformer</span></span><span class="p">,</span>
+    <span class="n">trotterization</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">trotter_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4068,32 +4099,53 @@ expectation values same control parameter id within single row instead of multip
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">generate_single_qubit_experimental_data</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">sample_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.physics.library.SimulationStrategy (inspeqtor.v1.predefined.SimulationStrategy)" href="../physics/#inspeqtor.physics.library.SimulationStrategy">SimulationStrategy</a></span> <span class="o">=</span> <span class="n"><span title="inspeqtor.v1.predefined.SimulationStrategy.SHOT">SHOT</span></span><span class="p">,</span> <span class="n">qubit_inforamtion</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">generate_single_qubit_experimental_data</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">sample_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">shots</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.physics.library.SimulationStrategy (inspeqtor.v1.predefined.SimulationStrategy)" href="../physics/#inspeqtor.physics.library.SimulationStrategy">SimulationStrategy</a></span> <span class="o">=</span> <span class="n"><span title="inspeqtor.v1.predefined.SimulationStrategy.SHOT">SHOT</span></span><span class="p">,</span>
+    <span class="n">qubit_inforamtion</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
 
 
   
       dataclass
-   (inspeqtor.v2.data.QubitInformation)" href="#inspeqtor.data.QubitInformation">QubitInformation</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.library.get_mock_qubit_information (inspeqtor.v1.predefined.get_mock_qubit_information)" href="#inspeqtor.data.library.get_mock_qubit_information">get_mock_qubit_information</a></span><span class="p">(),</span> <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+   (inspeqtor.v2.data.QubitInformation)" href="#inspeqtor.data.QubitInformation">QubitInformation</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.library.get_mock_qubit_information (inspeqtor.v1.predefined.get_mock_qubit_information)" href="#inspeqtor.data.library.get_mock_qubit_information">get_mock_qubit_information</a></span><span class="p">(),</span>
+    <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
 
 
   
       dataclass
-   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.library.get_drag_pulse_v2_sequence (inspeqtor.v2.predefined.get_drag_pulse_v2_sequence)" href="../control/#inspeqtor.control.library.get_drag_pulse_v2_sequence">get_drag_pulse_v2_sequence</a></span><span class="p">(</span><span class="n"><span title="drive_strength">drive_strength</span></span><span class="p">),</span> <span class="n">max_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="n"><span title="int">int</span></span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span><span class="p">),</span> <span class="n">method</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.physics.library.WhiteboxStrategy (inspeqtor.v1.predefined.WhiteboxStrategy)" href="../physics/#inspeqtor.physics.library.WhiteboxStrategy">WhiteboxStrategy</a></span> <span class="o">=</span> <span class="n"><span title="inspeqtor.v1.predefined.WhiteboxStrategy.ODE">ODE</span></span><span class="p">,</span> <span class="n">trotter_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">expectation_value_receipt</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.library.get_drag_pulse_v2_sequence (inspeqtor.v2.predefined.get_drag_pulse_v2_sequence)" href="../control/#inspeqtor.control.library.get_drag_pulse_v2_sequence">get_drag_pulse_v2_sequence</a></span><span class="p">(</span>
+        <span class="n"><span title="drive_strength">drive_strength</span></span>
+    <span class="p">),</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="n"><span title="int">int</span></span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">),</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.physics.library.WhiteboxStrategy (inspeqtor.v1.predefined.WhiteboxStrategy)" href="../physics/#inspeqtor.physics.library.WhiteboxStrategy">WhiteboxStrategy</a></span> <span class="o">=</span> <span class="n"><span title="inspeqtor.v1.predefined.WhiteboxStrategy.ODE">ODE</span></span><span class="p">,</span>
+    <span class="n">trotter_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">expectation_value_receipt</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span>
+        <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.get_complete_expectation_values (inspeqtor.v2.data.get_complete_expectation_values)" href="#inspeqtor.data.get_complete_expectation_values">get_complete_expectation_values</a></span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExperimentalData
+   (inspeqtor.v2.data.ExpectationValue)" href="#inspeqtor.data.ExpectationValue">ExpectationValue</a></span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.get_complete_expectation_values (inspeqtor.v2.data.get_complete_expectation_values)" href="#inspeqtor.data.get_complete_expectation_values">get_complete_expectation_values</a></span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExperimentalData
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExperimentalData)" href="#inspeqtor.data.ExperimentalData">ExperimentalData</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+   (inspeqtor.v2.data.ExperimentalData)" href="#inspeqtor.data.ExperimentalData">ExperimentalData</a></span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
 
 
   
       dataclass
-   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]]</span>
+   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span>
+    <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+<span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">

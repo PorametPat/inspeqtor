@@ -2036,7 +2036,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_spam</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n"><span title="flax.typing.VariableDict">VariableDict</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="inspeqtor.v1.data.ExpectationValue">ExpectationValue</span></span><span class="p">],</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_spam</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n"><span title="flax.typing.VariableDict">VariableDict</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="inspeqtor.v1.data.ExpectationValue">ExpectationValue</span></span><span class="p">],</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2444,12 +2446,16 @@ The function will skip parsing config and will return as it is load from file.</
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_predict_expectation_value</span><span class="p">(</span><span class="n">observable</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">unitaries</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_predict_expectation_value</span><span class="p">(</span>
+    <span class="n">observable</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">unitaries</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">

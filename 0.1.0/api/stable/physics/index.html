@@ -2087,7 +2087,19 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">solver</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n">t_eval</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">y0</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">t0</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">t1</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="n"><span title="int">int</span></span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">solver</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span>
+    <span class="n">t_eval</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+    <span class="p">],</span>
+    <span class="n">y0</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+    <span class="n">t1</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+    <span class="n">rtol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span>
+    <span class="n">atol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="n"><span title="int">int</span></span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2408,7 +2420,13 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_rotating_frame_hamiltonian</span><span class="p">(</span><span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">frame</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">explicit_deriv</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">auto_rotating_frame_hamiltonian</span><span class="p">(</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+    <span class="p">],</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">explicit_deriv</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2585,7 +2603,12 @@ H_I = U(t) @ H @ U^dagger(t) + i * U(t) @ dU^dagger(t)/dt</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">explicit_auto_rotating_frame_hamiltonian</span><span class="p">(</span><span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">frame</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">explicit_auto_rotating_frame_hamiltonian</span><span class="p">(</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+    <span class="p">],</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3046,7 +3069,13 @@ that perform explicit derivative.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_signal_fn</span><span class="p">(</span><span class="n">get_envelope</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.ControlParam">ControlParam</span></span><span class="p">],</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]],</span> <span class="n">drive_frequency</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_signal_fn</span><span class="p">(</span>
+    <span class="n">get_envelope</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.physics.ControlParam">ControlParam</span></span><span class="p">],</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+    <span class="p">],</span>
+    <span class="n">drive_frequency</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3300,7 +3329,9 @@ that perform explicit derivative.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">process_fidelity</span><span class="p">(</span><span class="n">superop</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">target_superop</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">process_fidelity</span><span class="p">(</span>
+    <span class="n">superop</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">target_superop</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3331,7 +3362,9 @@ that perform explicit derivative.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">avg_gate_fidelity_from_superop</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">target_U</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">avg_gate_fidelity_from_superop</span><span class="p">(</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">target_U</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3389,12 +3422,16 @@ that perform explicit derivative.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">state_tomography</span><span class="p">(</span><span class="n">expval</span><span class="p">:</span> <span class="n"><span title="jaxtyping.Array">Array</span></span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">state_tomography</span><span class="p">(</span>
+    <span class="n">expval</span><span class="p">:</span> <span class="n"><span title="jaxtyping.Array">Array</span></span><span class="p">,</span>
+    <span class="n">num_qubits</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.ExpectationValue
 
 
   
       dataclass
-   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="jaxtyping.Array">Array</span></span>
+   (inspeqtor.v2.data.ExpectationValue)" href="../data/#inspeqtor.data.ExpectationValue">ExpectationValue</a></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jaxtyping.Array">Array</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3608,7 +3645,11 @@ that perform explicit derivative.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">calculate_exp</span><span class="p">(</span><span class="n">unitary</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">density_matrix</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">calculate_exp</span><span class="p">(</span>
+    <span class="n">unitary</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">operator</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">density_matrix</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3756,7 +3797,13 @@ Shape of all arguments must be boardcastable.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_trotterization_solver</span><span class="p">(</span><span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">total_dt</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">trotter_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">y0</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_trotterization_solver</span><span class="p">(</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">total_dt</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+    <span class="n">trotter_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+    <span class="n">y0</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3966,7 +4013,20 @@ Shape of all arguments must be boardcastable.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">lindblad_solver</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n">t_eval</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">lindblad_ops</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">rho0</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">t0</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">t1</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="n"><span title="int">int</span></span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">lindblad_solver</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span>
+    <span class="n">t_eval</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+    <span class="p">],</span>
+    <span class="n">lindblad_ops</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+    <span class="n">rho0</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+    <span class="n">t1</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+    <span class="n">rtol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span>
+    <span class="n">atol</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">1e-07</span><span class="p">,</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="n"><span title="int">int</span></span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4164,12 +4224,17 @@ Shape of all arguments must be boardcastable.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transmon_hamiltonian</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">qubit_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transmon_hamiltonian</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">qubit_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
 
 
   
       dataclass
-   (inspeqtor.v1.data.QubitInformation)" href="../data/#inspeqtor.data.QubitInformation">QubitInformation</a></span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+   (inspeqtor.v1.data.QubitInformation)" href="../data/#inspeqtor.data.QubitInformation">QubitInformation</a></span><span class="p">,</span>
+    <span class="n">signal</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4343,12 +4408,17 @@ Shape of all arguments must be boardcastable.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">rotating_transmon_hamiltonian</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">qubit_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">rotating_transmon_hamiltonian</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">qubit_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
 
 
   
       dataclass
-   (inspeqtor.v1.data.QubitInformation)" href="../data/#inspeqtor.data.QubitInformation">QubitInformation</a></span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+   (inspeqtor.v1.data.QubitInformation)" href="../data/#inspeqtor.data.QubitInformation">QubitInformation</a></span><span class="p">,</span>
+    <span class="n">signal</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4538,7 +4608,12 @@ Shape of all arguments must be boardcastable.</p>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">detune_x_hamiltonian</span><span class="p">(</span><span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n">detune</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">detune_x_hamiltonian</span><span class="p">(</span>
+    <span class="n">hamiltonian</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+    <span class="p">],</span>
+    <span class="n">detune</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.physics.HamiltonianArgs">HamiltonianArgs</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4961,17 +5036,21 @@ Shape of all arguments must be boardcastable.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_solver</span><span class="p">(</span><span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_solver</span><span class="p">(</span>
+    <span class="n">control_sequence</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.control.ControlSequence
 
 
   
       dataclass
-   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span> <span class="n">qubit_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
+   (inspeqtor.v2.control.ControlSequence)" href="../control/#inspeqtor.control.ControlSequence">ControlSequence</a></span><span class="p">,</span>
+    <span class="n">qubit_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.QubitInformation
 
 
   
       dataclass
-   (inspeqtor.v2.data.QubitInformation)" href="../data/#inspeqtor.data.QubitInformation">QubitInformation</a></span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
+   (inspeqtor.v2.data.QubitInformation)" href="../data/#inspeqtor.data.QubitInformation">QubitInformation</a></span><span class="p">,</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

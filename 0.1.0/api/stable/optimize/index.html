@@ -1751,7 +1751,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_default_optimizer</span><span class="p">(</span><span class="n">n_iterations</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_default_optimizer</span><span class="p">(</span>
+    <span class="n">n_iterations</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -1864,7 +1866,15 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">minimize</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Any">Any</span></span><span class="p">]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">minimize</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span>
+    <span class="n">lower</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">upper</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Any">Any</span></span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2105,7 +2115,16 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stochastic_minimize</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Any">Any</span></span><span class="p">]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stochastic_minimize</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span>
+    <span class="n">lower</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">upper</span><span class="p">:</span> <span class="n"><span title="chex.ArrayTree">ArrayTree</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">maxiter</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="chex.ArrayTree">ArrayTree</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Any">Any</span></span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2476,7 +2495,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">predict_with_gaussian_process</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n"><span title="gpjax.gps.ConjugatePosterior">ConjugatePosterior</span></span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n"><span title="gpjax.Dataset">Dataset</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">predict_with_gaussian_process</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n"><span title="gpjax.gps.ConjugatePosterior">ConjugatePosterior</span></span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n"><span title="gpjax.Dataset">Dataset</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2515,7 +2536,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">predict_mean_and_std</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n"><span title="gpjax.Dataset">Dataset</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">predict_mean_and_std</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n"><span title="gpjax.Dataset">Dataset</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2638,7 +2661,12 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expected_improvement</span><span class="p">(</span><span class="n">y_best</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">posterior_mean</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">posterior_var</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">exploration_factor</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expected_improvement</span><span class="p">(</span>
+    <span class="n">y_best</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">posterior_mean</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">posterior_var</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">exploration_factor</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3007,7 +3035,13 @@ The exploration factor can be adjust to balance between exploration and exploita
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">suggest_next_candidates</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">opt_state</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.optimize.BayesOptState (inspeqtor.v2.optimize.BayesOptState)" href="#inspeqtor.optimize.BayesOptState">BayesOptState</a></span><span class="p">,</span> <span class="n">sample_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">num_suggest</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">exploration_factor</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">suggest_next_candidates</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">opt_state</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.optimize.BayesOptState (inspeqtor.v2.optimize.BayesOptState)" href="#inspeqtor.optimize.BayesOptState">BayesOptState</a></span><span class="p">,</span>
+    <span class="n">sample_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">num_suggest</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">exploration_factor</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3226,7 +3260,9 @@ The exploration factor can be adjust to balance between exploration and exploita
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_observations</span><span class="p">(</span><span class="n">opt_state</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.optimize.BayesOptState (inspeqtor.v2.optimize.BayesOptState)" href="#inspeqtor.optimize.BayesOptState">BayesOptState</a></span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.optimize.BayesOptState (inspeqtor.v2.optimize.BayesOptState)" href="#inspeqtor.optimize.BayesOptState">BayesOptState</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_observations</span><span class="p">(</span>
+    <span class="n">opt_state</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.optimize.BayesOptState (inspeqtor.v2.optimize.BayesOptState)" href="#inspeqtor.optimize.BayesOptState">BayesOptState</a></span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.optimize.BayesOptState (inspeqtor.v2.optimize.BayesOptState)" href="#inspeqtor.optimize.BayesOptState">BayesOptState</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents first">

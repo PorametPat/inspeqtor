@@ -1958,7 +1958,12 @@
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">shared_layers</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">],</span> <span class="n">pauli_layers</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">rngs</span><span class="p">:</span> <span class="n"><span title="flax.nnx.Rngs">Rngs</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
+    <span class="n">shared_layers</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">],</span>
+    <span class="n">pauli_layers</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">rngs</span><span class="p">:</span> <span class="n"><span title="flax.nnx.Rngs">Rngs</span></span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2464,7 +2469,9 @@
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">unitary_model</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.models.library.nnx.UnitaryModel (inspeqtor.v1.models.nnx.UnitaryModel)" href="#inspeqtor.models.library.nnx.UnitaryModel">UnitaryModel</a></span><span class="p">,</span> <span class="n">spam_params</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rngs</span><span class="p">:</span> <span class="n"><span title="flax.nnx.Rngs">Rngs</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
+    <span class="n">unitary_model</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.models.library.nnx.UnitaryModel (inspeqtor.v1.models.nnx.UnitaryModel)" href="#inspeqtor.models.library.nnx.UnitaryModel">UnitaryModel</a></span><span class="p">,</span> <span class="n">spam_params</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rngs</span><span class="p">:</span> <span class="n"><span title="flax.nnx.Rngs">Rngs</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2563,22 +2570,33 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">train_model</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n">train_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">train_model</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span>
+    <span class="n">train_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span> <span class="n">val_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span>
+    <span class="n">val_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span> <span class="n">test_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span>
+    <span class="n">test_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.models.nnx.Blackbox">Blackbox</span></span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">NUM_EPOCH</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">_optimizer</span><span class="p">:</span> <span class="n"><span title="flax.nnx.Optimizer">Optimizer</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="inspeqtor.v1.models.nnx.Blackbox">Blackbox</span></span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n"><span title="optax.GradientTransformation">GradientTransformation</span></span><span class="p">,</span>
+    <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Callable">Callable</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+    <span class="n">NUM_EPOCH</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">_optimizer</span><span class="p">:</span> <span class="n"><span title="flax.nnx.Optimizer">Optimizer</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3026,12 +3044,16 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_step</span><span class="p">(</span><span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[[</span><span class="n"><span title="inspeqtor.v1.models.nnx.Blackbox">Blackbox</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_step</span><span class="p">(</span>
+    <span class="n">loss_fn</span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">[</span>
+        <span class="p">[</span><span class="n"><span title="inspeqtor.v1.models.nnx.Blackbox">Blackbox</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            inspeqtor.data.DataBundled
 
 
   
       dataclass
-   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">],</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]])</span>
+   (inspeqtor.v1.data.DataBundled)" href="../data/#inspeqtor.data.DataBundled">DataBundled</a></span><span class="p">],</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]</span>
+    <span class="p">],</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
