@@ -28,6 +28,24 @@ We aim to provide a data-efficient framework for the characterization and calibr
 
 ## Installation
 
+To install `inspeqtor` from the PyPI:
+
+=== "uv"
+
+    ```bash
+
+    uv add inspeqtor
+
+    ```
+
+=== "pip"
+
+    ```bash
+
+    pip install inspeqtor
+
+    ```
+
 To install `inspeqtor` from the remote repository:
 
 === "uv"
