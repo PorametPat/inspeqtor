@@ -919,7 +919,7 @@ wheels = [
 
 [[package]]
 name = "gpjax"
-version = "0.13.4"
+version = "0.13.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beartype" },
@@ -930,11 +930,12 @@ dependencies = [
     { name = "numpy" },
     { name = "numpyro" },
     { name = "optax" },
+    { name = "tensorstore", marker = "sys_platform == 'darwin'" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/4c/391273628c92e7c3579b5f9faf7b5f74ba15e5764f4fa46221d2357f4c29/gpjax-0.13.4.tar.gz", hash = "sha256:0005fd5e2cff00bcf03efef9eb2282454202c02b6664f9a61ea9eead75fd5bc3", size = 4810571, upload-time = "2025-11-23T21:37:36.33Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/51/5fbb85c6e24250fbbe5bb059477ce234d36529d9e368b5527f6fd2c87c4d/gpjax-0.13.6.tar.gz", hash = "sha256:4c25ad05cebc2dfa403c88393074726f21a745602a796effeddffc8628e60536", size = 4873809, upload-time = "2026-02-08T22:54:12.51Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/a7/f38ed82f6d07ee76b9c82b0c39856ac63f7a2b81aa12bff89370017dd1f3/gpjax-0.13.4-py3-none-any.whl", hash = "sha256:6625514c27837ef88de8bb544b2e553465fb60178f31596cf968f369bfbef639", size = 91047, upload-time = "2025-11-23T21:37:34.4Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/db/6f8a8901feeb04db2e41670e58eedac6db208317ba44d9e3337dfa63331f/gpjax-0.13.6-py3-none-any.whl", hash = "sha256:1ad13298da1622a3bec690e79b3a5697683fc55d160332d99128b1b930635bd1", size = 93238, upload-time = "2026-02-08T22:54:10.618Z" },
 ]
 
 [[package]]
