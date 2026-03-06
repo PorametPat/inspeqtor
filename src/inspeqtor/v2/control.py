@@ -71,9 +71,9 @@ class BaseControl(ABC):
         params = sample_params(key, lower, upper)
         # waveform = self.get_waveform(params)
 
-        assert all([isinstance(k, str) for k in params.keys()]), (
-            "All key of params dict must be string"
-        )
+        assert all(
+            [isinstance(k, str) for k in params.keys()]
+        ), "All key of params dict must be string"
         assert all([isinstance(v, float) for v in params.values()]) or all(
             [isinstance(v, jnp.ndarray) for v in params.values()]
         ), "All value of params dict must be float"
@@ -628,6 +628,47 @@ def get_envelope(param: ParametersDictType, seq: ControlSequence):
         lambda ctrl, x: ctrl.get_envelope(x),
         seq.controls,
         param,
+        is_leaf=lambda x: isinstance(x, BaseControl),
+    )
+
+    def envelope(t):
+        return jax.tree.reduce(lambda value, fn: fn(t) + value, tree, initializer=0.0)
+
+    return envelope
+
+
+def recursive_filter(d, filter_out):
+    if isinstance(d, dict):
+        return {
+            k: recursive_filter(v, filter_out)
+            for k, v in d.items()
+            if k not in filter_out
+        }
+    else:
+        return d
+
+
+def make_envelope_fn(
+    param: ParametersDictType, seq: ControlSequence, filter_out: typing.Iterable[str]
+):
+    """Return an envelope function create from envelope of all controls in `seq` with control parameter `param`
+
+    Args:
+        param (_type_): Control parameter
+        seq (ControlSequence): Control Sequence
+        filter_out (typing.Iterable[str]): The keys of control to be filtered out, the envelope of the control with these keys will not be included in the final envelope.
+
+    Returns:
+        _type_: A function of time which is a sum of all envelope of control in `seq` with parameter `param`
+    """
+
+    filtered_controls = recursive_filter(seq.controls, filter_out)
+    filtered_param = recursive_filter(param, filter_out)
+
+    tree = jax.tree.map(
+        lambda ctrl, x: ctrl.get_envelope(x),
+        filtered_controls,
+        filtered_param,
         is_leaf=lambda x: isinstance(x, BaseControl),
     )
 
