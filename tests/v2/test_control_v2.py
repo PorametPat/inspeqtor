@@ -243,3 +243,43 @@ def test_envelope_fn():
 
     r = jax.vmap(sq.control.envelope_fn, in_axes=(None, 0, None))(param, t_eval, seq)
     assert r.shape == (321,)
+
+
+def test_make_envelope_fn_with_filter():
+    duration = 320
+    dt = 2 / 9
+    pulse = sq.control.library.GaussianPulse(
+        duration=duration, qubit_drive_strength=0.1, dt=dt
+    )
+    drag = sq.control.library.DragPulseV2(
+        duration=duration, qubit_drive_strength=0.1, dt=dt
+    )
+    seq = sq.control.ControlSequence(
+        controls={"0": pulse, "1": pulse, "2": drag}, total_dt=duration
+    )
+    t_eval = jnp.linspace(0.0, duration, duration + 1)
+
+    param = seq.sample_params_v2(jax.random.key(0))
+
+    # Test filtering "1"
+    filter_out = ["1"]
+    envelope_fn = sq.control.make_envelope_fn(param, seq, filter_out)
+    envelope = jax.vmap(envelope_fn)(t_eval)
+
+    # Expected: sum of "0" and "2"
+    env0 = sq.control.control_waveform(param["0"], t_eval, seq.controls["0"])
+    env2 = sq.control.control_waveform(param["2"], t_eval, seq.controls["2"])
+    expected = env0 + env2
+
+    chex.assert_trees_all_close(envelope, expected)
+
+    # Test filtering "0" and "2"
+    filter_out_2 = ["0", "2"]
+    envelope_fn_2 = sq.control.make_envelope_fn(param, seq, filter_out_2)
+    envelope_2 = jax.vmap(envelope_fn_2)(t_eval)
+
+    # Expected: "1"
+    env1 = sq.control.control_waveform(param["1"], t_eval, seq.controls["1"])
+    expected_2 = env1
+
+    chex.assert_trees_all_close(envelope_2, expected_2)

@@ -14,6 +14,7 @@ from inspeqtor.v2.control import (
     split_bounds as split_bounds,
     get_envelope as get_envelope,
     envelope_fn as envelope_fn,
+    make_envelope_fn as make_envelope_fn,
 )
 
 from inspeqtor.stable.control import library as library
