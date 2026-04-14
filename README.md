@@ -1,6 +1,6 @@
 # Inspeqtor
 
-[![DOI](https://zenodo.org/badge/894394996.svg)](https://doi.org/10.5281/zenodo.17748401)
+[![DOI](https://zenodo.org/badge/894394996.svg)](https://doi.org/10.5281/zenodo.17748402)
 
 <div align="center">
 <img src="https://raw.githubusercontent.com/PorametPat/inspeqtor/refs/heads/main/docs/assets/inspeqtor_logo.svg" alt="logo" style="width: 100px"></img>
