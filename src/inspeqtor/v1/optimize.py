@@ -1,8 +1,8 @@
 import typing
 import jax
 import jax.numpy as jnp
-import optax  # type: ignore
-import chex
+import optax
+from .ctyping import ArrayTree
 
 
 def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
@@ -26,26 +26,26 @@ def get_default_optimizer(n_iterations: int) -> optax.GradientTransformation:
 
 
 def minimize(
-    params: chex.ArrayTree,
+    params: ArrayTree,
     func: typing.Callable[[jnp.ndarray], tuple[jnp.ndarray, typing.Any]],
     optimizer: optax.GradientTransformation,
-    lower: chex.ArrayTree | None = None,
-    upper: chex.ArrayTree | None = None,
+    lower: ArrayTree | None = None,
+    upper: ArrayTree | None = None,
     maxiter: int = 1000,
     callbacks: list[typing.Callable] = [],
-) -> tuple[chex.ArrayTree, list[typing.Any]]:
+) -> tuple[ArrayTree, list[typing.Any]]:
     """Optimize the loss function with bounded parameters.
 
     Args:
-        params (chex.ArrayTree): Intiial parameters to be optimized
-        lower (chex.ArrayTree): Lower bound of the parameters
-        upper (chex.ArrayTree): Upper bound of the parameters
+        params (ArrayTree): Intiial parameters to be optimized
+        lower (ArrayTree): Lower bound of the parameters
+        upper (ArrayTree): Upper bound of the parameters
         func (typing.Callable[[jnp.ndarray], tuple[jnp.ndarray, typing.Any]]): Loss function
         optimizer (optax.GradientTransformation): Instance of optax optimizer
         maxiter (int, optional): Number of optimization step. Defaults to 1000.
 
     Returns:
-        tuple[chex.ArrayTree, list[typing.Any]]: Tuple of parameters and optimization history
+        tuple[ArrayTree, list[typing.Any]]: Tuple of parameters and optimization history
     """
     opt_state = optimizer.init(params)
     history = []
@@ -71,26 +71,26 @@ def minimize(
 
 def stochastic_minimize(
     key: jnp.ndarray,
-    params: chex.ArrayTree,
+    params: ArrayTree,
     func: typing.Callable[[jnp.ndarray, jnp.ndarray], tuple[jnp.ndarray, typing.Any]],
     optimizer: optax.GradientTransformation,
-    lower: chex.ArrayTree | None = None,
-    upper: chex.ArrayTree | None = None,
+    lower: ArrayTree | None = None,
+    upper: ArrayTree | None = None,
     maxiter: int = 1000,
     callbacks: list[typing.Callable] = [],
-) -> tuple[chex.ArrayTree, list[typing.Any]]:
+) -> tuple[ArrayTree, list[typing.Any]]:
     """Optimize the loss function with bounded parameters.
 
     Args:
-        params (chex.ArrayTree): Intiial parameters to be optimized
-        lower (chex.ArrayTree): Lower bound of the parameters
-        upper (chex.ArrayTree): Upper bound of the parameters
+        params (ArrayTree): Intiial parameters to be optimized
+        lower (ArrayTree): Lower bound of the parameters
+        upper (ArrayTree): Upper bound of the parameters
         func (typing.Callable[[jnp.ndarray], tuple[jnp.ndarray, typing.Any]]): Loss function
         optimizer (optax.GradientTransformation): Instance of optax optimizer
         maxiter (int, optional): Number of optimization step. Defaults to 1000.
 
     Returns:
-        tuple[chex.ArrayTree, list[typing.Any]]: Tuple of parameters and optimization history
+        tuple[ArrayTree, list[typing.Any]]: Tuple of parameters and optimization history
     """
     opt_state = optimizer.init(params)
     history = []
