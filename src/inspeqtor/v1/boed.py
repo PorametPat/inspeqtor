@@ -1,14 +1,15 @@
 import jax
 import jax.numpy as jnp
 import numpyro
-from numpyro import handlers, plate_stack  # type: ignore
+from numpyro import handlers, plate_stack
 from numpyro import distributions as dist
 
-import optax  # type: ignore
+import optax
 import typing
 import jaxtyping
-import chex
 from .decorator import warn_not_tested_function
+
+from .ctyping import ArrayTree
 
 
 def safe_shape(a: typing.Any) -> tuple[int, ...] | str:
@@ -128,7 +129,7 @@ def marginal_loss(
     target_labels: list[str],
     num_particles: int,
     evaluation: bool = False,
-) -> typing.Callable[[chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]:
+) -> typing.Callable[[ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]:
     """The marginal loss implemented following
     https://docs.pyro.ai/en/dev/contrib.oed.html#pyro.contrib.oed.eig.marginal_eig
 
@@ -209,7 +210,7 @@ def vnmc_eig_loss(
     target_labels: list[str],
     num_particles: tuple[int, int],
     evaluation: bool = False,
-) -> typing.Callable[[chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]:
+) -> typing.Callable[[ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]:
     """The VNMC loss implemented following
     https://docs.pyro.ai/en/dev/_modules/pyro/contrib/oed/eig.html#vnmc_eig
 
@@ -325,7 +326,7 @@ def init_params_from_guide(
     *args,
     key: jnp.ndarray,
     design: jnp.ndarray,
-) -> chex.ArrayTree:
+) -> ArrayTree:
     """Initlalize parameters of marginal guide.
 
     Args:
@@ -359,26 +360,24 @@ class HistoryEntry(typing.NamedTuple):
 
 
 def opt_eig_ape_loss(
-    loss_fn: typing.Callable[
-        [chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]
-    ],
-    params: chex.ArrayTree,
+    loss_fn: typing.Callable[[ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]],
+    params: ArrayTree,
     num_steps: int,
     optim: optax.GradientTransformation,
     key: jnp.ndarray,
     callbacks: list = [],
-) -> chex.ArrayTree:
+) -> ArrayTree:
     """Optimize the EIG loss function.
 
     Args:
-        loss_fn (typing.Callable[[chex.ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]): Loss function
-        params (chex.ArrayTree): Initial parameter
+        loss_fn (typing.Callable[[ArrayTree, jnp.ndarray], tuple[jnp.ndarray, AuxEntry]]): Loss function
+        params (ArrayTree): Initial parameter
         num_steps (int): Number of optimization step
         optim (optax.GradientTransformation): Optax Optimizer
         key (jnp.ndarray): Random key
 
     Returns:
-        tuple[chex.ArrayTree, list[typing.Any]]: Optimized parameters, and optimization history.
+        tuple[ArrayTree, list[typing.Any]]: Optimized parameters, and optimization history.
     """
     # Initialize the optimizer
     opt_state = optim.init(params)
