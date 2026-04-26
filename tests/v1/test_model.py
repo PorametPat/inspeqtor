@@ -14,7 +14,7 @@ def test_check_allclose():
         raise AssertionError("The trees are not all close.")
 
 
-def test_linen_model(load_dataset):
+def test_linen_model(load_dataset, tmp_path):
     # Initialization
 
     loaded_data, train_data, test_data = load_dataset
@@ -76,13 +76,15 @@ def test_linen_model(load_dataset):
         },
     )
 
-    model_data.to_file("test_model_data.json")
-    model_data_from_file = sq.model.ModelData.from_file("test_model_data.json")
+    model_data.to_file(tmp_path / "test_model_data.json")
+    model_data_from_file = sq.model.ModelData.from_file(
+        tmp_path / "test_model_data.json"
+    )
 
     assert model_data == model_data_from_file
 
 
-def test_nnx_model(load_dataset):
+def test_nnx_model(load_dataset, tmp_path):
     # Initialization
 
     loaded_data, train_data, test_data = load_dataset
@@ -137,7 +139,9 @@ def test_nnx_model(load_dataset):
         },
     )
 
-    model_data.to_file("test_nnx_model_data.json")
-    model_data_from_file = sq.model.ModelData.from_file("test_nnx_model_data.json")
+    model_data.to_file(tmp_path / "test_nnx_model_data.json")
+    model_data_from_file = sq.model.ModelData.from_file(
+        tmp_path / "test_nnx_model_data.json"
+    )
 
     assert model_data == model_data_from_file
