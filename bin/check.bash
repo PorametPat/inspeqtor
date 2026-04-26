@@ -81,7 +81,7 @@ uv run pyright src/inspeqtor
 if [[ ${INSPEQTOR_SKIP_TESTS} == false ]]; then
   stdmsg "Running test suite for all supported Python versions"
   while IFS='' read -r version; do
-    uv run --python "${version}" --isolated --with-editable '.[test]' pytest tests/.
+    uv run --python "${version}" --isolated --group test pytest tests/.
   done <<EOF
 3.13
 3.12
