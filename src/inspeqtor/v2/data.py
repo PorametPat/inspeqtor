@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as jnp
 from dataclasses import dataclass, field, asdict
 import typing
@@ -7,7 +8,73 @@ import json
 import polars as pl
 import itertools
 
-from ..v1.data import QubitInformation
+
+@jax.tree_util.register_dataclass
+@dataclass
+class DataBundled:
+    control_params: jnp.ndarray
+    unitaries: jnp.ndarray
+    observables: jnp.ndarray
+    aux: jnp.ndarray | None = None
+
+
+@dataclass
+class QubitInformation:
+    """Dataclass to store qubit information
+
+    Args:
+        unit (str): The string representation of unit, currently support "GHz", "2piGHz", "2piHz", or "Hz".
+        qubit_idx (int): the index of the qubit.
+        anharmonicity (float): Anhamonicity of the qubit, kept for the sake of completeness.
+        frequency (float): Qubit frequency.
+        drive_strength (float): Drive strength of qubit, might be specific for IBMQ platform.
+
+    Raises:
+        ValueError: Fail to convert unit to GHz
+    """
+
+    unit: str
+    qubit_idx: int
+    anharmonicity: float
+    frequency: float
+    drive_strength: float
+    date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def __post_init__(self):
+        self.convert_unit_to_ghz()
+
+    def convert_unit_to_ghz(self):
+        """Convert the unit of data stored in self to unit of GHz
+
+        Raises:
+            ValueError: Data stored in the unsupported unit
+        """
+        if self.unit == "GHz":
+            pass
+        elif self.unit == "Hz":
+            self.anharmonicity = self.anharmonicity * 1e-9
+            self.frequency = self.frequency * 1e-9
+            self.drive_strength = self.drive_strength * 1e-9
+        elif self.unit == "2piGHz":
+            self.anharmonicity = self.anharmonicity / (2 * jnp.pi)
+            self.frequency = self.frequency / (2 * jnp.pi)
+            self.drive_strength = self.drive_strength / (2 * jnp.pi)
+        elif self.unit == "2piHz":
+            self.anharmonicity = self.anharmonicity / (2 * jnp.pi) * 1e-9
+            self.frequency = self.frequency / (2 * jnp.pi) * 1e-9
+            self.drive_strength = self.drive_strength / (2 * jnp.pi) * 1e-9
+        else:
+            raise ValueError("Unit must be GHz, 2piGHz, 2piHz, or Hz")
+
+        # Set unit to GHz
+        self.unit = "GHz"
+
+    def to_dict(self):
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, dict_qubit_info: dict):
+        return cls(**dict_qubit_info)
 
 
 @dataclass
@@ -432,3 +499,45 @@ def calculate_expectation_value_from_binary_dataframe(
     expectation_value = (even_parity - odd_parity) / (even_parity + odd_parity)
 
     return expectation_value
+
+
+def save_to_json(data: dict, path: typing.Union[str, Path]):
+    """Save the dictionary as json to the path
+
+    Args:
+        data (dict): Dict to be save to file
+        path (typing.Union[str, Path]): Path to save file.
+    """
+    if isinstance(path, str):
+        path = Path(path)
+
+    path.parent.mkdir(exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+DataclassVar = typing.TypeVar("DataclassVar")
+
+
+def read_from_json(
+    path: typing.Union[str, Path],
+    dataclass: typing.Union[None, type[DataclassVar]] = None,
+) -> typing.Union[dict, DataclassVar]:
+    """Construct provided `dataclass` instance with json file
+
+    Args:
+        path (typing.Union[str, Path]): Path to json file
+        dataclass (typing.Union[None, type[DataclassVar]], optional): The constructor of the dataclass. Defaults to None.
+
+    Returns:
+        typing.Union[dict, DataclassVar]: Dataclass instance, if dataclass is not provideded, return dict instead.
+    """
+    if isinstance(path, str):
+        path = Path(path)
+    with open(path, "r") as f:
+        config_dict = json.load(f)
+
+    if dataclass is None:
+        return config_dict
+    else:
+        return dataclass(**config_dict)

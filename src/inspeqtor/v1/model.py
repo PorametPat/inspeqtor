@@ -1,4 +1,4 @@
-from deprecated import deprecated
+import warnings
 import jax
 import jax.numpy as jnp
 import typing
@@ -10,7 +10,6 @@ import pathlib
 import json
 from datetime import datetime
 from enum import StrEnum
-import chex
 from numpyro.contrib.module import ParamShape
 
 from .data import ExpectationValue, save_pytree_to_json, load_pytree_from_json, State
@@ -218,13 +217,19 @@ def calculate_metric(
     }
 
 
-@deprecated(reason="use ModelData instead")
 @dataclass
 class ModelState:
     """Dataclass for storing model configurations and parameters."""
 
     model_config: dict
     model_params: VariableDict
+
+    def __post_init__(self):
+        warnings.warn(
+            "ModelState is deprecated, use ModelData instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
 
     def save(self, path: pathlib.Path | str):
         """Save model to the given folder
@@ -573,9 +578,9 @@ class ModelData:
         if not isinstance(value, type(self)):
             raise ValueError("The compared value is not Model object")
 
-        try:
-            chex.assert_trees_all_close(self.params, value.params)
-        except AssertionError:
+        res = jax.tree.map(lambda x, y: jnp.allclose(x, y), self.params, value.params)
+        # Check if all values in the res are True
+        if not jax.tree_util.tree_all(res):
             return False
 
         return True if value.config == self.config else False

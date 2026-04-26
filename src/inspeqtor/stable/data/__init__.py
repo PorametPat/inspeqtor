@@ -1,10 +1,3 @@
-from inspeqtor.v1.data import (
-    QubitInformation as QubitInformation,
-    DataBundled as DataBundled,
-    read_from_json as read_from_json,
-    save_to_json as save_to_json,
-)
-
 from inspeqtor.v2.data import (
     ExpectationValue as ExpectationValue,
     ExperimentalData as ExperimentalData,
@@ -12,6 +5,10 @@ from inspeqtor.v2.data import (
     get_observable_operator as get_observable_operator,
     get_initial_state as get_initial_state,
     get_complete_expectation_values as get_complete_expectation_values,
+    QubitInformation as QubitInformation,
+    DataBundled as DataBundled,
+    read_from_json as read_from_json,
+    save_to_json as save_to_json,
 )
 
 from inspeqtor.v2.predefined import (

@@ -4,15 +4,12 @@ version = "0.1.1.dev0"
 dependencies = [
     "flax>=0.11.0",
     "jax>=0.4.35",
-    "pandas-stubs>=2.2.3.241009",
-    "pandas>=2.2.3",
     "optax>=0.2.4",
     "matplotlib>=3.9.2",
     "diffrax>=0.6.0",
     "numpyro>=0.16.0",
     "graphviz>=0.20.3",
     "funsor>=0.4.5",
-    "deprecated>=1.2.18",
     "polars>=1.33.1",
     "gpjax>=0.12.2",
 ]
@@ -79,11 +76,16 @@ docs = [
     "seaborn>=0.13.2",
     "treescope>=0.1.10",
     "zensical>=0.0.7",
+    "pandas>=3.0.1",
+    "pandas-stubs>=2.2.3.241009",
 ]
 test = [
     "chex>=0.1.91",
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
+    "pandas>=3.0.1",
+    "pandas-stubs>=2.2.3.241009",
+
 ]
 
 [tool.hatch.build.targets.wheel]

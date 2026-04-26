@@ -1,4 +1,4 @@
-from deprecated import deprecated
+import warnings
 import jax
 import jax.numpy as jnp
 from collections import namedtuple
@@ -256,7 +256,6 @@ def make_probabilistic_model(
     return bernoulli_model
 
 
-@deprecated
 def get_args_of_distribution(x):
     """Get the arguments used to construct Distribution, if the provided parameter is not Distribution, return it.
     So that the function can be used with `jax.tree.map`.
@@ -267,13 +266,18 @@ def get_args_of_distribution(x):
     Returns:
         typing.Any: Argument of Distribution if Distribution is provided.
     """
+    warnings.warn(
+        "This function is deprecated",
+        category=DeprecationWarning,
+        stacklevel=2,
+    )
+
     if isinstance(x, dist.Distribution):
         return x.get_args()
     else:
         return x
 
 
-@deprecated
 def construct_normal_priors(posterior):
     """Construct a dict of Normal Distributions with posterior
 
@@ -283,6 +287,13 @@ def construct_normal_priors(posterior):
     Returns:
         typing.Any: dict of Normal distributions
     """
+
+    warnings.warn(
+        "This function is deprecated",
+        category=DeprecationWarning,
+        stacklevel=2,
+    )
+
     posterior_distributions = {}
     assert isinstance(posterior, dict)
     for name, value in posterior.items():
@@ -713,7 +724,6 @@ def dense_deterministic_layer(
     return batched_matmul(x, W, b)  # type: ignore
 
 
-@deprecated
 def make_posteriors_fn(key: jnp.ndarray, guide, params, num_samples=10000):
     """Make the posterior distribution function that will
     return the posterior of parameter of the given name, from guide and parameters.
@@ -726,6 +736,13 @@ def make_posteriors_fn(key: jnp.ndarray, guide, params, num_samples=10000):
     Returns:
         typing.Any: A function of parameter name that return the sample from the posterior distribution of the parameters.
     """
+
+    warnings.warn(
+        "This function is deprecated",
+        category=DeprecationWarning,
+        stacklevel=2,
+    )
+
     posterior_distribution = Predictive(
         model=guide, params=params, num_samples=num_samples
     )(key)
@@ -968,7 +985,6 @@ def make_predictive_fn_v2(
     return predictive_fn
 
 
-@deprecated
 def make_predictive_SGM_model(
     model: nn.Module, model_params, output_to_expectation_values_fn, shots: int
 ):
@@ -979,6 +995,12 @@ def make_predictive_SGM_model(
         model_params (typing.Any): The model parameters.
         shots (int): The number of shots.
     """
+
+    warnings.warn(
+        "This function is deprecated",
+        category=DeprecationWarning,
+        stacklevel=2,
+    )
 
     def predictive_model(
         key: jnp.ndarray, control_param: jnp.ndarray, unitaries: jnp.ndarray

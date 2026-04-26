@@ -1,4 +1,4 @@
-import deprecated
+import warnings
 import jax
 import jax.numpy as jnp
 from flax import nnx
@@ -250,7 +250,6 @@ def toggling_unitary_with_spam_predictive_fn(
     )
 
 
-@deprecated.deprecated
 def make_loss_fn_old(
     predictive_fn,
     calculate_metric_fn=calculate_metric,
@@ -263,6 +262,12 @@ def make_loss_fn_old(
         calculate_metric_fn (typing.Any, optional): Function for calculating metrics. Defaults to calculate_metric.
         loss_metric (LossMetric, optional): The chosen loss function to be optimized. Defaults to LossMetric.MSEE.
     """
+
+    warnings.warn(
+        "make_loss_fn_old is deprecated, use make_loss_fn instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def loss_fn(model: Blackbox, data: DataBundled):
         expval = predictive_fn(data.control_params, data.unitaries, model)
@@ -277,7 +282,6 @@ def make_loss_fn_old(
     return loss_fn
 
 
-@deprecated.deprecated("Use new `make_loss_fn` instead")
 def make_loss_fn_oldv2(
     adapter_fn,
     calculate_metric_fn=calculate_metric,
@@ -290,6 +294,12 @@ def make_loss_fn_oldv2(
         calculate_metric_fn (typing.Any, optional): Function for calculating metrics. Defaults to calculate_metric.
         loss_metric (LossMetric, optional): The chosen loss function to be optimized. Defaults to LossMetric.MSEE.
     """
+
+    warnings.warn(
+        "make_loss_fn_oldv2 is deprecated, use make_loss_fn instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def loss_fn(model: Blackbox, data: DataBundled):
         output = model(data.control_params)

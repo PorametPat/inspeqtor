@@ -3,6 +3,17 @@ import inspeqtor.v1 as sq
 from flax import nnx
 
 
+def test_check_allclose():
+    tree = {"a": jax.numpy.array([1.0, 2.0]), "b": jax.numpy.array([3.0, 4.0])}
+    tree_copy = tree.copy()
+
+    # Use tree.map to apply jax.numpy.allclose to each leaf of the tree
+    res = jax.tree.map(lambda x, y: jax.numpy.allclose(x, y), tree, tree_copy)
+
+    if not jax.tree_util.tree_all(res):
+        raise AssertionError("The trees are not all close.")
+
+
 def test_linen_model(load_dataset):
     # Initialization
 
@@ -57,6 +68,19 @@ def test_linen_model(load_dataset):
     unitary_f = loaded_data.whitebox(sample_params)[-1]
     predictive_fn(sq.predefined.drag_feature_map(sample_params), unitary_f)
 
+    model_data = sq.model.ModelData(
+        model_params,
+        {
+            "shared_layers": [10],
+            "pauli_layers": [10],
+        },
+    )
+
+    model_data.to_file("test_model_data.json")
+    model_data_from_file = sq.model.ModelData.from_file("test_model_data.json")
+
+    assert model_data == model_data_from_file
+
 
 def test_nnx_model(load_dataset):
     # Initialization
@@ -78,7 +102,7 @@ def test_nnx_model(load_dataset):
     training_key, params_key = jax.random.split(key)
     NUM_EPOCH = 10
     optimizer = sq.optimize.get_default_optimizer(8 * NUM_EPOCH)
-    model_params, opt_state, histories = sq.models.nnx.train_model(
+    _, opt_state, histories = sq.models.nnx.train_model(
         training_key,
         train_data=train_data,
         val_data=test_data,  # Here, we did not care about the validating dataset.
@@ -101,3 +125,19 @@ def test_nnx_model(load_dataset):
 
     unitary_f = loaded_data.whitebox(sample_params)[-1]
     predictive_fn(sq.predefined.drag_feature_map(sample_params), unitary_f)
+
+    _, state = nnx.split(model)
+    model_params = nnx.to_pure_dict(state)
+
+    model_data = sq.model.ModelData(
+        model_params,
+        {
+            "shared_layers": [8],
+            "pauli_layers": [8],
+        },
+    )
+
+    model_data.to_file("test_nnx_model_data.json")
+    model_data_from_file = sq.model.ModelData.from_file("test_nnx_model_data.json")
+
+    assert model_data == model_data_from_file
