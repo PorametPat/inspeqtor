@@ -1,4 +1,4 @@
-import deprecated
+import warnings
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
@@ -195,7 +195,6 @@ class UnitarySPAMModel(nn.Module):
         return {"model_params": x, "spam_params": unflatten_fn(spam_params)}
 
 
-@deprecated.deprecated(reason="use make_loss_fn instead")
 def loss_fn(
     params: VariableDict,
     control_parameters: jnp.ndarray,
@@ -222,6 +221,13 @@ def loss_fn(
     Returns:
         tuple[jnp.ndarray, dict[str, jnp.ndarray]]: The loss value and other metrics.
     """
+
+    warnings.warn(
+        "loss_fn is deprecated, use make_loss_fn instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     # Calculate the metrics
     predicted_expectation_value = predictive_fn(
         model=model,
@@ -347,7 +353,6 @@ def toggling_unitary_predictive_fn(
         )
 
 
-@deprecated.deprecated
 def make_loss_fn_old(
     predictive_fn: typing.Callable,
     model: nn.Module,
@@ -362,6 +367,12 @@ def make_loss_fn_old(
         loss_metric (LossMetric): The choice of loss value to be minimized. Defaults to LossMetric.MSEE.
         calculate_metric_fn (typing.Callable): Function for metrics calculation from prediction and experimental value. Defaults to calculate_metric.
     """
+
+    warnings.warn(
+        "make_loss_fn_old is deprecated, use make_loss_fn instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def loss_fn(
         params: VariableDict,

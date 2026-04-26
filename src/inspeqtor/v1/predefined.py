@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 import typing
 from enum import Enum, StrEnum, auto
 from functools import partial
-import pandas as pd
+
+# import pandas as pd
 import pathlib
 from .data import (
     QubitInformation,
@@ -638,6 +639,14 @@ def generate_experimental_data(
     Returns:
         tuple[ExperimentData, ControlSequence, jnp.ndarray, typing.Callable[[jnp.ndarray], jnp.ndarray]]: tuple of (1) Experiment data, (2) Pulse sequence, (3) Noisy unitary, (4) Noisy solver
     """
+
+    try:
+        import pandas as pd  # type: ignore
+    except ImportError:
+        raise ImportError(
+            "pandas is required to run this function. Please install pandas with `pip install pandas`."
+        )
+
     qubit_info, control_sequence, config = get_mock_prefined_exp_v1(
         sample_size=sample_size,
         shots=shots,

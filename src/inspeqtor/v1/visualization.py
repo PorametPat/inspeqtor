@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from matplotlib.axes import Axes
-import pandas as pd
 import numpy as np
 from .constant import default_expectation_values_order
 
@@ -83,6 +82,13 @@ def plot_loss_with_moving_average(
     Returns:
         Axes: Axes object.
     """
+    try:
+        import pandas as pd  # type: ignore
+    except ImportError:
+        raise ImportError(
+            "pandas is required to run this function. Please install pandas with `pip install pandas`."
+        )
+
     moving_average = pd.Series(np.asarray(y)).rolling(window=window).mean()
 
     ax.plot(

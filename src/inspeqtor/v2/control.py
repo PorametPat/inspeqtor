@@ -1,4 +1,3 @@
-from deprecated import deprecated
 import jax
 import jax.numpy as jnp
 import typing
@@ -484,36 +483,6 @@ def ravel_unravel_fn(structure: typing.Iterable[typing.Iterable[str]]):
         return unflatten_dict(
             {dict_keys: param[idx] for idx, dict_keys in enumerate(structure)}
         )
-
-    return ravel_fn, unravel_fn
-
-
-@deprecated(reason="Old implementation of the ravel_unravel_fn")
-def ravel_unravel_fn_old(control_sequence: ControlSequence):
-    """This function return the ravel and unravel functions for the provided control sequence
-
-    Args:
-        control_sequence (ControlSequence): The control sequence
-
-    Returns:
-        tuple[typing.Callable, typing.Callable]: The first element is the function that convert structured parameter to array, the second is a function that reverse the action of the first.
-    """
-    structure = control_sequence.get_structure()
-
-    def ravel_fn(param_dict: dict[str, ParametersDictType]) -> jnp.ndarray:
-        tmp = []
-        for sub_order in structure:
-            tmp.append(param_dict[sub_order[0]][sub_order[1]])
-        return jnp.array(tmp)
-
-    def unravel_fn(param: jnp.ndarray) -> dict[str, ParametersDictType]:
-        tmp = {}
-        for idx, sub_order in enumerate(structure):
-            if sub_order[0] not in tmp:
-                tmp[sub_order[0]] = {}
-
-            tmp[sub_order[0]][sub_order[1]] = param[idx]
-        return tmp
 
     return ravel_fn, unravel_fn
 
