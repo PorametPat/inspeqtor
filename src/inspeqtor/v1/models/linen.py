@@ -31,11 +31,11 @@ class WoModel(nn.Module):
     NUM_UNITARY_PARAMS: int = 3
     NUM_DIAGONAL_PARAMS: int = 2
 
-    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
-        lambda x: 2 * jnp.pi * nn.hard_sigmoid(x)
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        2 * jnp.pi * nn.hard_sigmoid(x)
     )
-    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
-        lambda x: (2 * nn.hard_sigmoid(x)) - 1
+    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        (2 * nn.hard_sigmoid(x)) - 1
     )
 
     @nn.compact
@@ -105,11 +105,11 @@ class WoDropoutModel(nn.Module):
     NUM_UNITARY_PARAMS: int = 3
     NUM_DIAGONAL_PARAMS: int = 2
 
-    _unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
-        lambda x: 2 * jnp.pi * nn.hard_sigmoid(x)
+    _unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        2 * jnp.pi * nn.hard_sigmoid(x)
     )
-    _diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
-        lambda x: (2 * nn.hard_sigmoid(x)) - 1
+    _diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        (2 * nn.hard_sigmoid(x)) - 1
     )
 
     @nn.compact

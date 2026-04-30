@@ -4,6 +4,8 @@ import inspeqtor as sq
 
 
 def test_expectation_values_calculation():
+    sq.utils.enable_jax_x64()
+
     ideal_expvals = jnp.array(
         [
             sq.physics.calculate_exp(
@@ -38,3 +40,5 @@ def test_expectation_values_calculation():
     )
 
     chex.assert_trees_all_close(b, expvals)
+
+    sq.utils.disable_jax_x64()

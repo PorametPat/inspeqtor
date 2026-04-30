@@ -66,7 +66,7 @@ class GaussianPulse(BaseControl):
     max_theta: float = 2 * jnp.pi
 
     def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration, dtype=jnp.float_)
+        self.t_eval = jnp.arange(self.duration, dtype=float)
 
         # This is the correction factor that will cancel the factor in the front of hamiltonian
         self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
@@ -275,7 +275,7 @@ def get_predefined_data_model_m1(
             total_dt=control_seq.total_dt,
             dt=dt,
             trotter_steps=trotter_steps,
-            y0=jnp.eye(2, dtype=jnp.complex128),
+            y0=jnp.eye(2, dtype=complex),
         )
 
     else:
@@ -283,7 +283,7 @@ def get_predefined_data_model_m1(
             solver,
             t_eval=jnp.linspace(0, control_seq.total_dt * dt, 321),
             hamiltonian=hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex128),
+            y0=jnp.eye(2, dtype=complex),
             t0=0,
             t1=control_seq.total_dt * dt,
         )
@@ -301,14 +301,14 @@ def get_predefined_data_model_m1(
             total_dt=control_seq.total_dt,
             dt=dt,
             trotter_steps=trotter_steps,
-            y0=jnp.eye(2, dtype=jnp.complex128),
+            y0=jnp.eye(2, dtype=complex),
         )
     else:
         whitebox = partial(
             solver,
             t_eval=jnp.linspace(0, control_seq.total_dt * dt, 321),
             hamiltonian=ideal_hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex128),
+            y0=jnp.eye(2, dtype=complex),
             t0=0,
             t1=control_seq.total_dt * dt,
         )
@@ -390,7 +390,7 @@ class HamiltonianSpec:
                 total_dt=control_sequence.total_dt,
                 dt=dt,
                 trotter_steps=self.trotter_steps,
-                y0=jnp.eye(2, dtype=jnp.complex128),
+                y0=jnp.eye(2, dtype=complex),
             )
 
         elif self.method == WhiteboxStrategy.ODE:
@@ -414,7 +414,7 @@ class HamiltonianSpec:
                 solver,
                 t_eval=t_eval,
                 hamiltonian=hamiltonian,
-                y0=jnp.eye(2, dtype=jnp.complex_),
+                y0=jnp.eye(2, dtype=complex),
                 t0=0,
                 t1=control_sequence.total_dt * dt,
                 max_steps=self.max_steps,
@@ -546,7 +546,7 @@ def generate_single_qubit_experimental_data(
                 total_dt=control_sequence.total_dt,
                 dt=dt,
                 trotter_steps=trotter_steps,
-                y0=jnp.eye(2, dtype=jnp.complex128),
+                y0=jnp.eye(2, dtype=complex),
             )
         )
     else:
@@ -558,7 +558,7 @@ def generate_single_qubit_experimental_data(
                 solver,
                 t_eval=t_eval,
                 hamiltonian=hamiltonian,
-                y0=jnp.eye(2, dtype=jnp.complex64),
+                y0=jnp.eye(2, dtype=complex),
                 t0=0,
                 t1=control_sequence.total_dt * dt,
                 max_steps=max_steps,

@@ -273,7 +273,7 @@ class ControlSequence:
     #         params_list, total_waveform = sample(key)
     #     """
     #     # Create base waveform
-    #     total_waveform = jnp.zeros(self.total_dt, dtype=jnp.complex64)
+    #     total_waveform = jnp.zeros(self.total_dt, dtype=complex)
 
     #     for _params, _pulse in zip(params_list, self.controls):
     #         waveform = _pulse.get_waveform(_params)

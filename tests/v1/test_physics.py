@@ -9,7 +9,12 @@ import chex
 import logging
 import typing
 
-sq.utils.enable_jax_x64()
+
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_teardown():
+    sq.utils.enable_jax_x64()
+    yield
+    sq.utils.disable_jax_x64()
 
 
 def get_single_qubit_rotating_frame_whitebox(
@@ -204,7 +209,7 @@ def solve_with_manual_rotate():
             sq.physics.solver,
             t_eval=t_eval,
             hamiltonian=hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex64),
+            y0=jnp.eye(2, dtype=complex),
             t0=0,
             t1=control_sequence.total_dt * time_step,
         )
@@ -238,7 +243,7 @@ def solve_with_auto_rotate():
             sq.physics.solver,
             t_eval=t_eval,
             hamiltonian=rotating_hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex64),
+            y0=jnp.eye(2, dtype=complex),
             t0=0,
             t1=control_sequence.total_dt * time_step,
         )
@@ -319,7 +324,7 @@ def solve_with_auto_hamiltonian_extractor():
         hamiltonian_args,
         t_eval=t_eval,
         hamiltonian=rotating_hamiltonian,
-        y0=jnp.eye(2, dtype=jnp.complex64),
+        y0=jnp.eye(2, dtype=complex),
         t0=0,
         t1=control_sequence.total_dt * time_step,
     )
@@ -458,7 +463,7 @@ def test_crosscheck_difflax():
             sq.physics.solver,
             t_eval=t_eval,
             hamiltonian=rotating_hamiltonian,
-            y0=jnp.eye(2, dtype=jnp.complex64),
+            y0=jnp.eye(2, dtype=complex),
             t0=0,
             t1=control_sequence.total_dt * time_step,
         )
@@ -510,7 +515,7 @@ def test_crosscheck_difflax():
         hamiltonian_args,
         t_eval=t_eval,
         hamiltonian=rotating_hamiltonian,
-        y0=jnp.eye(2, dtype=jnp.complex64),
+        y0=jnp.eye(2, dtype=complex),
         t0=0,
         t1=control_sequence.total_dt * time_step,
     )

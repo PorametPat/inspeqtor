@@ -51,13 +51,13 @@ class Operator:
 
     """
 
-    _pauli_x = jnp.array([[0, 1], [1, 0]], dtype=jnp.complex64)
-    _pauli_y = jnp.array([[0, -1j], [1j, 0]], dtype=jnp.complex64)
-    _pauli_z = jnp.array([[1, 0], [0, -1]], dtype=jnp.complex64)
-    _hadamard = jnp.array([[1, 1], [1, -1]], dtype=jnp.complex64) / jnp.sqrt(2)
-    _s_gate = jnp.array([[1, 0], [0, 1j]], dtype=jnp.complex64)
-    _sdg_gate = jnp.array([[1, 0], [0, -1j]], dtype=jnp.complex64)
-    _identity = jnp.array([[1, 0], [0, 1]], dtype=jnp.complex64)
+    _pauli_x = jnp.array([[0, 1], [1, 0]], dtype=complex)
+    _pauli_y = jnp.array([[0, -1j], [1j, 0]], dtype=complex)
+    _pauli_z = jnp.array([[1, 0], [0, -1]], dtype=complex)
+    _hadamard = jnp.array([[1, 1], [1, -1]], dtype=complex) / jnp.sqrt(2)
+    _s_gate = jnp.array([[1, 0], [0, 1j]], dtype=complex)
+    _sdg_gate = jnp.array([[1, 0], [0, -1j]], dtype=complex)
+    _identity = jnp.array([[1, 0], [0, 1]], dtype=complex)
 
     @classmethod
     def from_label(cls, op: str) -> jnp.ndarray:
@@ -115,12 +115,12 @@ class State:
         ValueError: Provided state is not qubit
     """
 
-    _zero = jnp.array([1, 0], dtype=jnp.complex64)
-    _one = jnp.array([0, 1], dtype=jnp.complex64)
-    _plus = jnp.array([1, 1], dtype=jnp.complex64) / jnp.sqrt(2)
-    _minus = jnp.array([1, -1], dtype=jnp.complex64) / jnp.sqrt(2)
-    _right = jnp.array([1, 1j], dtype=jnp.complex64) / jnp.sqrt(2)
-    _left = jnp.array([1, -1j], dtype=jnp.complex64) / jnp.sqrt(2)
+    _zero = jnp.array([1, 0], dtype=complex)
+    _one = jnp.array([0, 1], dtype=complex)
+    _plus = jnp.array([1, 1], dtype=complex) / jnp.sqrt(2)
+    _minus = jnp.array([1, -1], dtype=complex) / jnp.sqrt(2)
+    _right = jnp.array([1, 1j], dtype=complex) / jnp.sqrt(2)
+    _left = jnp.array([1, -1j], dtype=complex) / jnp.sqrt(2)
 
     @classmethod
     def from_label(cls, state: str, dm: bool = False) -> jnp.ndarray:

@@ -190,7 +190,7 @@ def finite_shot_expectation_value(key: jnp.ndarray, prob: jnp.ndarray, shots: in
     return jnp.mean(
         jax.random.choice(
             key,
-            jax.vmap(check_parity)(jnp.arange(0, prob.size, dtype=jnp.int_)),
+            jax.vmap(check_parity)(jnp.arange(0, prob.size, dtype=int)),
             shape=(shots,),
             p=prob,
         )

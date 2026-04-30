@@ -4,6 +4,7 @@ import polars as pl
 import numpy as np
 from flax.traverse_util import flatten_dict
 import chex
+import pytest
 
 import inspeqtor as sq
 
@@ -47,6 +48,7 @@ def test_ExperimentConfig(tmp_path):
     assert experiment_config == experiment_config_from_file
 
 
+@pytest.mark.usefixtures("x64_context")
 def test_ExperimentalData(tmp_path):
     data_model = sq.data.library.get_predefined_data_model_m1(trotter_steps=1_000)
     seq = data_model.control_sequence
@@ -149,3 +151,20 @@ def test_ExperimentalData(tmp_path):
         config, param_df, binaray_obs_df, mode="binary"
     )
     chex.assert_trees_all_close(binary_exp_data.get_observed(), exp_data.get_observed())
+
+
+@pytest.mark.parametrize("x64_enable", [True, False])
+def test_complex_promotion(x64_enable):
+    # Define a constant that suppose to be complex dtype
+
+    if x64_enable:
+        sq.utils.enable_jax_x64()
+    else:
+        sq.utils.disable_jax_x64()
+
+    const = jnp.array([1, 0], dtype=complex)
+
+    if x64_enable:
+        assert const.dtype == jnp.complex128
+    else:
+        assert const.dtype == jnp.complex64

@@ -14,6 +14,7 @@ def test_check_allclose():
         raise AssertionError("The trees are not all close.")
 
 
+# @pytest.mark.usefixtures("x64_context")
 def test_linen_model(load_dataset, tmp_path):
     # Initialization
 
@@ -84,6 +85,7 @@ def test_linen_model(load_dataset, tmp_path):
     assert model_data == model_data_from_file
 
 
+# @pytest.mark.usefixtures("x64_context")
 def test_nnx_model(load_dataset, tmp_path):
     # Initialization
 
