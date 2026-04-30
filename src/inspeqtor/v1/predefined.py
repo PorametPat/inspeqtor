@@ -119,7 +119,7 @@ class GaussianPulse(BaseControl):
     max_theta: float = 2 * jnp.pi
 
     def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration, dtype=jnp.float_)
+        self.t_eval = jnp.arange(self.duration, dtype=float)
 
         # This is the correction factor that will cancel the factor in the front of hamiltonian
         self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
@@ -201,7 +201,7 @@ class TwoAxisGaussianPulse(BaseControl):
     max_theta_y: float = 2 * jnp.pi
 
     def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration, dtype=jnp.float_)
+        self.t_eval = jnp.arange(self.duration, dtype=float)
 
         # Correction factor that will cancel the factor in the front of hamiltonian
         self.correction = 2 * jnp.pi * self.qubit_drive_strength * self.dt
@@ -484,7 +484,7 @@ class MultiDragPulseV3(BaseControl):
     global_beta_bound: list[float] = field(default_factory=list)  # [-2.0, 2.0]
 
     def __post_init__(self):
-        self.t_eval = jnp.arange(self.duration, dtype=jnp.float64)
+        self.t_eval = jnp.arange(self.duration, dtype=float)
 
     def get_bounds(self) -> tuple[ParametersDictType, ParametersDictType]:
         lower: ParametersDictType = {}
@@ -666,7 +666,7 @@ def generate_experimental_data(
                 total_dt=control_sequence.total_dt,
                 dt=dt,
                 trotter_steps=trotter_steps,
-                y0=jnp.eye(2, dtype=jnp.complex128),
+                y0=jnp.eye(2, dtype=complex),
             )
         )
     else:
@@ -678,7 +678,7 @@ def generate_experimental_data(
                 solver,
                 t_eval=t_eval,
                 hamiltonian=hamiltonian,
-                y0=jnp.eye(2, dtype=jnp.complex64),
+                y0=jnp.eye(2, dtype=complex),
                 t0=0,
                 t1=control_sequence.total_dt * dt,
                 max_steps=max_steps,
@@ -798,7 +798,7 @@ def get_single_qubit_whitebox(
         solver,
         t_eval=t_eval,
         hamiltonian=hamiltonian,
-        y0=jnp.eye(2, dtype=jnp.complex_),
+        y0=jnp.eye(2, dtype=complex),
         t0=0,
         t1=control_sequence.total_dt * dt,
         max_steps=max_steps,
@@ -897,7 +897,7 @@ class HamiltonianSpec:
                 total_dt=control_sequence.total_dt,
                 dt=dt,
                 trotter_steps=self.trotter_steps,
-                y0=jnp.eye(2, dtype=jnp.complex128),
+                y0=jnp.eye(2, dtype=complex),
             )
             return whitebox
         elif self.method == WhiteboxStrategy.ODE:
@@ -1007,7 +1007,7 @@ def get_predefined_data_model_m1(
         total_dt=control_seq.total_dt,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
-        y0=jnp.eye(2, dtype=jnp.complex128),
+        y0=jnp.eye(2, dtype=complex),
     )
 
     ideal_hamiltonian = partial(
@@ -1022,7 +1022,7 @@ def get_predefined_data_model_m1(
         total_dt=control_seq.total_dt,
         dt=dt,
         trotter_steps=TROTTER_STEPS,
-        y0=jnp.eye(2, dtype=jnp.complex128),
+        y0=jnp.eye(2, dtype=complex),
     )
 
     return SyntheticDataModel(

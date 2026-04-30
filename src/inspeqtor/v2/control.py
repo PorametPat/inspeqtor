@@ -383,7 +383,7 @@ def sequence_waveform(
         params, total_waveform = sample(key)
     """
     # Create base waveform
-    total_waveform = jnp.zeros_like(t_eval, dtype=jnp.complex64)
+    total_waveform = jnp.zeros_like(t_eval, dtype=complex)
 
     for (param_key, param_val), (ctrl_key, control) in zip(
         params.items(), control_seqeunce.controls.items()

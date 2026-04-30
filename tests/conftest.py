@@ -3,6 +3,7 @@ import jax.numpy as jnp
 import inspeqtor.v1 as sq
 import logging
 import pytest
+import warnings
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,7 +44,7 @@ def load_dataset(generate_dataset):
         data_model.control_sequence.total_dt,
         data_model.dt,
         trotter_steps=TROTTER_STEPS,
-        y0=jnp.eye(2, dtype=jnp.complex128),
+        y0=jnp.eye(2, dtype=complex),
     )
     loaded_data = sq.utils.prepare_data(exp_data, data_model.control_sequence, whitebox)
 
@@ -73,3 +74,14 @@ def load_dataset(generate_dataset):
         observables=test_expectation_values,
     )
     return loaded_data, train_data, test_data
+
+
+@pytest.fixture(scope="function")
+def x64_context():
+    sq.utils.enable_jax_x64()
+    is_enabled = jax.config.read("jax_enable_x64")
+    warnings.warn(f"JAX X64 enabled: {is_enabled}")
+    yield
+    sq.utils.disable_jax_x64()
+    is_enabled = jax.config.read("jax_enable_x64")
+    warnings.warn(f"JAX X64 enabled after teardown: {is_enabled}")

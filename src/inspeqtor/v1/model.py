@@ -312,7 +312,7 @@ def hermitian(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
     q_10 = -jnp.exp(-1j * beta) * jnp.sin(theta)
     q_11 = jnp.exp(-1j * alpha) * jnp.cos(theta)
 
-    Q = jnp.zeros(U.shape[:-1] + (2, 2), dtype=jnp.complex_)
+    Q = jnp.zeros(U.shape[:-1] + (2, 2), dtype=complex)
     Q = Q.at[..., 0, 0].set(q_00)
     Q = Q.at[..., 0, 1].set(q_01)
     Q = Q.at[..., 1, 0].set(q_10)
@@ -323,7 +323,7 @@ def hermitian(U: jnp.ndarray, D: jnp.ndarray) -> jnp.ndarray:
     # NOTE: Below is working
     Q_dagger = jnp.swapaxes(Q, -2, -1).conj()
 
-    Diag = jnp.zeros(D.shape[:-1] + (2, 2), dtype=jnp.complex_)
+    Diag = jnp.zeros(D.shape[:-1] + (2, 2), dtype=complex)
     Diag = Diag.at[..., 0, 0].set(lambda_1)
     Diag = Diag.at[..., 1, 1].set(lambda_2)
 
@@ -352,7 +352,7 @@ def unitary(params: jnp.ndarray) -> jnp.ndarray:
     q_10 = -jnp.exp(-1j * beta) * jnp.sin(theta)
     q_11 = jnp.exp(-1j * alpha) * jnp.cos(theta)
 
-    Q = jnp.zeros(params.shape[:-1] + (2, 2), dtype=jnp.complex_)
+    Q = jnp.zeros(params.shape[:-1] + (2, 2), dtype=complex)
     Q = Q.at[..., 0, 0].set(q_00)
     Q = Q.at[..., 0, 1].set(q_01)
     Q = Q.at[..., 1, 0].set(q_10)

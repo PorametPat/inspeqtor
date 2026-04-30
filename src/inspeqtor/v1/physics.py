@@ -108,7 +108,7 @@ def solver(
         args (HamiltonianArgs): The arguments for the Hamiltonian
         t_eval (jnp.ndarray): The time points to evaluate the solution
         hamiltonian (typing.Callable[[HamiltonianArgs, jnp.ndarray], jnp.ndarray]): The Hamiltonian function
-        y0 (jnp.ndarray): The initial state, set to jnp.eye(2, dtype=jnp.complex128) for unitary matrix
+        y0 (jnp.ndarray): The initial state, set to jnp.eye(2, dtype=complex) for unitary matrix
         t0 (float): The initial time
         t1 (float): The final time
         rtol (float, optional): _description_. Defaults to 1e-7.
@@ -653,7 +653,7 @@ def make_trotterization_solver(
         total_dt (int): The total duration of control sequence
         dt (float, optional): The duration of time step in nanosecond.
         trotter_steps (int, optional): The number of trotterization step.
-        y0 (jnp.ndarray): The initial unitary state. Defaults to jnp.eye(2, dtype=jnp.complex128)
+        y0 (jnp.ndarray): The initial unitary state. Defaults to jnp.eye(2, dtype=complex)
 
     Returns:
         typing.Callable[..., jnp.ndarray]: Trotterization Whitebox function

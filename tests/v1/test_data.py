@@ -42,6 +42,7 @@ qubit_test_cases = [
 ]
 
 
+@pytest.mark.usefixtures("x64_context")
 @pytest.mark.parametrize("state_str", ["0", "1", "+", "-", "r", "l"])
 def test_State(state_str):
     state = sq.data.State.from_label(state_str)
@@ -155,6 +156,7 @@ def test_get_parameters_dict_list_1():
     ]
 
 
+@pytest.mark.usefixtures("x64_context")
 def test_get_parameters_dict_list_2():
     key = jax.random.PRNGKey(0)
     control_sequence = sq.predefined.get_multi_drag_control_sequence_v3()
@@ -177,6 +179,7 @@ def test_get_parameters_dict_list_2():
     chex.assert_trees_all_close(parameters_dict_list, pulse_params)
 
 
+@pytest.mark.usefixtures("x64_context")
 def test_ExperimentData_1(tmp_path):
     qubit_info, control_sequence, config = sq.predefined.get_mock_prefined_exp_v1()
     key = jax.random.PRNGKey(0)
@@ -243,6 +246,7 @@ def test_ExperimentData_1(tmp_path):
     assert exp_data == exp_data_from_file
 
 
+@pytest.mark.usefixtures("x64_context")
 def test_save_load_data_from_path_v2(tmp_path, load_dataset):
     loaded_data, _, _ = load_dataset
 

@@ -1,8 +1,10 @@
 import jax
 import jax.numpy as jnp
 import inspeqtor as sq
+import pytest
 
 
+@pytest.mark.usefixtures("x64_context")
 def test_generate_mock_data():
     data_model = sq.data.library.get_predefined_data_model_m1()
 

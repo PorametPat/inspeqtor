@@ -22,7 +22,12 @@ from numpyro.contrib.module import random_flax_module, random_nnx_module
 from numpyro.infer import SVI, TraceMeanField_ELBO
 from flax import nnx
 
-jax.config.update("jax_enable_x64", True)
+
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_teardown():
+    sq.utils.enable_jax_x64()
+    yield
+    sq.utils.disable_jax_x64()
 
 
 def test_eigenvalue_binary_conversion():
@@ -302,13 +307,12 @@ def make_WoBased_bnn_model(
     priors_fn: typing.Callable[
         [str, tuple[int, ...]], dist.Distribution
     ] = sq.probabilistic.default_priors_fn,
-    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: 2
-    * jnp.pi
-    * jax.nn.hard_sigmoid(x),
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        2 * jnp.pi * jax.nn.hard_sigmoid(x)
+    ),
     diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
-        2 * jax.nn.hard_sigmoid(x)
-    )
-    - 1,
+        (2 * jax.nn.hard_sigmoid(x)) - 1
+    ),
 ) -> typing.Callable:
     """Function to create Blackbox BNN with custom activation functions for unitary and diagonal output
 

@@ -2,6 +2,9 @@ import jax
 import jax.numpy as jnp
 import inspeqtor as sq
 import chex
+import pytest
+
+# sq.utils.enable_jax_x64()
 
 
 def test_check_parity():
@@ -9,6 +12,7 @@ def test_check_parity():
     assert sq.utils.check_parity(6) == 0
 
 
+@pytest.mark.usefixtures("x64_context")
 def test_finite_shot_expectation_value():
     key = jax.random.key(0)
     expval = sq.utils.finite_shot_expectation_value(
@@ -40,6 +44,8 @@ def test_tensor_product():
 
 
 def test_get_measurement_probability():
+    sq.utils.enable_jax_x64()
+
     expval = sq.data.ExpectationValue("00", "ZZ")
     state = sq.data.get_initial_state(expval.initial_state, dm=True)
     idx_with_one = int(expval.initial_state, base=2)
@@ -54,8 +60,12 @@ def test_get_measurement_probability():
     state = sq.data.get_initial_state(expval.initial_state, dm=True)
     results = sq.utils.get_measurement_probability(state, expval.observable)
 
+    sq.utils.disable_jax_x64()
+
 
 def test_finite_shot_integration():
+    sq.utils.enable_jax_x64()
+
     expval = sq.data.ExpectationValue("+1", "XY")
     state = sq.data.get_initial_state(expval.initial_state, dm=True)
 
@@ -65,3 +75,5 @@ def test_finite_shot_integration():
     expval = sq.utils.finite_shot_expectation_value(key, prob, 1000)
 
     assert expval >= -1.0 and expval <= 1.0
+
+    sq.utils.disable_jax_x64()

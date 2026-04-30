@@ -143,33 +143,54 @@ def tensor_product(*operators) -> jnp.ndarray:
     return result
 
 
-operators_map = {
-    "X": jnp.array([[0, 1], [1, 0]], dtype=jnp.complex_),
-    "Y": jnp.array([[0, -1j], [1j, 0]], dtype=jnp.complex_),
-    "Z": jnp.array([[1, 0], [0, -1]], dtype=jnp.complex_),
-    "H": jnp.array([[1, 1], [1, -1]], dtype=jnp.complex_) / jnp.sqrt(2),
-    "S": jnp.array([[1, 0], [0, 1j]], dtype=jnp.complex_),
-    "Sdg": jnp.array([[1, 0], [0, -1j]], dtype=jnp.complex_),
-    "I": jnp.array([[1, 0], [0, 1]], dtype=jnp.complex_),
-}
+def operator_map(operator: str) -> jnp.ndarray:
+    match operator:
+        case "X":
+            return jnp.array([[0, 1], [1, 0]], dtype=complex)
+        case "Y":
+            return jnp.array([[0, -1j], [1j, 0]], dtype=complex)
+        case "Z":
+            return jnp.array([[1, 0], [0, -1]], dtype=complex)
+        case "H":
+            return jnp.array([[1, 1], [1, -1]], dtype=complex) / jnp.sqrt(2)
+        case "S":
+            return jnp.array([[1, 0], [0, 1j]], dtype=complex)
+        case "Sdg":
+            return jnp.array([[1, 0], [0, -1j]], dtype=complex)
+        case "I":
+            return jnp.array([[1, 0], [0, 1]], dtype=complex)
+        case _:
+            raise ValueError(
+                f"Invalid operator label '{operator}'. Must be one of 'I', 'X', 'Y', 'Z', 'H', 'S', or 'Sdg'."
+            )
 
 
 def operator_from_label(ops: str) -> jnp.ndarray:
-    return operators_map[ops]
+    return operator_map(ops)
 
 
-state_map = {
-    "0": jnp.array([1, 0], dtype=jnp.complex_),
-    "1": jnp.array([0, 1], dtype=jnp.complex_),
-    "+": jnp.array([1, 1], dtype=jnp.complex_) / jnp.sqrt(2),
-    "-": jnp.array([1, -1], dtype=jnp.complex_) / jnp.sqrt(2),
-    "r": jnp.array([1, 1j], dtype=jnp.complex_) / jnp.sqrt(2),
-    "l": jnp.array([1, -1j], dtype=jnp.complex_) / jnp.sqrt(2),
-}
+def state_map(state: str) -> jnp.ndarray:
+    match state:
+        case "0":
+            return jnp.array([1, 0], dtype=complex)
+        case "1":
+            return jnp.array([0, 1], dtype=complex)
+        case "+":
+            return jnp.array([1, 1], dtype=complex) / jnp.sqrt(2)
+        case "-":
+            return jnp.array([1, -1], dtype=complex) / jnp.sqrt(2)
+        case "r":
+            return jnp.array([1, 1j], dtype=complex) / jnp.sqrt(2)
+        case "l":
+            return jnp.array([1, -1j], dtype=complex) / jnp.sqrt(2)
+        case _:
+            raise ValueError(
+                f"Invalid state label '{state}'. Must be one of '0', '1', '+', '-', 'r', or 'l'."
+            )
 
 
 def state_from_label(state: str, dm: bool) -> jnp.ndarray:
-    vec = state_map[state].reshape(-1, 1)
+    vec = state_map(state).reshape(-1, 1)
     return vec if not dm else jnp.outer(vec, vec.conj())
 
 

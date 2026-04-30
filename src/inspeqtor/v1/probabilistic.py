@@ -1012,7 +1012,7 @@ def make_predictive_SGM_model(
             jax.vmap(jax.random.bernoulli, in_axes=(0, None))(
                 jax.random.split(key, shots),
                 expectation_value_to_prob_minus(predicted_expvals),
-            ).astype(jnp.int_)
+            ).astype(int)
         ).mean(axis=0)
 
     return predictive_model
@@ -1068,7 +1068,7 @@ def make_predictive_resampling_model(
             jax.vmap(jax.random.bernoulli, in_axes=(0, None))(
                 jax.random.split(key, shots),
                 expectation_value_to_prob_minus(predicted_expvals),
-            ).astype(jnp.int_)
+            ).astype(int)
         ).mean(axis=0)
 
     return predictive_model
@@ -1085,11 +1085,11 @@ class WoModel:
     priors_fn: typing.Callable[[str, tuple[int, ...]], dist.Distribution] = (
         default_priors_fn
     )
-    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
-        lambda x: 2 * jnp.pi * jax.nn.hard_sigmoid(x)
+    unitary_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        2 * jnp.pi * jax.nn.hard_sigmoid(x)
     )
-    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = (
-        lambda x: (2 * jax.nn.hard_sigmoid(x)) - 1
+    diagonal_activation_fn: typing.Callable[[jnp.ndarray], jnp.ndarray] = lambda x: (
+        (2 * jax.nn.hard_sigmoid(x)) - 1
     )
 
     def __call__(self, x: jnp.ndarray) -> dict[str, jnp.ndarray]:
