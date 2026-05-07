@@ -1,27 +1,13 @@
 # Design Decisions
 
-## The `import` 🧐
+## The `stable` module
 
-Currently, we recommend importing the package with the following code:
+If you look within the `inspeqtor`'s modules, you will see that there are `v1` and `v2` modules, and the `stable` module. The `v1` module contains the first version of the code, which is the one that I have been developing and using for a while. The `v2` module contains the newer implementation. The `stable` module imports from both `v1` and `v2`, and re-exports the functions and classes that are considered stable. This way, users can import from `stable` without worrying about the versioning, and I can still work on the `v2` module without breaking the existing code in `v1`.
 
-```python
-
-import inspeqtor.experimental as sq
-
-```
-
-In the future, once the `legacy` module has been fully removed, the `experimental` submodule will likely be eliminated as well. Migrating should then be as simple as omitting `experimental` from your import statement.
-
-We are now developing a `v2` API. Although the name could be misleading, this is our current approach. The `v2` API will gradually take the place of the `experimental` API. Since both APIs use the same namespace, migration should be straightforward.
-
-For users wanting to try the new `v2` API, we recommend the following imports:
+Importing from `stable` is simple as follows:
 
 ```python
-
-import inspeqtor.experimental as sqe
-
 import inspeqtor as sq
-
 ```
 
-This demonstrates that `v2` provides a stable way to interact with `inspeqtor`, eliminating the need to specifically import `inspeqtor.v2 as sq` as with the `experimental` API.
+You don't need to specify the version.
