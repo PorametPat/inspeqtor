@@ -711,6 +711,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-jax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why jax?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#random-number-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Random number generation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-stable-module" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1698,6 +1720,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-jax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why jax?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#random-number-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Random number generation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-stable-module" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1729,6 +1773,18 @@
 
 
 <h1 id="design-decisions">Design Decisions</h1>
+<h2 id="why-jax">Why <code>jax</code>?</h2>
+<p>We chose <a href="https://docs.jax.dev/en/latest/index.html">JAX</a> as the numerical framework for <code>inspeqtor</code> because of its automatic differentiation, pseudo-random number generation, just-in-time compilation capabilities, and functional-style interface. These features make it accessible to both the scientific community and the engineering teams who maintain production infrastructure. With JAX, we can easily deploy <code>inspeqtor</code> to CPU, GPU, and TPU machines. Furthermore, the JAX ecosystem provides a wide range of libraries and tools that can be easily integrated with <code>inspeqtor</code>, such as <a href="https://flax.readthedocs.io/en/stable/">Flax</a> for neural networks, <a href="https://optax.readthedocs.io/en/latest/">Optax</a> for optimization, <a href="https://num.pyro.ai/en/stable/">NumPyro</a> for probabilistic programming, <a href="https://docs.kidger.site/diffrax/">Diffrax</a> for differential equations, and many more. This allows us to leverage existing tools in the JAX ecosystem to enhance the functionality of <code>inspeqtor</code> and make it more versatile.</p>
+<p>Currently, we perform just-in-time (JIT) compilation on functions that are commonly used in the inner loops of our algorithms. We may consider removing JIT compilation in the future if appropriate, as it can introduce overhead during compilation.</p>
+<h2 id="random-number-generation">Random number generation</h2>
+<p>Since we are a library that provides tools for the characterization and calibration of quantum devices, we need to generate random numbers for various purposes. With JAX, we can use the <code>jax.random</code> module to generate random numbers. However, JAX's random number generation follows a functional style, which means we need to pass a random key to the functions that generate random numbers. Once used, a random key is consumed and should not be reused. To generate new random numbers, we split the key to create a new one. This approach ensures that random numbers can be generated reproducibly. For example, to generate a random number, we can do the following:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+
+<span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Create a random key</span>
+<span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>  <span class="c1"># Split the key to get a new subkey</span>
+<span class="n">random_number</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span>  <span class="c1"># Generate a random number</span>
+</code></pre></div>
+<p>For more details on JAX's random number generation, refer to the <a href="https://docs.jax.dev/en/latest/random-numbers.html">JAX documentation</a>.</p>
 <h2 id="the-stable-module">The <code>stable</code> module</h2>
 <p>If you look within the <code>inspeqtor</code>'s modules, you will see that there are <code>v1</code> and <code>v2</code> modules, and the <code>stable</code> module. The <code>v1</code> module contains the first version of the code, which is the one that I have been developing and using for a while. The <code>v2</code> module contains the newer implementation. The <code>stable</code> module imports from both <code>v1</code> and <code>v2</code>, and re-exports the functions and classes that are considered stable. This way, users can import from <code>stable</code> without worrying about the versioning, and I can still work on the <code>v2</code> module without breaking the existing code in <code>v1</code>.</p>
 <p>Importing from <code>stable</code> is simple as follows:</p>
