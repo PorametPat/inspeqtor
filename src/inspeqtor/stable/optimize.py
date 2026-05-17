@@ -13,4 +13,6 @@ from inspeqtor.v2.optimize import (
     init_opt_state as init_opt_state,
     suggest_next_candidates as suggest_next_candidates,
     add_observations as add_observations,
+    edge_scheduler as edge_scheduler,
+    extract_sub_distribution as extract_sub_distribution
 )

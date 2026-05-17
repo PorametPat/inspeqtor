@@ -233,7 +233,7 @@ def make_probabilistic_model(
                             probs=expectation_value_to_prob_minus(
                                 jnp.expand_dims(expvals[..., idx], axis=-1)
                             )
-                        ).to_event(1),  # type: ignore
+                        ).to_event(1), # type: ignore
                         obs=(
                             observables[..., idx] if observables is not None else None
                         ),
@@ -254,6 +254,108 @@ def make_probabilistic_model(
         return expvals_samples
 
     return bernoulli_model
+
+
+def make_probabilistic_model_v2(
+    predictive_model: typing.Callable[..., jnp.ndarray],
+    shots: int = 1,
+    block_graybox: bool = False,
+    separate_observables: bool = False,
+    log_expectation_values: bool = False,
+):
+    """Make probabilistic model from the Statistical model with priors.
+    Uses Binomial distribution when shots > 1 instead of plotting arrays of Bernoulli variables.
+    This version is designed specifically for fast optimization through BOED / estimate_eig.
+
+    Args:
+        base_model (nn.Module): The statistical based model, currently only support flax.linen module
+        model_prediction_to_expvals_fn (typing.Callable[..., jnp.ndarray]): Function to convert output from model to expectation values array
+        bnn_prior (dict[str, dist.Distribution] | dist.Distribution, optional): The priors of BNN. Defaults to dist.Normal(0.0, 1.0).
+        shots (int, optional): The number of shots forcing PGM to sample. Defaults to 1.
+        block_graybox (bool, optional): If true, the latent variables in Graybox model will be hidden, i.e. not traced by `numpyro`. Defaults to False.
+        enable_bnn (bool, optional): If true, the statistical model will be convert to probabilistic model. Defaults to True.
+        separate_observables (bool, optional): If true, the observable will be separate into dict form. Defaults to False.
+
+    Returns:
+        typing.Callable: Probabilistic Graybox Model
+    """
+
+    def block_graybox_fn(
+        control_parameters: jnp.ndarray,
+        unitaries: jnp.ndarray,
+    ):
+        key = numpyro.prng_key()
+        with handlers.block(), handlers.seed(rng_seed=key):
+            expvals = predictive_model(control_parameters, unitaries)
+
+        return expvals
+
+    graybox_fn = block_graybox_fn if block_graybox else predictive_model
+
+    def binomial_model(
+        control_parameters: jnp.ndarray,
+        unitaries: jnp.ndarray,
+        observables: jnp.ndarray | None = None,
+    ):
+        expvals = graybox_fn(control_parameters, unitaries)
+
+        if log_expectation_values:
+            numpyro.deterministic("expectation_values", expvals)
+
+        # Base sizes excluding the event dimension
+        sizes = control_parameters.shape[:-1] + (18,)
+
+        # If passed binary observables of shape (shots, *sizes), collapse them into Binomial counts
+        if observables is not None and observables.shape != sizes:
+            if shots > 1 and observables.shape[0] == shots:
+                observables = jnp.sum(observables, axis=0)
+
+        # Plate across the batch dimensions
+        with numpyro.plate_stack("plate", sizes=list(sizes)[:-1]):
+            if separate_observables:
+                expvals_samples = {}
+
+                for idx, exp in enumerate(default_expectation_values_order):
+                    probs = expectation_value_to_prob_minus(
+                        jnp.expand_dims(expvals[..., idx], axis=-1)
+                    )
+                    obs_slice = observables[..., idx] if observables is not None else None
+
+                    if shots > 1:
+                        s = numpyro.sample(
+                            f"obs/{exp.initial_state}/{exp.observable}",
+                            dist.BinomialProbs(total_count=shots, probs=probs).to_event(1), # type: ignore
+                            obs=obs_slice,
+                        )
+                    else:
+                        s = numpyro.sample(
+                            f"obs/{exp.initial_state}/{exp.observable}",
+                            dist.BernoulliProbs(probs=probs).to_event(1), # type: ignore
+                            obs=obs_slice,
+                        )
+
+                    expvals_samples[f"obs/{exp.initial_state}/{exp.observable}"] = s
+
+            else:
+                probs = expectation_value_to_prob_minus(expvals)
+                if shots > 1:
+                    expvals_samples = numpyro.sample(
+                        "obs",
+                        dist.BinomialProbs(total_count=shots, probs=probs).to_event(1),  # type: ignore
+                        obs=observables,
+                        infer={"enumerate": "parallel"},
+                    )
+                else:
+                    expvals_samples = numpyro.sample(
+                        "obs",
+                        dist.BernoulliProbs(probs=probs).to_event(1),  # type: ignore
+                        obs=observables,
+                        infer={"enumerate": "parallel"},
+                    )
+
+        return expvals_samples
+
+    return binomial_model
 
 
 def get_args_of_distribution(x):

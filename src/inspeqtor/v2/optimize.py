@@ -165,3 +165,58 @@ def add_observations(opt_state: BayesOptState, x, y) -> BayesOptState:
     return BayesOptState(
         dataset=opt_state.dataset + gpx.Dataset(X=x, y=y), control=opt_state.control
     )
+
+
+def edge_scheduler(edges: list[tuple[int, int]]) -> list[list[tuple[int, int]]]:
+
+    schedule = []
+    _edges = [edge for edge in edges]
+
+    # Loop until no more edge to schedule
+    while len(_edges) != 0:
+        current_round = [edge for edge in _edges]
+        this_schedule = []
+        _edges = []
+        # print(current_round)
+        current_set = set()
+        for edge in current_round:
+            if (edge[0] not in current_set) and (edge[1] not in current_set):
+                this_schedule.append(edge)
+                current_set.add(edge[0])
+                current_set.add(edge[1])
+            else:
+                _edges.append(edge)
+
+        schedule.append(this_schedule)
+
+    return schedule
+
+
+def extract_sub_distribution(
+    binary_distribution: dict[tuple[int, ...], int], indices: list[tuple[int, ...]]
+) -> dict[tuple[int, ...], dict[tuple[int, ...], int]]:
+    """Take a full empirical distribution of binary readout from quantum system
+
+    Args:
+        binary_distribution (dict[tuple[int, ...], int]): The full empirical distribution
+        indices (list[tuple[int, ...]]): The list of subsystem to extract their own distribution from the full distribution
+
+    Returns:
+        dict[tuple[int, ...], dict[tuple[int, ...], int]]: The key is the indices of subsystem and the key is the sub-distribution
+    """
+
+    result = {}
+
+    for target_indices in indices:
+        sub_dist = {}
+
+        for full_bitstring, count in binary_distribution.items():
+            # Create the sub-bitstring by selecting only the requested indices
+            sub_bitstring = tuple(full_bitstring[i] for i in target_indices)
+
+            # Aggregate the counts for this specific sub-outcome
+            sub_dist[sub_bitstring] = sub_dist.get(sub_bitstring, 0) + count
+
+        result[target_indices] = sub_dist
+
+    return result

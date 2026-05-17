@@ -326,6 +326,8 @@ def init_params_from_guide(
     *args,
     key: jnp.ndarray,
     design: jnp.ndarray,
+    observation_labels: list[str] = [],
+    target_labels: list[str] = [],
 ) -> ArrayTree:
     """Initlalize parameters of marginal guide.
 
@@ -341,7 +343,7 @@ def init_params_from_guide(
     # expanded_design = lexpand(design, num_particles)
     marginal_guide_trace = handlers.trace(
         handlers.seed(marginal_guide, subkey)
-    ).get_trace(design, *args, observation_labels=[], target_labels=[])
+    ).get_trace(design, *args, observation_labels=observation_labels, target_labels=target_labels)
 
     # Get only nodes that are parameters
     params = {
@@ -445,6 +447,8 @@ def estimate_eig(
         *args,
         key=subkey,
         design=design,
+        observation_labels=observation_labels,
+        target_labels=target_labels,
     )
 
     # Optimize the loss function first to get the optimal parameters
@@ -524,19 +528,93 @@ def marginal_guide(design, unitaries, observation_labels, target_labels):
     numpyro.sample("obs", dist.Bernoulli(logits=q_logit).to_event(1))  # type: ignore
 
 
-def auto_marginal_guide(model, guide):
-    # The guide should be create for the model with block = True
+def make_marginal_guide_from_model(
+    model: typing.Callable,
+    design: jnp.ndarray,
+    *args,
+    key: jnp.ndarray = jax.random.key(0)
+) -> typing.Callable:
+    """
+    Automatically generates a marginal guide for marginal EIG estimation
+    by tracing the model once to infer sizes and distribution families of observation sites.
 
-    def marginal_guide(control_parameters, *args, observation_labels, target_labels):
-        # Get the number of candidate designs
-        num_candidates = control_parameters.shape[-2]
+    Args:
+        model (typing.Callable): The probabilistic model.
+        design (jnp.ndarray): Example of the designs of the experiment.
+        args: Additional arguments passed to the model.
+        key (jnp.ndarray, optional): Random key for tracing. Defaults to jax.random.key(0).
 
-        with numpyro.plate("candidates", num_candidates):
-            params = guide(control_parameters, *args)
+    Returns:
+        typing.Callable: The marginal guide function.
+    """
+    trace = handlers.trace(handlers.seed(model, key)).get_trace(design, *args)
 
-            cond_model = numpyro.handlers.condition(model, params)
-            expectation_values = cond_model(control_parameters, *args)
+    site_metadata = {}
+    for name, site in trace.items():
+        if site["type"] == "sample":
+            dist_instance = site["fn"]
 
-        return expectation_values
+            # Unwrap Independent distribution to get the actual distribution name
+            base_dist = dist_instance
+            while hasattr(base_dist, "base_dist"):
+                base_dist = base_dist.base_dist
+
+            site_metadata[name] = {
+                "dist_name": type(base_dist).__name__,
+                "event_shape": dist_instance.event_shape,
+                "event_dim": len(dist_instance.event_shape),
+                "total_count": getattr(base_dist, "total_count", None),
+            }
+
+    def marginal_guide(
+        design_batch,
+        *args_batch,
+        observation_labels: list[str],
+        target_labels: list[str]
+    ):
+        num_candidates = design_batch.shape[-2]
+
+        for label in observation_labels:
+            if label not in site_metadata:
+                raise ValueError(f"Observation site '{label}' not found in model trace.")
+
+            meta = site_metadata[label]
+            dist_name = meta["dist_name"]
+            event_dim = meta["event_dim"]
+            event_shape = meta["event_shape"]
+            total_count = meta["total_count"]
+
+            param_shape = (num_candidates,) + event_shape
+
+            if "BinomialProbs" in dist_name or "Binomial" in dist_name:
+                q_probs = numpyro.param(
+                    f"q_{label}_probs",
+                    0.5 * jnp.ones(param_shape),
+                    constraint=dist.constraints.unit_interval
+                )
+                numpyro.sample(label, dist.BinomialProbs(probs=q_probs, total_count=total_count).to_event(event_dim))
+            elif "BernoulliProbs" in dist_name:
+                q_probs = numpyro.param(
+                    f"q_{label}_probs",
+                    0.5 * jnp.ones(param_shape),
+                    constraint=dist.constraints.unit_interval
+                )
+                numpyro.sample(label, dist.BernoulliProbs(probs=q_probs).to_event(event_dim))
+            elif "Bernoulli" in dist_name:
+                q_logit = numpyro.param(f"q_{label}_logit", jnp.zeros(param_shape))
+                numpyro.sample(label, dist.Bernoulli(logits=q_logit).to_event(event_dim))
+            elif "Normal" in dist_name:
+                q_loc = numpyro.param(f"q_{label}_loc", jnp.zeros(param_shape))
+                q_scale = numpyro.param(
+                    f"q_{label}_scale",
+                    0.1 * jnp.ones(param_shape),
+                    constraint=dist.constraints.softplus_positive
+                )
+                numpyro.sample(label, dist.Normal(q_loc, q_scale).to_event(event_dim))
+            else:
+                raise NotImplementedError(
+                    f"Distribution {dist_name} not yet supported in auto marginal guide. "
+                    "You can write a custom marginal guide instead."
+                )
 
     return marginal_guide
