@@ -168,7 +168,6 @@ def add_observations(opt_state: BayesOptState, x, y) -> BayesOptState:
 
 
 def edge_scheduler(edges: list[tuple[int, int]]) -> list[list[tuple[int, int]]]:
-
     schedule = []
     _edges = [edge for edge in edges]
 
