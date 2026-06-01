@@ -101,6 +101,7 @@ def solver(
     rtol: float = 1e-7,
     atol: float = 1e-7,
     max_steps: int = int(2**16),
+    saveat: diffrax.SaveAt | None = None,
 ) -> jnp.ndarray:
     """Solve the Schrodinger equation using the given Hamiltonian
 
@@ -140,7 +141,7 @@ def solver(
         ),
         y0=y0,
         args=args,
-        saveat=diffrax.SaveAt(ts=t_eval),
+        saveat=saveat if saveat is not None else diffrax.SaveAt(ts=t_eval),
         max_steps=max_steps,
     )
 
