@@ -175,7 +175,7 @@ def make_probabilistic_model(
     separate_observables: bool = False,
     log_expectation_values: bool = False,
 ):
-    """Make probabilistic model from the Statistical model with priors
+    """Make probabilistic model from the Statistical model with priors.
 
     Args:
         base_model (nn.Module): The statistical based model, currently only support flax.linen module
@@ -233,7 +233,7 @@ def make_probabilistic_model(
                             probs=expectation_value_to_prob_minus(
                                 jnp.expand_dims(expvals[..., idx], axis=-1)
                             )
-                        ).to_event(1), # type: ignore
+                        ).to_event(1),  # type: ignore
                         obs=(
                             observables[..., idx] if observables is not None else None
                         ),
@@ -319,18 +319,22 @@ def make_probabilistic_model_v2(
                     probs = expectation_value_to_prob_minus(
                         jnp.expand_dims(expvals[..., idx], axis=-1)
                     )
-                    obs_slice = observables[..., idx] if observables is not None else None
+                    obs_slice = (
+                        observables[..., idx] if observables is not None else None
+                    )
 
                     if shots > 1:
                         s = numpyro.sample(
                             f"obs/{exp.initial_state}/{exp.observable}",
-                            dist.BinomialProbs(total_count=shots, probs=probs).to_event(1), # type: ignore
+                            dist.BinomialProbs(total_count=shots, probs=probs).to_event(
+                                1
+                            ),  # type: ignore
                             obs=obs_slice,
                         )
                     else:
                         s = numpyro.sample(
                             f"obs/{exp.initial_state}/{exp.observable}",
-                            dist.BernoulliProbs(probs=probs).to_event(1), # type: ignore
+                            dist.BernoulliProbs(probs=probs).to_event(1),  # type: ignore
                             obs=obs_slice,
                         )
 

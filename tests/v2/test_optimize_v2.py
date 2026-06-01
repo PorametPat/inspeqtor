@@ -2,7 +2,6 @@ import inspeqtor as sq
 
 
 def test_edge_scheduler():
-
     edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0)]
     result = sq.optimize.edge_scheduler(edges)
 
@@ -13,7 +12,6 @@ def test_edge_scheduler():
 
 
 def test_extract_sub_distribution():
-
     empirical_distribution = {(0, 0): 11, (0, 1): 12, (1, 0): 13, (1, 1): 14}
     result = sq.optimize.extract_sub_distribution(empirical_distribution, [(0,), (1,)])
 
